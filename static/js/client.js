@@ -49,12 +49,9 @@ function setPlaying(title, link) {
 }
 
 window.onload = function () {
-    console.log("TEST 1")
     $("INPUT").val("")
     $("#name").keypress(function (evt) {
-        console.log("TEST 2")
         if (evt.originalEvent.keyCode == 13) {
-            console.log("TEST 3")
             $("#join").trigger("click")
         }
     })
