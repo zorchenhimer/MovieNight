@@ -48,6 +48,14 @@ function setPlaying(title, link) {
     $('#playinglink').attr('href', link);
 }
 
+function getWsUri() {
+    port = window.location.port
+    if (port == "") {
+        port = "8089"
+    }
+    return "ws://" + window.location.hostname + ":" + port + "/ws"
+}
+
 window.onload = function () {
     $("INPUT").val("")
     $("#name").keypress(function (evt) {
@@ -65,7 +73,7 @@ window.onload = function () {
             return
         }
         console.log("join started")
-        chat = new WebSocket("ws://" + window.location.host + ":8089/ws");
+        chat = new WebSocket(getWsUri());
         chat.onopen = function (evt) {
             chat.send(name);  //sending the chat name
             $("#phase1").animate({ opacity: 0 }, 500, "linear", function () {
