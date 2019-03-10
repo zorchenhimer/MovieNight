@@ -1,48 +1,33 @@
 <!doctype html>
 <html>
-    <head>
-        <meta charset='utf-8'>
-        <title>Movie Night!</title>
-        <style>
-        body {
-            margin:0;
-            padding:0;
-            background:#000;
-        }
-
-        html, body{
-            height:100%;
-        }
-
-        video {
-            width:100%;
-            height:100%;
-        }
-        </style>
-        <script src="/static/jquery.js"></script>
-        <script src="/static/flv.min.js"></script>
+<head>
+    <meta charset='utf-8'>
+    <title>Movie Night!</title>
+    <link rel="stylesheet" type="text/css" href="/static/site.css">
+    <script src="/static/js/jquery.js"></script>
+    <script src="/static/js/flv.min.js"></script>
     <script>
 
-function initPlayer() {
-    if (flvjs.isSupported()) {
-        var videoElement = document.getElementById('videoElement');
-        var flvPlayer = flvjs.createPlayer({
-            type: 'flv',
-            url: '/live'
-        });
-        flvPlayer.attachMediaElement(videoElement);
-        flvPlayer.load();
-        flvPlayer.play();
-    }
-}
+        function initPlayer() {
+            if (flvjs.isSupported()) {
+                var videoElement = document.getElementById('videoElement');
+                var flvPlayer = flvjs.createPlayer({
+                    type: 'flv',
+                    url: '/live'
+                });
+                flvPlayer.attachMediaElement(videoElement);
+                flvPlayer.load();
+                flvPlayer.play();
+            }
+        }
 
     </script>
-    </head>
+</head>
 
-    <body>
-        <video id="videoElement" controls autoplay x5-video-player-type="h5" x5-video-player-fullscreen="true" playsinline webkit-playsinline>
-            Your browser is too old and doesn't support HTML5 video.
-        </video>
-        <script>initPlayer();</script>
-    </body>
+<body>
+    <video id="videoElement" controls autoplay x5-video-player-type="h5" x5-video-player-fullscreen="true" playsinline webkit-playsinline>
+        Your browser is too old and doesn't support HTML5 video.
+    </video>
+    <script>initPlayer();</script>
+</body>
 </html>

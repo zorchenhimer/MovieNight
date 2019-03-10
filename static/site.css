@@ -1,0 +1,86 @@
+body {
+    margin: 0;
+    padding: 0;
+    background: #000;
+}
+
+html,
+body,
+#messages,
+#phase2 {
+    height: 100%;
+}
+
+video {
+    width: 100%;
+    height: 100%;
+}
+
+#streambox {
+    width: 80%;
+    float: left;
+    margin: 0;
+}
+
+#chatbox {
+    width: 19%;
+    float: right;
+    height: 85%;
+}
+
+#messages {
+    border: 1px solid #666;
+    width: 95%;
+    overflow: auto;
+    color: #f4f4f4;
+}
+
+#msg {
+    width: 94%;
+    height: 3em;
+}
+
+#error {
+    color: #f00;
+    padding: 5px;
+    font-weight: bold;
+}
+
+span.name {
+    font-weight: bold;
+}
+
+span.cmdme {
+    font-style: italic;
+}
+
+span.msg {
+    font-style: normal;
+    color: #cfccd1;
+}
+
+span.svmsg {
+    font-style: italic;
+    color: #ea6260;
+}
+
+.announcement {
+    font-weight: bold;
+    color: #ea6260;
+    text-align: center;
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border-top: 3px solid red;
+    border-bottom: 3px solid red;
+}
+
+#playingDiv {
+    color: #8b6a96;
+    font-weight: bold;
+    padding: 10px;
+}
+
+#playing {
+    font-size: x-Large;
+}

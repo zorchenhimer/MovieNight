@@ -90,11 +90,10 @@ func main() {
 
 	// Chat websocket
 	http.HandleFunc("/ws", wsHandler)
-	http.HandleFunc("/static/", wsStaticFiles)
+	http.HandleFunc("/static/js/", wsStaticFiles)
+	http.HandleFunc("/static/site.css", wsStaticFiles)
 	http.HandleFunc("/emotes/", wsEmotes)
 	http.HandleFunc("/favicon.ico", wsStaticFiles)
-	http.HandleFunc("/jquery.js", wsStaticFiles)
-	http.HandleFunc("/ractive.min.js", wsStaticFiles)
 	http.HandleFunc("/justchat", wsStaticFiles)
 	http.HandleFunc("/justvideo", wsStaticFiles)
 
