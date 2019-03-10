@@ -144,7 +144,7 @@ func (cl *Client) Host() string {
 	return host
 }
 
-var dumbSpaces []string = []string{
+var dumbSpaces = []string{
 	"\n",
 	"\t",
 	"\r",

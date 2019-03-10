@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	addr = flag.String("l", ":8089", "host:port of the go-rtmp-server")
+	addr = flag.String("l", ":8089", "host:port of the MovieNight")
 	sKey = flag.String("k", "", "Stream key, to protect your stream")
 )
 
