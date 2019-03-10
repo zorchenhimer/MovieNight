@@ -11,13 +11,6 @@ function initPlayer() {
     }
 }
 
-function escapeHtml(string) {
-    return string;
-    //return String(string).replace(/[&<>"'\/]/g, function (s) {
-    //    return entityMap[s];
-    //});
-}
-
 //helper function for debugging purposes
 function toHex(str) {
     var result = '';
@@ -67,7 +60,7 @@ window.onload = function () {
     //handling the start of the chat
     $("#join").click(function () {
         $("#error").html("");
-        var name = escapeHtml($("#name").val())
+        var name = $("#name").val()
         if (name.length < 3) {
             $("#error").html("Name is too short!");
             return
@@ -106,7 +99,7 @@ window.onload = function () {
     })
 
     $("#send").click(function () {
-        chat.send(escapeHtml($("#msg").val()));
+        chat.send($("#msg").val());
         $("#msg").val("");
     })
 
