@@ -1,0 +1,63 @@
+== TODO
+
+- break long words across lines
+
+- mod commands
+    - auth command to gain mod status
+    - kick/mute/timeout
+    - list users
+    - purge chat
+    - mods cannot kick/ban other mods or admin
+    - only admin can kick/ban mods
+    - admin revoke command with password
+    - broadcast mod/unmod command results to mods and admins
+    - fix /color for mods and admins
+
+- "login" options
+    - IP admin/mod?
+    - save ip/name combo for reconnects?
+
+- Move kick/ban core functionality into command instead of room?
+    or to (server-side) client?
+
+- add a Chatroom.FindUser(name) function
+
+- rewrite Javascript to accept json data.
+    - separate data into commands and chat
+    - commands will just execute more JS (eg, changing title)
+    - chat will append chat message
+    - moves all styling to client
+
+- rewrite javascript client in go webasm?
+
+== Commands
+/color
+    change user color
+/me
+    italic chat message without leading colon.  message is the same color as name.
+/count
+    display the number of users in chat
+/w
+/whoami
+    debugging command.  prints name, mod, and admin status
+/auth
+    authenticate to admin
+
+= Mod commands
+/playing [title] [link]
+    update title and link.  clears title if no arguments
+/sv <message>
+    server announcement message.  it's red, with a red border, centered in chat.
+/kick
+    kick user from chat
+/unmod
+    unmod self only
+
+= Admin commands
+/reloademotes
+    reload emotes map
+/reloadplayer
+    reloads the video player of everybody in chat
+/unmod <name>
+    unmod a user
+/mod <name> mod a user

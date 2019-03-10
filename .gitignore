@@ -1,0 +1,9 @@
+*.gif
+*.png
+*.exe
+
+# Linux binary
+MovieNight
+
+# Twitch channel info
+static/subscriber.json
