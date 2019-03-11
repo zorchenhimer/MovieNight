@@ -24,6 +24,17 @@ func wsStaticFiles(w http.ResponseWriter, r *http.Request) {
 	case "/justvideo":
 		http.ServeFile(w, r, "./static/justvideo.html")
 		return
+
+	// TODO: use a template for this, lol.
+	case "/help":
+		w.Write([]byte(helpPage(false, false)))
+		return
+	case "/modhelp":
+		w.Write([]byte(helpPage(true, false)))
+		return
+	case "/adminhelp":
+		w.Write([]byte(helpPage(true, true)))
+		return
 	}
 
 	goodPath := r.URL.Path[8:len(r.URL.Path)]

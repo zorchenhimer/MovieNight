@@ -96,6 +96,9 @@ func main() {
 	http.HandleFunc("/favicon.ico", wsStaticFiles)
 	http.HandleFunc("/justchat", wsStaticFiles)
 	http.HandleFunc("/justvideo", wsStaticFiles)
+	http.HandleFunc("/help", wsStaticFiles)
+	http.HandleFunc("/modhelp", wsStaticFiles)
+	http.HandleFunc("/adminhelp", wsStaticFiles)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		l.RLock()

@@ -84,3 +84,11 @@ span.svmsg {
 #playing {
     font-size: x-Large;
 }
+
+.helptext {
+    color: white;
+}
+
+dt {
+    font-weight: bold;
+}
