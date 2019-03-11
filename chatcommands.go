@@ -224,15 +224,21 @@ func cmdColor(cl *Client, args []string) string {
 		return fmt.Sprintf("Color changed for user %s to %s\n", name, color)
 	}
 
-	// Change the color of the user
-	if len(args) == 0 || !colorRegex.MatchString(args[0]) {
-		cl.color = randomColor()
-		return "Random color chosen. To choose a specific color use the format <i>/color #c029ce</i>.  Hex values expected."
-	}
-
+	// Don't allow an unprivilaged user to change their color if
+	// it was changed by a mod
 	if cl.IsColorForced {
 		fmt.Printf("[color] %s tried to change a forced color\n", cl.name)
 		return "You are not allowed to change your color."
+	}
+
+	if len(args) == 0 {
+		cl.color = randomColor()
+		return "Random color chosen: " + cl.color
+	}
+
+	// Change the color of the user
+	if !colorRegex.MatchString(args[0]) {
+		return "To choose a specific color use the format <i>/color #c029ce</i>.  Hex values expected."
 	}
 
 	cl.color = args[0]
