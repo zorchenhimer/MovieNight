@@ -201,7 +201,8 @@ func (cc *CommandControl) RunCommand(command string, args []string, sender *Clie
 }
 
 func cmdColor(cl *Client, args []string) string {
-	if cl.IsMod || cl.IsAdmin && len(args) == 2 {
+	// If the caller is priviledged enough, they can change the color of another user
+	if len(args) == 2 && (cl.IsMod || cl.IsAdmin) {
 		color := ""
 		name := ""
 		for _, s := range args {
@@ -222,6 +223,8 @@ func cmdColor(cl *Client, args []string) string {
 		}
 		return fmt.Sprintf("Color changed for user %s to %s\n", name, color)
 	}
+
+	// Change the color of the user
 	if len(args) == 0 || !colorRegex.MatchString(args[0]) {
 		cl.color = randomColor()
 		return "Random color chosen. To choose a specific color use the format <i>/color #c029ce</i>.  Hex values expected."
