@@ -88,8 +88,7 @@ func (cl *Client) NewMsg(msg string) {
 func formatLinks(input string) string {
 	newMsg := []string{}
 	for _, word := range strings.Split(input, " ") {
-		if strings.HasPrefix(word, "http:&#x2F;&#x2F;") || strings.HasPrefix(word, "https:&#x2F;&#x2F;") {
-			//word = unescape(word)
+		if strings.HasPrefix(word, "http://") || strings.HasPrefix(word, "https://") {
 			word = html.UnescapeString(word)
 			word = fmt.Sprintf(`<a href="%s" target="_blank">%s</a>`, word, word)
 		}
