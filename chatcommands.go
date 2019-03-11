@@ -140,6 +140,9 @@ func init() {
 
 		admin: map[string]CommandFunction{
 			"mod": func(cl *Client, args []string) string {
+				if len(args) == 0 {
+					return "Missing user to mod."
+				}
 				if err := cl.belongsTo.Mod(args[0]); err != nil {
 					return err.Error()
 				}
