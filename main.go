@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/nareix/joy4/av/avutil"
@@ -60,30 +61,49 @@ func main() {
 
 		l.Lock()
 		fmt.Println("request string->", conn.URL.RequestURI())
-		fmt.Println("request key->", conn.URL.Query().Get("key"))
-		streamKey := conn.URL.Query().Get("key")
-		if streamKey != *sKey {
+		urlParts := strings.Split(strings.Trim(conn.URL.RequestURI(), "/"), "/")
+		fmt.Println("urlParts->", urlParts)
+
+		if len(urlParts) > 2 {
+			fmt.Println("Extra garbage after stream key")
+			conn.Close()
+			return
+		}
+
+		if len(urlParts) != 2 {
+			fmt.Println("Missing stream key")
+			conn.Close()
+			return
+		}
+
+		if urlParts[1] != *sKey {
 			fmt.Println("Due to key not match, denied stream")
+			conn.Close()
 			return //If key not match, deny stream
 		}
-		ch := channels[conn.URL.Path]
+		streamPath := urlParts[0]
+		ch := channels[streamPath]
 		if ch == nil {
 			ch = &Channel{}
 			ch.que = pubsub.NewQueue()
 			ch.que.WriteHeader(streams)
-			channels[conn.URL.Path] = ch
+			channels[streamPath] = ch
 		} else {
 			ch = nil
 		}
 		l.Unlock()
 		if ch == nil {
+			fmt.Println("Unable to start stream, channel is nil.")
+			conn.Close()
 			return
 		}
 
+		fmt.Println("Stream started")
 		avutil.CopyPackets(ch.que, conn)
+		fmt.Println("Stream finished")
 
 		l.Lock()
-		delete(channels, conn.URL.Path)
+		delete(channels, streamPath)
 		l.Unlock()
 		ch.que.Close()
 	}
@@ -102,7 +122,7 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		l.RLock()
-		ch := channels[r.URL.Path]
+		ch := channels[strings.Trim(r.URL.Path, "/")]
 		l.RUnlock()
 
 		if ch != nil {
