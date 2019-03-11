@@ -1,34 +1,47 @@
-# Golang rtmp server demo
+# MovieNight stream server
 
-This is a very tiny demo with rtmp protocol server/client side implement.
+This is a single-instance streaming server with chat.  Originally written to
+replace Rabbit as the platform for watching movies with a group of people
+online.
 
-## Requirement
+## Build requirements
 
-You need golang to build all tools.
+- Go 1.12 or newer
+- GNU Make
 
 ## Install
 
+To just download and run:
 ```bash
 go get -u -v github.com/zorchenhimer/MovieNight
 
-~/go/bin/MovieNight  -l :8089 -k  longSecurityKey
+MovieNight  -l :8089 -k longSecurityKey
+```
+
+To download and compile for development:
+```bash
+git clone github.com/zorchenhimer/MovieNight
+cd MovieNight
+make
+./MovieNight -l :8089 -k longSecurityKey
 ```
 
 ## Usage
 
-now you can using obs to push stream to rtmp server
+Now you can use OBS to push a stream to the server.  Set the stream URL to
+```text
+rtmp://your.domain.host/live
+```
+and enter the stream key.
 
-the stream url maybe ```rtmp://your.domain.host/live?key=longSecurityKey```
-
-You can using obs to stream
-
-Now you may visit the demo at
+Now you can view the stream at
 
 ```text
 http://your.domain.host:8089/
 ```
 
-the :8089 is the default listen port of the http server. and you can change it as you want
+The default listen port is `:8089`.  It can be changed by providing a new port
+at startup:
 
 ```text
 Usage of .\MovieNight.exe:
