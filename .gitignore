@@ -25,3 +25,6 @@ settings.json
 
 # vscode
 .vscode
+
+# Autobuilt wasm files
+static/main.wasm

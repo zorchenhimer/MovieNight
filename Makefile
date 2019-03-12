@@ -1,10 +1,6 @@
-
-#export GOOS=linux
-#export GOARCH=386
-
 .PHONY: sync fmt vet
 
-all: vet fmt MovieNight MovieNight.exe
+all: vet fmt MovieNight MovieNight.exe static/main.wasm
 
 MovieNight.exe: *.go
 	GOOS=windows GOARCH=amd64 go build -o MovieNight.exe
@@ -12,16 +8,18 @@ MovieNight.exe: *.go
 MovieNight: *.go
 	GOOS=linux GOARCH=386 go build -o MovieNight
 
+static/main.wasm: wasm/*.go
+	GOOS=js GOARCH=wasm go build -o ./static/main.wasm wasm/*.go
+
 clean:
-	rm MovieNight.exe MovieNight
+	rm MovieNight.exe MovieNight ./static/main.wasm
 
 fmt:
 	gofmt -w .
 
 vet:
-	go vet
+	go vet ./...
+	GOOS=js GOARCH=wasm go vet ./...
 
 sync:
-	#rsync -v --no-perms --chmod=ugo=rwX -r ./ zorchenhimer@movienight.zorchenhimer.com:/home/zorchenhimer/movienight/
-	#rsync -v --no-perms --chmod=ugo=rwX -e "ssh -i /c/movienight/movienight-deploy.key" -r ./ zorchenhimer@movienight.zorchenhimer.com:/home/zorchenhimer/movienight/
 	scp -i /c/movienight/movienight-deploy.key -r . zorchenhimer@movienight.zorchenhimer.com:/home/zorchenhimer/movienight

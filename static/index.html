@@ -6,6 +6,7 @@
     <link rel="stylesheet" type="text/css" href="/static/site.css">
     <script type="application/javascript" src="/static/js/jquery.js"></script>
     <script type="application/javascript" src="/static/js/flv.min.js"></script>
+    <script type="application/javascript" src="/static/js/wasm_exec.js"></script>
     <script type="application/javascript" src="/static/js/client.js"></script>
 </head>
 
@@ -23,8 +24,8 @@
     <div id="chatbox">
         <div id="phase1">
             <p style="color:#e5e0e5">Please enter your name to Join the chat</P>
-            <input id="name">
-            <button id="join">Join</button>
+            <input id="name" maxlength="36">
+            <button id="join" onclick="join();">Join</button>
         </div>
         <div id="error"></div>
         <div id="phase2" style="opacity:0">

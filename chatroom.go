@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	//"html"
 	"math/rand"
 	"path/filepath"
@@ -13,7 +14,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-const UsernameMaxLength int = 36
+const (
+	UsernameMaxLength int = 36
+	UsernameMinLength int = 3
+)
 
 var re_username *regexp.Regexp = regexp.MustCompile(`^[0-9a-zA-Z_-]+$`)
 
@@ -85,16 +89,16 @@ func randomColor() string {
 
 //registering a new client
 //returns pointer to a Client, or Nil, if the name is already taken
-func (cr *ChatRoom) Join(name string, conn *websocket.Conn) *Client {
+func (cr *ChatRoom) Join(name string, conn *websocket.Conn) (*Client, error) {
 
-	if len(name) > UsernameMaxLength || !re_username.MatchString(name) {
-		return nil
+	if len(name) < UsernameMinLength || len(name) > UsernameMaxLength || !re_username.MatchString(name) {
+		return nil, UserFormatError{Name: name}
 	}
 
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock() //preventing simultaneous access to the `clients` map
 	if _, exists := cr.clients[strings.ToLower(name)]; exists {
-		return nil
+		return nil, UserTakenError{Name: name}
 	}
 
 	client := &Client{
@@ -107,9 +111,7 @@ func (cr *ChatRoom) Join(name string, conn *websocket.Conn) *Client {
 	host := client.Host()
 
 	if banned, names := settings.IsBanned(host); banned {
-		fmt.Printf("[BAN] Banned user tried to connect with IP %s: %q (banned with name(s) %q)\n", host, name, strings.Join(names, ", "))
-		conn.Close()
-		return nil
+		return nil, newBannedUserError(host, name, names)
 	}
 
 	cr.clients[strings.ToLower(name)] = client
@@ -117,7 +119,7 @@ func (cr *ChatRoom) Join(name string, conn *websocket.Conn) *Client {
 	fmt.Printf("[join] %s %s\n", host, name)
 	client.Send(cr.GetPlayingString())
 	cr.AddMsg(fmt.Sprintf("<i><b style=\"color:%s\">%s</b> has joined the chat.</i><br />", client.color, name))
-	return client
+	return client, nil
 }
 
 // TODO: fix this up a bit.  kick and leave are the same, incorrect, error: "That name was already used!"

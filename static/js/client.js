@@ -11,15 +11,6 @@ function initPlayer() {
     }
 }
 
-//helper function for debugging purposes
-function toHex(str) {
-    var result = '';
-    for (var i = 0; i < str.length; i++) {
-        result += ("0" + str.charCodeAt(i).toString(16)).slice(-2) + " ";
-    }
-    return result.toUpperCase();
-}
-
 function setPlaying(title, link) {
     if (title === "") {
         $('#playingDiv').hide();
@@ -41,6 +32,23 @@ function setPlaying(title, link) {
     $('#playinglink').attr('href', link);
 }
 
+
+function startGo() {
+    if (!WebAssembly.instantiateStreaming) { // polyfill
+        WebAssembly.instantiateStreaming = async (resp, importObject) => {
+            const source = await (await resp).arrayBuffer();
+            return await WebAssembly.instantiate(source, importObject);
+        };
+    }
+
+    const go = new Go();
+    WebAssembly.instantiateStreaming(fetch("/static/main.wasm"), go.importObject).then((result) => {
+        go.run(result.instance)
+    }).catch((err) => {
+        console.error(err);
+    });
+}
+
 function getWsUri() {
     port = window.location.port
     if (port == "") {
@@ -49,68 +57,64 @@ function getWsUri() {
     return "ws://" + window.location.hostname + ":" + port + "/ws"
 }
 
+function appendMessages(msg) {
+    $("#messages").append(msg).scrollTop(9e6);
+}
+
+function openChat() {
+    console.log("chat opening");
+    $("#phase1").animate({ opacity: 0 }, 500, "linear", function () {
+        $("#phase1").css({ display: "none" })
+        $("#phase2").css({ opacity: 1 })
+        $("#msg").focus()
+    })
+}
+
+function closeChat() {
+    console.log("chat closing")
+    $("#phase1").stop().css({ display: "block" }).animate({ opacity: 1 }, 500)
+    $("#phase2").stop().animate({ opacity: 0 })
+    $("#error").html("That name was already used!")
+}
+
+function join() {
+    let name = $("#name").val();
+    if (name.length < 3 || name.length > 36) {
+        $("#error").html("Please input a name between 3 and 36 characters");
+        return;
+    }
+    sendMessage($("#name").val());
+    openChat();
+}
+
+let ws = new WebSocket(getWsUri());
+ws.onmessage = (m) => recieveMessage(m.data);
+ws.onopen = (e) => console.log("Websocket Open:", e);
+ws.onclose = () => closeChat();
+ws.onerror = (e) => console.log("Websocket Error:", e);
+
+function websocketSend(data) {
+    ws.send(data)
+}
+
 window.onload = function () {
-    $("INPUT").val("")
+    startGo();
+
     $("#name").keypress(function (evt) {
         if (evt.originalEvent.keyCode == 13) {
             $("#join").trigger("click")
         }
     })
 
-    //handling the start of the chat
-    $("#join").click(function () {
-        $("#error").html("");
-        var name = $("#name").val()
-        if (name.length < 3) {
-            $("#error").html("Name is too short!");
-            return
-        }
-        console.log("join started")
-        chat = new WebSocket(getWsUri());
-        chat.onopen = function (evt) {
-            chat.send(name);  //sending the chat name
-            $("#phase1").animate({ opacity: 0 }, 500, "linear", function () {
-                $("#phase1").css({ display: "none" })
-                $("#phase2").css({ opacity: 1 })
-                $("#msg").focus()
-            })
-        };
-        chat.onerror = function (evt) {
-            console.log("Websocket Error:", evt)
-        };
-        chat.onclose = function (evt) {
-            console.log("chat closing")
-            $("#phase1").stop().css({ display: "block" }).animate({ opacity: 1 }, 500)
-            $("#phase2").stop().animate({ opacity: 0 })
-            $("#error").html("That name was already used!")
-        };
-        chat.onmessage = function (evt) {
-            $("#messages").append(evt.data).scrollTop(9e6)
-        };
-
-    })
-
     $("#msg").keypress(function (evt) {
         if (evt.originalEvent.keyCode == 13 && !evt.originalEvent.shiftKey) {
             $("#send").trigger("click")
             evt.preventDefault();
-            // submit name
         }
     })
 
     $("#send").click(function () {
-        chat.send($("#msg").val());
+        sendMessage($("#msg").val());
         $("#msg").val("");
     })
-
-    //helper function for escaping HTML
-    var entityMap = {
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': '&quot;',
-        "'": '&#39;',
-        "/": '&#x2F;',
-        "\n": '<BR/>'
-    };
 }
