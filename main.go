@@ -74,12 +74,7 @@ func main() {
 			return
 		}
 
-		streamKey := settings.StreamKey
-		if sKey != nil && len(*sKey) != 0 {
-			streamKey = *sKey
-		}
-
-		if urlParts[1] != streamKey {
+		if urlParts[1] != settings.GetStreamKey() {
 			fmt.Println("Due to key not match, denied stream")
 			return //If key not match, deny stream
 		}
@@ -161,7 +156,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("Stream key: ", streamKey)
+	if sKey != nil && len(*sKey) != 0 {
+		settings.SetTempKey(*sKey)
+	}
+
+	fmt.Println("Stream key: ", settings.GetStreamKey())
 	fmt.Println("Admin password: ", settings.AdminPassword)
 
 	go http.ListenAndServe(address, nil)

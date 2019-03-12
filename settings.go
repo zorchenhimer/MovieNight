@@ -19,6 +19,7 @@ type Settings struct {
 	Bans          []BanInfo
 	StreamKey     string
 	ListenAddress string
+	cmdLineKey    string // stream key from the command line
 }
 
 type BanInfo struct {
@@ -127,4 +128,21 @@ func (s *Settings) IsBanned(host string) (bool, []string) {
 		}
 	}
 	return false, nil
+}
+
+func (s *Settings) SetTempKey(key string) {
+	defer settingsMtx.Unlock()
+	settingsMtx.Lock()
+
+	s.cmdLineKey = key
+}
+
+func (s *Settings) GetStreamKey() string {
+	defer settingsMtx.Unlock()
+	settingsMtx.Lock()
+
+	if len(s.cmdLineKey) > 0 {
+		return s.cmdLineKey
+	}
+	return s.StreamKey
 }
