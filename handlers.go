@@ -3,15 +3,44 @@ package main
 import (
 	"fmt"
 	"html/template"
+	"io"
 	"net/http"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/nareix/joy4/av/avutil"
+	"github.com/nareix/joy4/av/pubsub"
+	//"github.com/nareix/joy4/format"
+	"github.com/nareix/joy4/format/flv"
+	"github.com/nareix/joy4/format/rtmp"
 )
 
-//global variable for handling all chat traffic
-var chat ChatRoom
+var (
+	//global variable for handling all chat traffic
+	chat ChatRoom
+
+	// Read/Write mutex for rtmp stream
+	l = &sync.RWMutex{}
+
+	// Map of active streams
+	channels = map[string]*Channel{}
+)
+
+type Channel struct {
+	que *pubsub.Queue
+}
+
+type writeFlusher struct {
+	httpflusher http.Flusher
+	io.Writer
+}
+
+func (self writeFlusher) Flush() error {
+	self.httpflusher.Flush()
+	return nil
+}
 
 // Serving static files
 func wsStaticFiles(w http.ResponseWriter, r *http.Request) {
@@ -140,5 +169,92 @@ func handleIndexTemplate(w http.ResponseWriter, r *http.Request) {
 	err = t.Execute(w, data)
 	if err != nil {
 		fmt.Printf("[ERR] could not execute file, %v", err)
+	}
+}
+
+func handlePublish(conn *rtmp.Conn) {
+	streams, _ := conn.Streams()
+
+	l.Lock()
+	fmt.Println("request string->", conn.URL.RequestURI())
+	urlParts := strings.Split(strings.Trim(conn.URL.RequestURI(), "/"), "/")
+	fmt.Println("urlParts->", urlParts)
+
+	if len(urlParts) > 2 {
+		fmt.Println("Extra garbage after stream key")
+		return
+	}
+
+	if len(urlParts) != 2 {
+		fmt.Println("Missing stream key")
+		return
+	}
+
+	if urlParts[1] != settings.GetStreamKey() {
+		fmt.Println("Due to key not match, denied stream")
+		return //If key not match, deny stream
+	}
+
+	streamPath := urlParts[0]
+	ch := channels[streamPath]
+	if ch == nil {
+		ch = &Channel{}
+		ch.que = pubsub.NewQueue()
+		ch.que.WriteHeader(streams)
+		channels[streamPath] = ch
+	} else {
+		ch = nil
+	}
+	l.Unlock()
+	if ch == nil {
+		fmt.Println("Unable to start stream, channel is nil.")
+		return
+	}
+
+	fmt.Println("Stream started")
+	avutil.CopyPackets(ch.que, conn)
+	fmt.Println("Stream finished")
+
+	l.Lock()
+	delete(channels, streamPath)
+	l.Unlock()
+	ch.que.Close()
+}
+
+func handlePlay(conn *rtmp.Conn) {
+	l.RLock()
+	ch := channels[conn.URL.Path]
+	l.RUnlock()
+
+	if ch != nil {
+		cursor := ch.que.Latest()
+		avutil.CopyFile(conn, cursor)
+	}
+}
+
+func handleDefault(w http.ResponseWriter, r *http.Request) {
+	l.RLock()
+	ch := channels[strings.Trim(r.URL.Path, "/")]
+	l.RUnlock()
+
+	if ch != nil {
+		w.Header().Set("Content-Type", "video/x-flv")
+		w.Header().Set("Transfer-Encoding", "chunked")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.WriteHeader(200)
+		flusher := w.(http.Flusher)
+		flusher.Flush()
+
+		muxer := flv.NewMuxerWriteFlusher(writeFlusher{httpflusher: flusher, Writer: w})
+		cursor := ch.que.Latest()
+
+		avutil.CopyFile(muxer, cursor)
+	} else {
+		if r.URL.Path != "/" {
+			fmt.Println("[http 404] ", r.URL.Path)
+			http.NotFound(w, r)
+		} else {
+			handleIndexTemplate(w, r)
+		}
 	}
 }
