@@ -66,13 +66,30 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	go func() {
+		var client *Client
+
 		//first message has to be the name
-		_, msg, err := conn.ReadMessage()
-		client := chat.Join(string(msg), conn)
-		if client == nil || err != nil {
-			fmt.Printf("[handler] Client closed connection: %s\n", conn.RemoteAddr().String())
-			conn.Close() //closing connection to indicate failed Join
-			return
+		// loop through name since websocket is opened once
+		for client == nil {
+			_, msg, err := conn.ReadMessage()
+			if err != nil {
+				fmt.Printf("[handler] Client closed connection: %s\n", conn.RemoteAddr().String())
+				conn.Close()
+				return
+			}
+
+			name := string(msg)
+			client, err = chat.Join(name, conn)
+			if err != nil {
+				switch err.(type) {
+				case UserFormatError, UserTakenError:
+					fmt.Printf("[handler] %v\n", err)
+				case BannedUserError:
+					fmt.Printf("[BAN] %v\n", err)
+					// close connection since banned users shouldn't be connecting
+					conn.Close()
+				}
+			}
 		}
 
 		//then watch for incoming messages

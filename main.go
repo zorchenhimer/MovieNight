@@ -113,6 +113,7 @@ func main() {
 	// Chat websocket
 	http.HandleFunc("/ws", wsHandler)
 	http.HandleFunc("/static/js/", wsStaticFiles)
+	http.HandleFunc("/static/main.wasm", wsStaticFiles)
 	http.HandleFunc("/static/site.css", wsStaticFiles)
 	http.HandleFunc("/emotes/", wsEmotes)
 	http.HandleFunc("/favicon.ico", wsStaticFiles)
