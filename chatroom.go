@@ -118,7 +118,7 @@ func (cr *ChatRoom) Join(name string, conn *websocket.Conn) (*Client, error) {
 
 	fmt.Printf("[join] %s %s\n", host, name)
 	client.Send(cr.GetPlayingString())
-	cr.AddMsg(fmt.Sprintf("<i><b style=\"color:%s\">%s</b> has joined the chat.</i><br />", client.color, name))
+	cr.AddMsg(fmt.Sprintf("<i><b style=\"color:%s\">%s</b> has joined the chat.</i>", client.color, name))
 	return client, nil
 }
 
@@ -136,7 +136,7 @@ func (cr *ChatRoom) Leave(name, color string) {
 	client.conn.Close()
 	cr.delClient(name)
 
-	cr.AddMsg(fmt.Sprintf("<i><b style=\"color:%s\">%s</b> has left the chat.</i><br />", color, name))
+	cr.AddMsg(fmt.Sprintf("<i><b style=\"color:%s\">%s</b> has left the chat.</i>", color, name))
 	fmt.Printf("[leave] %s %s\n", client.Host(), client.name)
 }
 
@@ -162,7 +162,7 @@ func (cr *ChatRoom) Kick(name string) string {
 	client.conn.Close()
 	cr.delClient(name)
 
-	cr.AddMsg(fmt.Sprintf("<i><b>%s</b> has been kicked.</i><br />", name))
+	cr.AddMsg(fmt.Sprintf("<i><b>%s</b> has been kicked.</i>", name))
 	fmt.Printf("[kick] %s %s has been kicked\n", host, name)
 	return ""
 }
@@ -197,9 +197,9 @@ func (cr *ChatRoom) Ban(name string) string {
 	err = settings.AddBan(host, names)
 	if err != nil {
 		fmt.Printf("[BAN] Error banning %q: %s\n", name, err)
-		cr.AddMsg(fmt.Sprintf("<i><b>%s</b> has been kicked.</i><br />", name))
+		cr.AddMsg(fmt.Sprintf("<i><b>%s</b> has been kicked.</i>", name))
 	} else {
-		cr.AddMsg(fmt.Sprintf("<i><b>%s</b> has been banned.</i><br />", name))
+		cr.AddMsg(fmt.Sprintf("<i><b>%s</b> has been banned.</i>", name))
 	}
 	return ""
 }
@@ -266,7 +266,7 @@ infLoop:
 	for {
 		select {
 		case m := <-cr.queue:
-			msgBlock += m // + "<br />"
+			msgBlock += m
 		default:
 			break infLoop
 		}

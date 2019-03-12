@@ -63,17 +63,15 @@ function appendMessages(msg) {
 
 function openChat() {
     console.log("chat opening");
-    $("#phase1").animate({ opacity: 0 }, 500, "linear", function () {
-        $("#phase1").css({ display: "none" })
-        $("#phase2").css({ opacity: 1 })
-        $("#msg").focus()
-    })
+    $("#joinbox").css("display", "none")
+    $("#chat").css("display", "grid")
+    $("#msg").focus()
 }
 
 function closeChat() {
     console.log("chat closing")
-    $("#phase1").stop().css({ display: "block" }).animate({ opacity: 1 }, 500)
-    $("#phase2").stop().animate({ opacity: 0 })
+    $("#joinbox").css("display", "")
+    $("#chat").css("display", "none")
     $("#error").html("That name was already used!")
 }
 
@@ -97,6 +95,12 @@ function websocketSend(data) {
     ws.send(data)
 }
 
+function sendChat() {
+    sendMessage($("#msg").val());
+    $("#msg").val("");
+}
+
+
 function onloadChat() {
     startGo();
 
@@ -111,10 +115,5 @@ function onloadChat() {
             $("#send").trigger("click")
             evt.preventDefault();
         }
-    })
-
-    $("#send").click(function () {
-        sendMessage($("#msg").val());
-        $("#msg").val("");
     })
 }

@@ -12,7 +12,7 @@ static/main.wasm: wasm/*.go
 	GOOS=js GOARCH=wasm go build -o ./static/main.wasm wasm/*.go
 
 clean:
-	rm MovieNight.exe MovieNight ./static/main.wasm
+	-rm MovieNight.exe MovieNight ./static/main.wasm
 
 fmt:
 	gofmt -w .

@@ -104,13 +104,13 @@ func (cl *Client) Exit() {
 
 //Sending message block to the client
 func (cl *Client) Send(msgs string) {
-	cl.conn.WriteMessage(websocket.TextMessage, []byte(msgs))
+	cl.conn.WriteMessage(websocket.TextMessage, []byte("<div>"+msgs+"</div>"))
 }
 
 // Send server message to this client
 func (cl *Client) ServerMessage(msg string) {
 	msg = ParseEmotes(msg)
-	cl.Send(`<span class="svmsg">` + msg + `</span><br />`)
+	cl.Send(`<span class="svmsg">` + msg + `</span>`)
 }
 
 // Outgoing messages
@@ -118,13 +118,13 @@ func (cl *Client) Message(msg string) {
 	msg = ParseEmotes(msg)
 	cl.belongsTo.AddMsg(
 		`<span class="name" style="color:` + cl.color + `">` + cl.name +
-			`</span><b>:</b> <span class="msg">` + msg + `</span><br />`)
+			`</span><b>:</b> <span class="msg">` + msg + `</span>`)
 }
 
 // Outgoing /me command
 func (cl *Client) Me(msg string) {
 	msg = ParseEmotes(msg)
-	cl.belongsTo.AddMsg(fmt.Sprintf(`<span style="color:%s"><span class="name">%s</span> <span class="cmdme">%s</span><br />`, cl.color, cl.name, msg))
+	cl.belongsTo.AddMsg(fmt.Sprintf(`<span style="color:%s"><span class="name">%s</span> <span class="cmdme">%s</span>`, cl.color, cl.name, msg))
 }
 
 func (cl *Client) Mod() {
