@@ -97,7 +97,7 @@ function websocketSend(data) {
     ws.send(data)
 }
 
-window.onload = function () {
+function onloadChat() {
     startGo();
 
     $("#name").keypress(function (evt) {

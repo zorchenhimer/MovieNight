@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	//"net"
+	"html/template"
 	"net/http"
 	"path/filepath"
+	"strings"
 
 	"github.com/gorilla/websocket"
 )
@@ -103,4 +104,41 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}()
+}
+
+func handleIndexTemplate(w http.ResponseWriter, r *http.Request) {
+	t, err := template.ParseFiles("./static/index.html")
+	if err != nil {
+		fmt.Printf("[ERR] could not parse template file, %v\n", err)
+		return
+	}
+
+	type Data struct {
+		Title       string
+		Video, Chat bool
+	}
+
+	data := Data{
+		Title: "Movie Night!",
+		Video: true,
+		Chat:  true,
+	}
+
+	path := strings.Split(strings.TrimLeft(r.URL.Path, "/"), "/")
+	fmt.Printf("%#v\n", path)
+	if path[0] == "chat" {
+		data.Video = false
+		data.Title += " - chat"
+
+	} else if path[0] == "video" {
+		data.Chat = false
+		data.Title += " - video"
+	}
+
+	fmt.Println(data)
+
+	err = t.Execute(w, data)
+	if err != nil {
+		fmt.Printf("[ERR] could not execute file, %v", err)
+	}
 }

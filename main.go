@@ -112,8 +112,8 @@ func main() {
 	http.HandleFunc("/static/site.css", wsStaticFiles)
 	http.HandleFunc("/emotes/", wsEmotes)
 	http.HandleFunc("/favicon.ico", wsStaticFiles)
-	http.HandleFunc("/justchat", wsStaticFiles)
-	http.HandleFunc("/justvideo", wsStaticFiles)
+	http.HandleFunc("/chat", handleIndexTemplate)
+	http.HandleFunc("/video", handleIndexTemplate)
 	http.HandleFunc("/help", wsStaticFiles)
 	http.HandleFunc("/modhelp", wsStaticFiles)
 	http.HandleFunc("/adminhelp", wsStaticFiles)
@@ -140,7 +140,7 @@ func main() {
 				fmt.Println("[http 404] ", r.URL.Path)
 				http.NotFound(w, r)
 			} else {
-				http.ServeFile(w, r, "./static/index.html")
+				handleIndexTemplate(w, r)
 			}
 		}
 	})

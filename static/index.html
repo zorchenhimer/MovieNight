@@ -2,37 +2,74 @@
 <html>
 <head>
     <meta charset='utf-8'>
-    <title>Movie Night!</title>
+    <title>{{ .Title }}</title>
     <link rel="stylesheet" type="text/css" href="/static/site.css">
     <script type="application/javascript" src="/static/js/jquery.js"></script>
-    <script type="application/javascript" src="/static/js/flv.min.js"></script>
     <script type="application/javascript" src="/static/js/wasm_exec.js"></script>
     <script type="application/javascript" src="/static/js/client.js"></script>
+
+    {{ if .Chat }}
+        <script>
+            window.onload = onloadChat;
+        </script>
+        <!-- If it is only the chat window, the the chat needs to be fullscreen -->
+        {{ if not .Video }}
+            <style>
+                #chatbox {
+                    float: left;
+                }
+        
+                #phase1 {
+                    margin: 0px 10px;
+                }
+            </style>
+        {{ end }}
+    {{ end }}
+
+    {{ if .Video }}
+        <script type="application/javascript" src="/static/js/video.js"></script>
+        <script type="application/javascript" src="/static/js/flv.min.js"></script>
+        {{ if not .Chat }}
+            <style>
+                #streambox {
+                    background: purple;
+                    width: 100%;
+                    height: 100%;
+                }
+            </style>
+        {{ end }}
+    {{ end }}
 </head>
 
 <body>
-    <div id="streambox">
 
-        <video id="videoElement" controls autoplay x5-video-player-type="h5" x5-video-player-fullscreen="true" playsinline webkit-playsinline>
-            Your browser is too old and doesn't support HTML5 video.
-        </video>
-        <script>initPlayer();</script>
+    {{ if .Video }}
+        <div id="streambox" onload="initPlayer();">
+            <video id="videoElement" controls autoplay x5-video-player-type="h5" x5-video-player-fullscreen="true" playsinline webkit-playsinline>
+                Your browser is too old and doesn't support HTML5 video.
+            </video>
+        </div>
+    {{ end }}
 
+    {{ if and .Chat .Video }}
         <button style="float:right" id="reload" onclick="initPlayer();">Reload Player</button>
         <div id="playingDiv"><span id="playing"></span><br /><a href="" target="_blank" id="playinglink"></a></div>
-    </div>
-    <div id="chatbox">
-        <div id="phase1">
-            <p style="color:#e5e0e5">Please enter your name to Join the chat</P>
-            <input id="name" maxlength="36">
-            <button id="join" onclick="join();">Join</button>
+    {{ end }}
+
+    {{ if .Chat }}
+        <div id="chatbox">
+            <div id="phase1">
+                <p style="color:#e5e0e5">Please enter your name to Join the chat</P>
+                <input id="name" maxlength="36">
+                <button id="join" onclick="join();">Join</button>
+            </div>
+            <div id="error"></div>
+            <div id="phase2" style="opacity:0">
+                <div id="messages"></div>
+                <textarea id="msg"></textarea>
+                <br/><button id="send">Send</button>
+            </div>
         </div>
-        <div id="error"></div>
-        <div id="phase2" style="opacity:0">
-            <div id="messages"></div>
-            <textarea id="msg"></textarea>
-            <br/><button id="send">Send</button>
-        </div>
-    </div>
+    {{ end }}
 </body>
 </html>
