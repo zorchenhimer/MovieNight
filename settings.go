@@ -17,6 +17,8 @@ type Settings struct {
 	filename      string
 	AdminPassword string
 	Bans          []BanInfo
+	StreamKey     string
+	ListenAddress string
 }
 
 type BanInfo struct {
@@ -30,6 +32,14 @@ func init() {
 	settings, err = LoadSettings("settings.json")
 	if err != nil {
 		panic("Unable to load settings: " + err.Error())
+	}
+	if len(settings.StreamKey) == 0 {
+		panic("Missing stream key is settings.json")
+	}
+
+	// Save admin password to file
+	if err = settings.Save(); err != nil {
+		panic("Unable to save settings: " + err.Error())
 	}
 }
 
@@ -63,7 +73,7 @@ func generateAdminPass(seed int64) string {
 }
 
 func (s *Settings) Save() error {
-	marshaled, err := json.Marshal(s)
+	marshaled, err := json.MarshalIndent(s, "", "\t")
 	if err != nil {
 		return fmt.Errorf("Error marshaling: %s", err)
 	}

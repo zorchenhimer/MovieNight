@@ -66,21 +66,24 @@ func main() {
 
 		if len(urlParts) > 2 {
 			fmt.Println("Extra garbage after stream key")
-			conn.Close()
 			return
 		}
 
 		if len(urlParts) != 2 {
 			fmt.Println("Missing stream key")
-			conn.Close()
 			return
 		}
 
-		if urlParts[1] != *sKey {
+		streamKey := settings.StreamKey
+		if sKey != nil && len(*sKey) != 0 {
+			streamKey = *sKey
+		}
+
+		if urlParts[1] != streamKey {
 			fmt.Println("Due to key not match, denied stream")
-			conn.Close()
 			return //If key not match, deny stream
 		}
+
 		streamPath := urlParts[0]
 		ch := channels[streamPath]
 		if ch == nil {
@@ -94,7 +97,6 @@ func main() {
 		l.Unlock()
 		if ch == nil {
 			fmt.Println("Unable to start stream, channel is nil.")
-			conn.Close()
 			return
 		}
 
@@ -147,12 +149,22 @@ func main() {
 		}
 	})
 
-	go http.ListenAndServe(*addr, nil)
-	fmt.Println("Listen and serve ", *addr)
+	address := settings.ListenAddress
+	if addr != nil && len(*addr) != 0 {
+		address = *addr
+	}
+
+	// Load emotes before starting server.
 	if err := chat.Init(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
+	fmt.Println("Stream key: ", streamKey)
+	fmt.Println("Admin password: ", settings.AdminPassword)
+
+	go http.ListenAndServe(address, nil)
+	fmt.Println("Listen and serve ", *addr)
 
 	server.ListenAndServe()
 
