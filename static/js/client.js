@@ -32,7 +32,6 @@ function setPlaying(title, link) {
     $('#playinglink').attr('href', link);
 }
 
-
 function startGo() {
     if (!WebAssembly.instantiateStreaming) { // polyfill
         WebAssembly.instantiateStreaming = async (resp, importObject) => {
@@ -57,7 +56,16 @@ function getWsUri() {
     return "ws://" + window.location.hostname + ":" + port + "/ws"
 }
 
+let maxMessageCount = 0
 function appendMessages(msg) {
+    let msgs = $("#messages").find('div')
+
+    // let's just say that if the max count is less than 1, then the count is infinite
+    // the server side should take care of chaking max count ranges
+    if (msgs.length > maxMessageCount) {
+        msgs.first().remove()
+    }
+
     $("#messages").append(msg).scrollTop(9e6);
 }
 

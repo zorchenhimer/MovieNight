@@ -12,7 +12,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/nareix/joy4/av/avutil"
 	"github.com/nareix/joy4/av/pubsub"
-	//"github.com/nareix/joy4/format"
 	"github.com/nareix/joy4/format/flv"
 	"github.com/nareix/joy4/format/rtmp"
 )
@@ -143,14 +142,16 @@ func handleIndexTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		Title       string
-		Video, Chat bool
+		Video, Chat         bool
+		MessageHistoryCount int
+		Title               string
 	}
 
 	data := Data{
-		Title: "Movie Night!",
-		Video: true,
-		Chat:  true,
+		Video:               true,
+		Chat:                true,
+		MessageHistoryCount: settings.MaxMessageCount,
+		Title:               "Movie Night!",
 	}
 
 	path := strings.Split(strings.TrimLeft(r.URL.Path, "/"), "/")

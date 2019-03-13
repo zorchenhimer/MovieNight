@@ -14,12 +14,13 @@ var settings *Settings
 var settingsMtx sync.Mutex
 
 type Settings struct {
-	filename      string
-	AdminPassword string
-	Bans          []BanInfo
-	StreamKey     string
-	ListenAddress string
-	cmdLineKey    string // stream key from the command line
+	filename        string
+	cmdLineKey      string // stream key from the command line
+	MaxMessageCount int
+	AdminPassword   string
+	Bans            []BanInfo
+	StreamKey       string
+	ListenAddress   string
 }
 
 type BanInfo struct {
@@ -56,6 +57,13 @@ func LoadSettings(filename string) (*Settings, error) {
 		return nil, fmt.Errorf("Error unmarshaling: %s", err)
 	}
 	s.filename = filename
+
+	// have a default of 200
+	if s.MaxMessageCount == 0 {
+		s.MaxMessageCount = 300
+	} else if s.MaxMessageCount < 0 {
+		return s, fmt.Errorf("the MaxMessageCount value must be greater than 0, given %d", s.MaxMessageCount)
+	}
 
 	s.AdminPassword = generateAdminPass(time.Now().Unix())
 	fmt.Printf("Settings reloaded.  New admin password: %s\n", s.AdminPassword)

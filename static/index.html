@@ -12,6 +12,7 @@
 
     {{ if .Chat }}
     <script>
+        maxMessageCount = {{ .MessageHistoryCount }}
         window.onload = chatOnload;
     </script>
     <!-- If it is only the chat window, the the chat needs to be fullscreen -->
