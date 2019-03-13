@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 
-	//"html"
 	"math/rand"
 	"path/filepath"
 	"regexp"

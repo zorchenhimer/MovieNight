@@ -15,7 +15,7 @@ clean:
 	-rm MovieNight.exe MovieNight ./static/main.wasm
 
 fmt:
-	gofmt -w .
+	goimports -w .
 
 vet:
 	go vet ./...
