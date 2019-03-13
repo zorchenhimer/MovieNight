@@ -18,7 +18,7 @@ import (
 
 var (
 	//global variable for handling all chat traffic
-	chat ChatRoom
+	chat *ChatRoom
 
 	// Read/Write mutex for rtmp stream
 	l = &sync.RWMutex{}
@@ -97,6 +97,12 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		var client *Client
 
+		uid, err := chat.JoinTemp(conn)
+		if err != nil {
+			fmt.Printf("[handler] could not do a temp join, %v\n", err)
+			conn.Close()
+		}
+
 		//first message has to be the name
 		// loop through name since websocket is opened once
 		for client == nil {
@@ -108,7 +114,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			name := string(msg)
-			client, err = chat.Join(name, conn)
+			client, err = chat.Join(name, uid)
 			if err != nil {
 				switch err.(type) {
 				case UserFormatError, UserTakenError:
@@ -116,6 +122,10 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 				case BannedUserError:
 					fmt.Printf("[BAN] %v\n", err)
 					// close connection since banned users shouldn't be connecting
+					conn.Close()
+				default:
+					// for now all errors not caught need to be warned
+					fmt.Printf("[handler] %v\n", err)
 					conn.Close()
 				}
 			}

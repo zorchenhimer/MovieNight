@@ -11,6 +11,10 @@ import (
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
+func connSend(s string, c *websocket.Conn) {
+	c.WriteMessage(websocket.TextMessage, []byte(s))
+}
+
 type Client struct {
 	name          string // Display name
 	conn          *websocket.Conn
@@ -108,8 +112,8 @@ func (cl *Client) Exit() {
 }
 
 //Sending message block to the client
-func (cl *Client) Send(msgs string) {
-	cl.conn.WriteMessage(websocket.TextMessage, []byte(msgs))
+func (cl *Client) Send(s string) {
+	connSend(s, cl.conn)
 }
 
 // Send server message to this client

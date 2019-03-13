@@ -1,7 +1,10 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+
+	uuid "github.com/satori/go.uuid"
 
 	"math/rand"
 	"path/filepath"
@@ -24,19 +27,23 @@ var re_username *regexp.Regexp = regexp.MustCompile(`^[0-9a-zA-Z_-]+$`)
 type ChatRoom struct {
 	clients     map[string]*Client // this needs to be a pointer.
 	clientsMtx  sync.Mutex
+	tempConn    map[string]*websocket.Conn
 	queue       chan string
 	playing     string
 	playingLink string
 }
 
 //initializing the chatroom
-func (cr *ChatRoom) Init() error {
-	cr.queue = make(chan string, 5)
-	cr.clients = make(map[string]*Client)
+func newChatRoom() (*ChatRoom, error) {
+	cr := &ChatRoom{
+		queue:    make(chan string, 5),
+		clients:  make(map[string]*Client),
+		tempConn: make(map[string]*websocket.Conn),
+	}
 
 	num, err := LoadEmotes()
 	if err != nil {
-		return fmt.Errorf("Error loading emotes: %s", err)
+		return nil, fmt.Errorf("Error loading emotes: %s", err)
 	}
 	fmt.Printf("Loaded %d emotes\n", num)
 
@@ -47,7 +54,7 @@ func (cr *ChatRoom) Init() error {
 			time.Sleep(100 * time.Millisecond)
 		}
 	}()
-	return nil
+	return cr, nil
 }
 
 func LoadEmotes() (int, error) {
@@ -87,9 +94,32 @@ func randomColor() string {
 		nums[3], nums[4], nums[5])
 }
 
+func (cr *ChatRoom) JoinTemp(conn *websocket.Conn) (string, error) {
+	if conn == nil {
+		return "", errors.New("conn should not be nil")
+	}
+
+	uid, err := uuid.NewV4()
+	if err != nil {
+		return "", fmt.Errorf("could not create uuid, %v", err)
+	}
+
+	suid := uid.String()
+	if _, ok := cr.tempConn[suid]; ok {
+		return "", errors.New("%#v is already in the temp connections")
+	}
+
+	cr.tempConn[suid] = conn
+	return suid, nil
+}
+
 //registering a new client
 //returns pointer to a Client, or Nil, if the name is already taken
-func (cr *ChatRoom) Join(name string, conn *websocket.Conn) (*Client, error) {
+func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
+	conn, hasConn := cr.tempConn[uid]
+	if !hasConn {
+		return nil, errors.New("connection is missing from temp connections")
+	}
 
 	if len(name) < UsernameMinLength || len(name) > UsernameMaxLength || !re_username.MatchString(name) {
 		return nil, UserFormatError{Name: name}
@@ -115,6 +145,7 @@ func (cr *ChatRoom) Join(name string, conn *websocket.Conn) (*Client, error) {
 	}
 
 	cr.clients[strings.ToLower(name)] = client
+	delete(cr.tempConn, uid)
 
 	fmt.Printf("[join] %s %s\n", host, name)
 	//client.Send(cr.GetPlayingString())
@@ -328,6 +359,9 @@ infLoop:
 	if len(msgBlock) > 0 {
 		for _, client := range cr.clients {
 			client.Send(msgBlock)
+		}
+		for _, conn := range cr.tempConn {
+			connSend(msgBlock, conn)
 		}
 	}
 }

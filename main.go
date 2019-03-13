@@ -50,7 +50,8 @@ func main() {
 	}
 
 	// Load emotes before starting server.
-	if err := chat.Init(); err != nil {
+	var err error
+	if chat, err = newChatRoom(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
