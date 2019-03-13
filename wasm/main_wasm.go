@@ -8,10 +8,6 @@ import (
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
-func log(s string) {
-	js.Get("console").Call("log", s)
-}
-
 func recieve(v []js.Value) {
 	if len(v) == 0 {
 		fmt.Printf("No data received")
@@ -58,7 +54,7 @@ func recieve(v []js.Value) {
 
 func send(v []js.Value) {
 	if len(v) != 1 {
-		log(fmt.Sprintf("expected 1 parameter, got %d", len(v)))
+		fmt.Printf("expected 1 parameter, got %d", len(v))
 		return
 	}
 	js.Call("websocketSend", v)
