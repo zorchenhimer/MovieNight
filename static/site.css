@@ -68,20 +68,23 @@ body {
     opacity: 0%;
     overflow-y: scroll;
     border: 1px solid #606060;
-    /* Firefox compatable scrollbar settings */
-    scrollbar-color: #45009e transparent;
-    scrollbar-width: thin;
 }
 
 #messages div {
     padding: .1em .5em .15em .5em;
 }
 
-#messages::-webkit-scrollbar {
+.scrollbar {
+    /* Firefox compatable scrollbar settings */
+    scrollbar-color: #45009e transparent;
+    scrollbar-width: thin;
+}
+
+.scrollbar::-webkit-scrollbar {
     width: 6px;
 }
 
-#messages::-webkit-scrollbar-thumb {
+.scrollbar::-webkit-scrollbar-thumb {
     background-color: #45009e;
 }
 

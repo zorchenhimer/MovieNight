@@ -101,7 +101,7 @@ function sendChat() {
 }
 
 
-function onloadChat() {
+function chatOnload() {
     startGo();
 
     $("#name").keypress(function (evt) {
