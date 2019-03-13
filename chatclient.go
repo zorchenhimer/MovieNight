@@ -8,7 +8,7 @@ import (
 	"unicode"
 
 	"github.com/gorilla/websocket"
-	//"github.com/zorchenhimer/MovieNight/common"
+	"github.com/zorchenhimer/MovieNight/common"
 )
 
 type Client struct {
@@ -115,7 +115,13 @@ func (cl *Client) Send(msgs string) {
 // Send server message to this client
 func (cl *Client) ServerMessage(msg string) {
 	msg = ParseEmotes(msg)
-	cl.Send(`<span class="svmsg">` + msg + `</span><br />`)
+	encoded, err := common.EncodeMessage("", "#ea6260", msg, common.MSG_ERROR)
+	if err != nil {
+		fmt.Printf("Error encoding server message to %s: %s; Message: %s\n", cl.name, err, msg)
+		return
+	}
+	cl.Send(encoded)
+	//cl.Send(`<span class="svmsg">` + msg + `</span><br />`)
 }
 
 // Outgoing messages

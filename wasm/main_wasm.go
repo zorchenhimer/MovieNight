@@ -26,19 +26,32 @@ func recieve(v []js.Value) {
 		return
 	}
 
-	//dt, err := common.ParseDataType(*data.Type)
-	//if err != nil {
-	//	fmt.Printf("Error decoding type: %s\n", err)
-	//	js.Call("appendMessages", v)
-	//	return
-	//}
-
 	switch data.GetType() {
 	case common.DT_CHAT, common.DT_EVENT, common.DT_ERROR:
-		fmt.Printf("data raw: %q\n", data)
-		dc := common.VisibleData(data)
-		js.Call("appendMessages", dc.HTML())
+		js.Call("appendMessages", data.HTML())
 	case common.DT_COMMAND:
+		dc := data.(common.DataCommand)
+
+		switch dc.Command {
+		case common.CMD_PLAYING:
+			if dc.Arguments == nil || len(dc.Arguments) == 0 {
+				js.Call("setPlaying", "", "")
+
+			} else if len(dc.Arguments) == 1 {
+				js.Call("setPlaying", dc.Arguments[0], "")
+
+			} else if len(dc.Arguments) == 2 {
+				js.Call("setPlaying", dc.Arguments[0], dc.Arguments[1])
+			}
+		case common.CMD_REFRESHPLAYER:
+			js.Call("initPlayer", nil)
+		case common.CMD_PURGECHAT:
+			fmt.Println("//TODO: chat purge command received.")
+		case common.CMD_HELP:
+			js.Call("appendMesages", data.HTML())
+			// TODO: open window
+			//js.Call("")
+		}
 		return
 	}
 }

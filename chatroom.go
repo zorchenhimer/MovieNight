@@ -220,20 +220,27 @@ func (cr *ChatRoom) Ban(name string) string {
 
 // Add a chat message from a viewer
 func (cr *ChatRoom) AddMsg(from *Client, isAction, isServer bool, msg string) {
-	data, err := common.EncodeChat(
+	t := common.MSG_CHAT
+
+	if isAction {
+		t = common.MSG_ACTION
+	}
+
+	if isServer {
+		t = common.MSG_SERVER
+	}
+
+	data, err := common.EncodeMessage(
 		from.name,
 		from.color,
 		msg,
-		isAction,
-		isServer)
+		t)
 
 	if err != nil {
 		fmt.Printf("Error encoding chat message: %s", err)
 		cr.queue <- msg
 		return
 	}
-
-	fmt.Println("Chat encoded OK")
 
 	cr.queue <- data
 }

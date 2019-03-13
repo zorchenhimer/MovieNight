@@ -16,12 +16,11 @@ type DataError struct {
 	Message string
 }
 
-type DataChat struct {
-	From     string
-	Color    string
-	Message  string
-	IsAction bool
-	IsServer bool // server message?
+type DataMessage struct {
+	From    string
+	Color   string
+	Message string
+	Type    MessageType
 }
 
 type DataCommand struct {
@@ -40,11 +39,7 @@ type DataInterface interface {
 	HTML() string
 }
 
-type VisibleData interface {
-	HTML() string
-}
-
-func (dc DataChat) GetType() DataType {
+func (dc DataMessage) GetType() DataType {
 	return DT_CHAT
 }
 
@@ -86,6 +81,7 @@ const (
 	CMD_PLAYING CommandType = iota
 	CMD_REFRESHPLAYER
 	CMD_PURGECHAT
+	CMD_HELP
 )
 
 type EventType int
@@ -98,35 +94,49 @@ const (
 	EV_SERVERMESSAGE
 )
 
+type MessageType int
+
+const (
+	MSG_CHAT   MessageType = iota // standard chat
+	MSG_ACTION                    // /me command
+	MSG_SERVER                    // server message
+	MSG_ERROR
+)
+
 // TODO: Read this HTML from a template somewhere
-func (dc DataChat) HTML() string {
-	if dc.IsAction {
+func (dc DataMessage) HTML() string {
+	fmt.Printf("message type: %d\n", dc.Type)
+	switch dc.Type {
+	case MSG_ACTION:
 		return `<span style="color:` + dc.Color + `"><span class="name">` + dc.From +
 			`</span> <span class="cmdme">` + dc.Message + `</span><br />`
-	}
 
-	if dc.IsServer {
+	case MSG_SERVER:
 		return `<div class="announcement">` + dc.Message + `</div>`
-	}
 
-	return `<span class="name" style="color:` + dc.Color + `">` + dc.From +
-		`</span><b>:</b> <span class="msg">` + dc.Message + `</span><br />`
+	case MSG_ERROR:
+		return `<div class="error">` + dc.Message + `</div>`
+
+	default:
+		return `<span class="name" style="color:` + dc.Color + `">` + dc.From +
+			`</span><b>:</b> <span class="msg">` + dc.Message + `</span><br />`
+	}
 }
 
 func (de DataEvent) HTML() string {
 	switch de.Event {
 	case EV_KICK:
 		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</b> has been kicked.</span><br />`
+			de.User + `</span> has been kicked.<br />`
 	case EV_LEAVE:
 		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</b> has left the chat.</span><br />`
+			de.User + `</span> has left the chat.<br />`
 	case EV_BAN:
 		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</b> has been banned.</span><br />`
+			de.User + `</span> has been banned.<br />`
 	case EV_JOIN:
 		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</b> has joined the chat.</span><br />`
+			de.User + `</span> has joined the chat.<br />`
 	}
 	return ""
 }
@@ -139,19 +149,17 @@ func (de DataCommand) HTML() string {
 	return ""
 }
 
-func EncodeChat(name, color, msg string, isAction, isServer bool) (string, error) {
+func EncodeMessage(name, color, msg string, msgtype MessageType) (string, error) {
 	d := ChatData{
 		Type: DT_CHAT,
-		Data: DataChat{
-			From:     name,
-			Color:    color,
-			IsAction: isAction,
-			IsServer: isServer,
-			Message:  msg,
+		Data: DataMessage{
+			From:    name,
+			Color:   color,
+			Message: msg,
+			Type:    msgtype,
 		},
 	}
 	j, err := jsonifyChatData(d)
-	fmt.Printf("Err: %s; data: %s\n", err, j)
 	return j, err
 }
 
@@ -199,18 +207,16 @@ func DecodeData(rawjson string) (DataInterface, error) {
 	decoder := json.NewDecoder(strings.NewReader(rawjson))
 
 	// Open bracket
-	t, err := decoder.Token()
+	_, err := decoder.Token()
 	if err != nil {
 		return nil, fmt.Errorf("Open bracket token error: %s", err)
 	}
-	fmt.Printf("Token: %q\n", t)
 
 	for decoder.More() {
 		key, err := decoder.Token()
 		if err != nil {
 			return nil, fmt.Errorf("Error decoding token: %s", err)
 		}
-		fmt.Printf("Key: %q\n", key)
 
 		if fmt.Sprintf("%s", key) == "Type" {
 			value, err := decoder.Token()
@@ -222,20 +228,13 @@ func DecodeData(rawjson string) (DataInterface, error) {
 			if err != nil {
 				return nil, fmt.Errorf("Error parsing data type: %d", data.Type)
 			}
-			fmt.Printf("data.Type: %d\n", data.Type)
 		} else {
-			fmt.Printf("Key: %q\n", key)
-			//value, err := decoder.Token()
-			//if err != nil {
-			//	return nil, fmt.Errorf("Error decoding value token: %s", err)
-			//}
-			//fmt.Printf("Value: %q", value)
 
 			switch DataType(data.Type) {
 			case DT_CHAT:
-				d := DataChat{}
+				d := DataMessage{}
 				if err := decoder.Decode(&d); err != nil {
-					return nil, fmt.Errorf("Unable to decode DataChat: %s", err)
+					return nil, fmt.Errorf("Unable to decode DataMessage: %s", err)
 				}
 				return d, nil
 			case DT_ERROR:
@@ -260,12 +259,6 @@ func DecodeData(rawjson string) (DataInterface, error) {
 				return nil, fmt.Errorf("Invalid data type: %d", data.Type)
 			}
 
-			//fmt.Printf("di.GetType: %q\n", di.GetType())
-			//err = decoder.Decode(&di)
-			//if err != nil {
-			//	return nil, fmt.Errorf("Unable to decode data into interface: %s", err)
-			//}
-			//return di, nil
 		}
 	}
 	return nil, fmt.Errorf("Incomplete data")
