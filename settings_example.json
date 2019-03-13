@@ -1,4 +1,5 @@
 {
+	"MaxMessageCount": 300,
 	"AdminPassword": "",
 	"Bans": [],
 	"StreamKey": "ALongStreamKey",
