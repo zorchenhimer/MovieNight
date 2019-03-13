@@ -72,6 +72,7 @@ body {
 
 #messages div {
     padding: .1em .5em .15em .5em;
+    word-wrap: break-word;
 }
 
 .scrollbar {
