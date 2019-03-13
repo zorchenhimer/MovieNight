@@ -108,8 +108,8 @@ func (dc DataMessage) HTML() string {
 	fmt.Printf("message type: %d\n", dc.Type)
 	switch dc.Type {
 	case MSG_ACTION:
-		return `<span style="color:` + dc.Color + `"><span class="name">` + dc.From +
-			`</span> <span class="cmdme">` + dc.Message + `</span><br />`
+		return `<div style="color:` + dc.Color + `"><span class="name">` + dc.From +
+			`</span> <span class="cmdme">` + dc.Message + `</span></div>`
 
 	case MSG_SERVER:
 		return `<div class="announcement">` + dc.Message + `</div>`
@@ -118,31 +118,31 @@ func (dc DataMessage) HTML() string {
 		return `<div class="error">` + dc.Message + `</div>`
 
 	default:
-		return `<span class="name" style="color:` + dc.Color + `">` + dc.From +
-			`</span><b>:</b> <span class="msg">` + dc.Message + `</span><br />`
+		return `<div><span class="name" style="color:` + dc.Color + `">` + dc.From +
+			`</span><b>:</b> <span class="msg">` + dc.Message + `</span></div>`
 	}
 }
 
 func (de DataEvent) HTML() string {
 	switch de.Event {
 	case EV_KICK:
-		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</span> has been kicked.<br />`
+		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
+			de.User + `</span> has been kicked.</div>`
 	case EV_LEAVE:
-		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</span> has left the chat.<br />`
+		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
+			de.User + `</span> has left the chat.</div>`
 	case EV_BAN:
-		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</span> has been banned.<br />`
+		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
+			de.User + `</span> has been banned.</div>`
 	case EV_JOIN:
-		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</span> has joined the chat.<br />`
+		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
+			de.User + `</span> has joined the chat.</div>`
 	}
 	return ""
 }
 
 func (de DataError) HTML() string {
-	return `<span class="svmsg"><b>Error</b>: ` + de.Message + `</span><br />`
+	return `<div class="svmsg"><b>Error</b>: ` + de.Message + `</div>`
 }
 
 func (de DataCommand) HTML() string {
