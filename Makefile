@@ -2,13 +2,13 @@
 
 all: vet fmt MovieNight MovieNight.exe static/main.wasm
 
-MovieNight.exe: *.go
+MovieNight.exe: *.go common/*.go
 	GOOS=windows GOARCH=amd64 go build -o MovieNight.exe
 
-MovieNight: *.go
+MovieNight: *.go common/*.go
 	GOOS=linux GOARCH=386 go build -o MovieNight
 
-static/main.wasm: wasm/*.go
+static/main.wasm: wasm/*.go common/*.go
 	GOOS=js GOARCH=wasm go build -o ./static/main.wasm wasm/*.go
 
 clean:
@@ -23,3 +23,6 @@ vet:
 
 sync:
 	scp -i /c/movienight/movienight-deploy.key -r . zorchenhimer@movienight.zorchenhimer.com:/home/zorchenhimer/movienight
+
+run: all
+	./MovieNight.exe
