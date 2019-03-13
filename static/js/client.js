@@ -13,12 +13,13 @@ function initPlayer() {
 
 function setPlaying(title, link) {
     if (title === "") {
-        $('#playingDiv').hide();
+        $('#playing').hide();
+        $('#playinglink').hide();
         document.title = "Movie Night"
         return;
     }
 
-    $('#playingDiv').show();
+    $('#playing').show();
     $('#playing').text(title);
     document.title = "Movie Night | " + title
 
