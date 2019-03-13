@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/zorchenhimer/MovieNight/common"
 )
 
 const (
@@ -117,8 +118,15 @@ func (cr *ChatRoom) Join(name string, conn *websocket.Conn) (*Client, error) {
 	cr.clients[strings.ToLower(name)] = client
 
 	fmt.Printf("[join] %s %s\n", host, name)
-	client.Send(cr.GetPlayingString())
-	cr.AddMsg(fmt.Sprintf("<i><b style=\"color:%s\">%s</b> has joined the chat.</i><br />", client.color, name))
+	//client.Send(cr.GetPlayingString())
+	playingCommand, err := common.EncodeCommand(common.CMD_PLAYING, []string{cr.playing, cr.playingLink})
+	if err != nil {
+		fmt.Printf("Unable to encode playing command on join: %s\n", err)
+	} else {
+		client.Send(playingCommand)
+	}
+	//cr.AddMsg(fmt.Sprintf("<i><b style=\"color:%s\">%s</b> has joined the chat.</i><br />", client.color, name))
+	cr.AddEventMsg(common.EV_JOIN, name, client.color)
 	return client, nil
 }
 
@@ -136,7 +144,8 @@ func (cr *ChatRoom) Leave(name, color string) {
 	client.conn.Close()
 	cr.delClient(name)
 
-	cr.AddMsg(fmt.Sprintf("<i><b style=\"color:%s\">%s</b> has left the chat.</i><br />", color, name))
+	//cr.AddMsg(fmt.Sprintf("<i><b style=\"color:%s\">%s</b> has left the chat.</i><br />", color, name))
+	cr.AddEventMsg(common.EV_LEAVE, name, color)
 	fmt.Printf("[leave] %s %s\n", client.Host(), client.name)
 }
 
@@ -158,11 +167,13 @@ func (cr *ChatRoom) Kick(name string) string {
 		return "Jebaited No."
 	}
 
+	color := client.color
 	host := client.Host()
 	client.conn.Close()
 	cr.delClient(name)
 
-	cr.AddMsg(fmt.Sprintf("<i><b>%s</b> has been kicked.</i><br />", name))
+	//cr.AddMsg(fmt.Sprintf("<i><b>%s</b> has been kicked.</i><br />", name))
+	cr.AddEventMsg(common.EV_KICK, name, color)
 	fmt.Printf("[kick] %s %s has been kicked\n", host, name)
 	return ""
 }
@@ -179,6 +190,7 @@ func (cr *ChatRoom) Ban(name string) string {
 
 	names := []string{}
 	host := client.Host()
+	color := client.color
 
 	client.conn.Close()
 	cr.delClient(name)
@@ -197,20 +209,56 @@ func (cr *ChatRoom) Ban(name string) string {
 	err = settings.AddBan(host, names)
 	if err != nil {
 		fmt.Printf("[BAN] Error banning %q: %s\n", name, err)
-		cr.AddMsg(fmt.Sprintf("<i><b>%s</b> has been kicked.</i><br />", name))
+		//cr.AddMsg(fmt.Sprintf("<i><b>%s</b> has been kicked.</i><br />", name))
+		cr.AddEventMsg(common.EV_KICK, name, color)
 	} else {
-		cr.AddMsg(fmt.Sprintf("<i><b>%s</b> has been banned.</i><br />", name))
+		//cr.AddMsg(fmt.Sprintf("<i><b>%s</b> has been banned.</i><br />", name))
+		cr.AddEventMsg(common.EV_BAN, name, color)
 	}
 	return ""
 }
 
-//adding message to queue
-func (cr *ChatRoom) AddMsg(msg string) {
-	cr.queue <- msg
+// Add a chat message from a viewer
+func (cr *ChatRoom) AddMsg(from *Client, isAction, isServer bool, msg string) {
+	data, err := common.EncodeChat(
+		from.name,
+		from.color,
+		msg,
+		isAction,
+		isServer)
+
+	if err != nil {
+		fmt.Printf("Error encoding chat message: %s", err)
+		cr.queue <- msg
+		return
+	}
+
+	fmt.Println("Chat encoded OK")
+
+	cr.queue <- data
 }
 
-func (cr *ChatRoom) AddCmdMsg(msg string) {
-	cr.queue <- msg
+func (cr *ChatRoom) AddCmdMsg(command common.CommandType, args []string) {
+	data, err := common.EncodeCommand(command, args)
+
+	if err != nil {
+		fmt.Printf("Error encoding command: %s", err)
+		//cr.queue <- msg
+		return
+	}
+
+	cr.queue <- data
+}
+
+func (cr *ChatRoom) AddEventMsg(event common.EventType, name, color string) {
+	data, err := common.EncodeEvent(event, name, color)
+
+	if err != nil {
+		fmt.Printf("Error encoding command: %s", err)
+		//cr.queue <- msg
+		return
+	}
+	cr.queue <- data
 }
 
 func (cr *ChatRoom) Unmod(name string) error {
@@ -281,18 +329,20 @@ infLoop:
 func (cr *ChatRoom) ClearPlaying() {
 	cr.playing = ""
 	cr.playingLink = ""
-	cr.AddCmdMsg(`<script>setPlaying("","");</script>`)
+	//cr.AddCmdMsg(`<script>setPlaying("","");</script>`)
+	cr.AddCmdMsg(common.CMD_PLAYING, []string{"", ""})
 }
 
 func (cr *ChatRoom) SetPlaying(title, link string) {
 	cr.playing = title
 	cr.playingLink = link
-	cr.AddCmdMsg(cr.GetPlayingString())
+	//cr.AddCmdMsg(cr.GetPlayingString())
+	cr.AddCmdMsg(common.CMD_PLAYING, []string{title, link})
 }
 
-func (cr *ChatRoom) GetPlayingString() string {
-	return fmt.Sprintf(`<script>setPlaying("%s","%s");</script>`, cr.playing, cr.playingLink)
-}
+//func (cr *ChatRoom) GetPlayingString() string {
+//	return fmt.Sprintf(`<script>setPlaying("%s","%s");</script>`, cr.playing, cr.playingLink)
+//}
 
 func (cr *ChatRoom) GetNames() []string {
 	names := []string{}

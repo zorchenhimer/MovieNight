@@ -8,6 +8,7 @@ import (
 	"unicode"
 
 	"github.com/gorilla/websocket"
+	//"github.com/zorchenhimer/MovieNight/common"
 )
 
 type Client struct {
@@ -22,8 +23,7 @@ type Client struct {
 
 var emotes map[string]string
 
-func ParseEmotes(msg string) string {
-	words := strings.Split(msg, " ")
+func ParseEmotesArray(words []string) []string {
 	newWords := []string{}
 	for _, word := range words {
 		word = strings.Trim(word, "[]")
@@ -40,7 +40,12 @@ func ParseEmotes(msg string) string {
 			newWords = append(newWords, word)
 		}
 	}
-	return strings.Join(newWords, " ")
+	return newWords
+}
+
+func ParseEmotes(msg string) string {
+	words := ParseEmotesArray(strings.Split(msg, " "))
+	return strings.Join(words, " ")
 }
 
 //Client has a new message to broadcast
@@ -116,15 +121,16 @@ func (cl *Client) ServerMessage(msg string) {
 // Outgoing messages
 func (cl *Client) Message(msg string) {
 	msg = ParseEmotes(msg)
-	cl.belongsTo.AddMsg(
-		`<span class="name" style="color:` + cl.color + `">` + cl.name +
-			`</span><b>:</b> <span class="msg">` + msg + `</span><br />`)
+	cl.belongsTo.AddMsg(cl, false, false, msg)
+	//`<span class="name" style="color:` + cl.color + `">` + cl.name +
+	//	`</span><b>:</b> <span class="msg">` + msg + `</span><br />`)
 }
 
 // Outgoing /me command
 func (cl *Client) Me(msg string) {
 	msg = ParseEmotes(msg)
-	cl.belongsTo.AddMsg(fmt.Sprintf(`<span style="color:%s"><span class="name">%s</span> <span class="cmdme">%s</span><br />`, cl.color, cl.name, msg))
+	cl.belongsTo.AddMsg(cl, true, false, msg)
+	//cl.belongsTo.AddMsg(fmt.Sprintf(`<span style="color:%s"><span class="name">%s</span> <span class="cmdme">%s</span><br />`, cl.color, cl.name, msg))
 }
 
 func (cl *Client) Mod() {

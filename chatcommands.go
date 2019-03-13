@@ -5,6 +5,8 @@ import (
 	"html"
 	"regexp"
 	"strings"
+
+	"github.com/zorchenhimer/MovieNight/common"
 )
 
 var commands *CommandControl
@@ -91,8 +93,9 @@ func init() {
 					if len(args) == 0 {
 						return "Missing message"
 					}
-					svmsg := formatLinks(ParseEmotes(strings.Join(args, " ")))
-					cl.belongsTo.AddCmdMsg(fmt.Sprintf(`<div class="announcement">%s</div>`, svmsg))
+					svmsg := formatLinks(strings.Join(ParseEmotesArray(args), " "))
+					//cl.belongsTo.AddCmdMsg(fmt.Sprintf(`<div class="announcement">%s</div>`, svmsg))
+					cl.belongsTo.AddMsg(cl, false, true, svmsg)
 					return ""
 				},
 			},
@@ -198,7 +201,8 @@ func init() {
 			"reloadplayer": Command{
 				HelpText: "Reload the stream player for everybody in chat.",
 				Function: func(cl *Client, args []string) string {
-					cl.belongsTo.AddCmdMsg(`<span class="svmsg">[SERVER] Video player reload forced.</span><script>initPlayer();</script><br />`)
+					//cl.belongsTo.AddCmdMsg(`<span class="svmsg">[SERVER] Video player reload forced.</span><script>initPlayer();</script><br />`)
+					cl.belongsTo.AddCmdMsg(common.CMD_REFRESHPLAYER, nil)
 					return "Reloading player for all chatters."
 				},
 			},
