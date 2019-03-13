@@ -1,10 +1,11 @@
 package main
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
+	"math/big"
 	"strings"
 	"sync"
 	"time"
@@ -62,23 +63,29 @@ func LoadSettings(filename string) (*Settings, error) {
 	if s.MaxMessageCount == 0 {
 		s.MaxMessageCount = 300
 	} else if s.MaxMessageCount < 0 {
-		return s, fmt.Errorf("the MaxMessageCount value must be greater than 0, given %d", s.MaxMessageCount)
+		return s, fmt.Errorf("MaxMessageCount value must be greater than 0, given %d", s.MaxMessageCount)
 	}
 
-	s.AdminPassword = generateAdminPass(time.Now().Unix())
+	s.AdminPassword, err = generatePass(time.Now().Unix())
+	if err != nil {
+		return nil, fmt.Errorf("Unable to generate admin password: %s", err)
+	}
 	fmt.Printf("Settings reloaded.  New admin password: %s\n", s.AdminPassword)
 
 	return s, nil
 }
 
-func generateAdminPass(seed int64) string {
+func generatePass(seed int64) (string, error) {
 	out := ""
-	r := rand.New(rand.NewSource(seed))
-	//for i := 0; i < 20; i++ {
 	for len(out) < 20 {
-		out = fmt.Sprintf("%s%X", out, r.Int31())
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(15)))
+		if err != nil {
+			return "", err
+		}
+
+		out = fmt.Sprintf("%s%X", out, num)
 	}
-	return out
+	return out, nil
 }
 
 func (s *Settings) Save() error {

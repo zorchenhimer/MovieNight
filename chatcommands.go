@@ -65,15 +65,21 @@ func init() {
 
 					pw := html.UnescapeString(strings.Join(args, " "))
 
-					//fmt.Printf("/auth from %s.  expecting %q [%X], received %q [%X]\n", cl.name, settings.AdminPassword, settings.AdminPassword, pw, pw)
 					if settings.AdminPassword == pw {
 						cl.IsMod = true
 						cl.IsAdmin = true
+						fmt.Printf("[auth] %s used the admin password\n", cl.name)
 						return "Admin rights granted."
 					}
 
-					// Don't let on that this command exists.  Not the most secure, but should be "good enough" LUL.
-					return "Invalid command."
+					if cl.belongsTo.redeemModPass(pw) {
+						cl.IsMod = true
+						fmt.Printf("[auth] %s used a mod password\n", cl.name)
+						return "Moderator privileges granted."
+					}
+
+					fmt.Printf("[auth] %s gave an invalid password\n", cl.name)
+					return "Invalid password."
 				},
 			},
 
@@ -219,6 +225,14 @@ func init() {
 
 					fmt.Printf("Loaded %d emotes\n", num)
 					return fmt.Sprintf("Emotes loaded: %d", num)
+				},
+			},
+
+			"modpass": Command{
+				HelpText: "Generate a single-use mod password.",
+				Function: func(cl *Client, args []string) string {
+					password := cl.belongsTo.generateModPass()
+					return "Single use password: " + password
 				},
 			},
 

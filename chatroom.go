@@ -31,6 +31,9 @@ type ChatRoom struct {
 	queue       chan string
 	playing     string
 	playingLink string
+
+	modPasswords    []string // single-use mod passwords
+	modPasswordsMtx sync.Mutex
 }
 
 //initializing the chatroom
@@ -405,4 +408,59 @@ func (cr *ChatRoom) getClient(name string) (*Client, error) {
 		return client, nil
 	}
 	return nil, fmt.Errorf("Client with that name not found.")
+}
+
+func (cr *ChatRoom) generateModPass() string {
+	defer cr.modPasswordsMtx.Unlock()
+	cr.modPasswordsMtx.Lock()
+
+	pass, err := generatePass(time.Now().Unix())
+	if err != nil {
+		return fmt.Sprintf("Error generating moderator password: %s", err)
+	}
+
+	// Make sure the password is unique
+	for existsInSlice(cr.modPasswords, pass) {
+		pass, err = generatePass(time.Now().Unix())
+		if err != nil {
+			return fmt.Sprintf("Error generating moderator password: %s", err)
+		}
+	}
+
+	cr.modPasswords = append(cr.modPasswords, pass)
+	return pass
+}
+
+func (cr *ChatRoom) redeemModPass(pass string) bool {
+	if pass == "" {
+		return false
+	}
+
+	defer cr.modPasswordsMtx.Unlock()
+	cr.modPasswordsMtx.Lock()
+
+	if existsInSlice(cr.modPasswords, pass) {
+		cr.modPasswords = removeFromSlice(cr.modPasswords, pass)
+		return true
+	}
+	return false
+}
+
+func removeFromSlice(slice []string, needle string) []string {
+	slc := []string{}
+	for _, item := range slice {
+		if item != needle {
+			slc = append(slc, item)
+		}
+	}
+	return slc
+}
+
+func existsInSlice(slice []string, needle string) bool {
+	for _, item := range slice {
+		if item == needle {
+			return true
+		}
+	}
+	return false
 }
