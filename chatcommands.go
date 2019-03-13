@@ -104,7 +104,7 @@ func init() {
 				HelpText: "Set the title text and info link.",
 				Function: func(cl *Client, args []string) string {
 					// Clear/hide title if sent with no arguments.
-					if len(args) == 1 {
+					if len(args) == 0 {
 						cl.belongsTo.ClearPlaying()
 						return ""
 					}
