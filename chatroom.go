@@ -46,7 +46,7 @@ func newChatRoom() (*ChatRoom, error) {
 
 	num, err := LoadEmotes()
 	if err != nil {
-		return nil, fmt.Errorf("Error loading emotes: %s", err)
+		return nil, fmt.Errorf("error loading emotes: %s", err)
 	}
 	fmt.Printf("Loaded %d emotes\n", num)
 
@@ -65,12 +65,12 @@ func LoadEmotes() (int, error) {
 
 	emotePNGs, err := filepath.Glob("./static/emotes/*.png")
 	if err != nil {
-		return 0, fmt.Errorf("Unable to glob emote directory: %s\n", err)
+		return 0, fmt.Errorf("unable to glob emote directory: %s\n", err)
 	}
 
 	emoteGIFs, err := filepath.Glob("./static/emotes/*.gif")
 	if err != nil {
-		return 0, fmt.Errorf("Unable to glob emote directory: %s\n", err)
+		return 0, fmt.Errorf("unable to glob emote directory: %s\n", err)
 	}
 	globbed_files := []string(emotePNGs)
 	globbed_files = append(globbed_files, emoteGIFs...)
@@ -104,12 +104,12 @@ func (cr *ChatRoom) JoinTemp(conn *websocket.Conn) (string, error) {
 
 	uid, err := uuid.NewV4()
 	if err != nil {
-		return "", fmt.Errorf("could not create uuid, %v", err)
+		return "", fmt.Errorf("could not create uuid: %v", err)
 	}
 
 	suid := uid.String()
 	if _, ok := cr.tempConn[suid]; ok {
-		return "", errors.New("%#v is already in the temp connections")
+		return "", fmt.Errorf("%#v is already in the temp connections", suid)
 	}
 
 	cr.tempConn[suid] = conn
@@ -420,7 +420,7 @@ func (cr *ChatRoom) getClient(name string) (*Client, error) {
 	if client, ok := cr.clients[strings.ToLower(name)]; ok {
 		return client, nil
 	}
-	return nil, fmt.Errorf("Client with that name not found.")
+	return nil, fmt.Errorf("client with that name not found")
 }
 
 func (cr *ChatRoom) generateModPass() string {

@@ -49,13 +49,13 @@ func init() {
 func LoadSettings(filename string) (*Settings, error) {
 	raw, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("Error reading file: %s", err)
+		return nil, fmt.Errorf("error reading file: %s", err)
 	}
 
 	var s *Settings
 	err = json.Unmarshal(raw, &s)
 	if err != nil {
-		return nil, fmt.Errorf("Error unmarshaling: %s", err)
+		return nil, fmt.Errorf("error unmarshaling: %s", err)
 	}
 	s.filename = filename
 
@@ -63,12 +63,12 @@ func LoadSettings(filename string) (*Settings, error) {
 	if s.MaxMessageCount == 0 {
 		s.MaxMessageCount = 300
 	} else if s.MaxMessageCount < 0 {
-		return s, fmt.Errorf("MaxMessageCount value must be greater than 0, given %d", s.MaxMessageCount)
+		return s, fmt.Errorf("value for MaxMessageCount must be greater than 0, given %d", s.MaxMessageCount)
 	}
 
 	s.AdminPassword, err = generatePass(time.Now().Unix())
 	if err != nil {
-		return nil, fmt.Errorf("Unable to generate admin password: %s", err)
+		return nil, fmt.Errorf("unable to generate admin password: %s", err)
 	}
 	fmt.Printf("Settings reloaded.  New admin password: %s\n", s.AdminPassword)
 
@@ -91,12 +91,12 @@ func generatePass(seed int64) (string, error) {
 func (s *Settings) Save() error {
 	marshaled, err := json.MarshalIndent(s, "", "\t")
 	if err != nil {
-		return fmt.Errorf("Error marshaling: %s", err)
+		return fmt.Errorf("error marshaling: %s", err)
 	}
 
 	err = ioutil.WriteFile(s.filename, marshaled, 0777)
 	if err != nil {
-		return fmt.Errorf("Error saving: %s", err)
+		return fmt.Errorf("error saving: %s", err)
 	}
 	return nil
 }
