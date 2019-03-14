@@ -180,7 +180,6 @@ func (c ClientData) HTML() string {
 
 // TODO: Read this HTML from a template somewhere
 func (dc DataMessage) HTML() string {
-	fmt.Printf("message type: %d\n", dc.Type)
 	switch dc.Type {
 	case MsgAction:
 		return `<div style="color:` + dc.Color + `"><span class="name">` + dc.From +
@@ -293,7 +292,7 @@ func DecodeData(rawjson string) (DataInterface, error) {
 			return nil, fmt.Errorf("Error decoding token: %s", err)
 		}
 
-		if fmt.Sprintf("%s", key) == "Type" {
+		if key.(string) == "Type" {
 			value, err := decoder.Token()
 			if err != nil {
 				return nil, fmt.Errorf("Error decoding data value: %q", err)

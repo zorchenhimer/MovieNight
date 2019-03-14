@@ -14,7 +14,6 @@ func recieve(v []js.Value) {
 		return
 	}
 
-	fmt.Printf("Received: %s\n", v[0])
 	data, err := common.DecodeData(v[0].String())
 	if err != nil {
 		fmt.Printf("Error decoding data: %s\n", err)
