@@ -9,7 +9,6 @@ import (
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
-var commands *CommandControl
 var colorRegex *regexp.Regexp = regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
 
 type CommandControl struct {
@@ -27,220 +26,216 @@ type CommandFunction func(client *Client, args []string) string
 
 //type HelpFunction func(client *Client) string
 
-func init() {
-	commands = &CommandControl{
-		user: map[string]Command{
-			"me": Command{
-				HelpText: "Display an action message.",
-				Function: func(client *Client, args []string) string {
-					client.Me(strings.Join(args, " "))
-					return ""
-				},
-			},
-
-			"help": Command{
-				HelpText: "This help text.",
-				Function: cmdHelp,
-			},
-
-			"count": Command{
-				HelpText: "Display number of users in chat.",
-				Function: func(client *Client, args []string) string {
-					return fmt.Sprintf("Users in chat: %d", client.belongsTo.UserCount())
-				},
-			},
-
-			"color":  cmdColor,
-			"colour": cmdColor,
-
-			"w":      cmdWhoAmI,
-			"whoami": cmdWhoAmI,
-
-			"auth": Command{
-				HelpText: "Authenticate to admin",
-				Function: func(cl *Client, args []string) string {
-					if cl.IsAdmin {
-						return "You are already authenticated."
-					}
-
-					pw := html.UnescapeString(strings.Join(args, " "))
-
-					if settings.AdminPassword == pw {
-						cl.IsMod = true
-						cl.IsAdmin = true
-						fmt.Printf("[auth] %s used the admin password\n", cl.name)
-						return "Admin rights granted."
-					}
-
-					if cl.belongsTo.redeemModPass(pw) {
-						cl.IsMod = true
-						fmt.Printf("[auth] %s used a mod password\n", cl.name)
-						return "Moderator privileges granted."
-					}
-
-					fmt.Printf("[auth] %s gave an invalid password\n", cl.name)
-					return "Invalid password."
-				},
-			},
-
-			"users": Command{
-				HelpText: "Show a list of users in chat",
-				Function: func(cl *Client, args []string) string {
-					names := cl.belongsTo.GetNames()
-					return strings.Join(names, " ")
-				},
+var commands = &CommandControl{
+	user: map[string]Command{
+		common.CNMe.String(): Command{
+			HelpText: "Display an action message.",
+			Function: func(client *Client, args []string) string {
+				client.Me(strings.Join(args, " "))
+				return ""
 			},
 		},
 
-		mod: map[string]Command{
-			"sv": Command{
-				HelpText: "Send a server announcement message.  It will show up red with a border in chat.",
-				Function: func(cl *Client, args []string) string {
-					if len(args) == 0 {
-						return "Missing message"
-					}
-					svmsg := formatLinks(strings.Join(ParseEmotesArray(args), " "))
-					//cl.belongsTo.AddCmdMsg(fmt.Sprintf(`<div class="announcement">%s</div>`, svmsg))
-					cl.belongsTo.AddMsg(cl, false, true, svmsg)
-					return ""
-				},
-			},
+		common.CNHelp.String(): Command{
+			HelpText: "This help text.",
+			Function: cmdHelp,
+		},
 
-			"playing": Command{
-				HelpText: "Set the title text and info link.",
-				Function: func(cl *Client, args []string) string {
-					// Clear/hide title if sent with no arguments.
-					if len(args) == 0 {
-						cl.belongsTo.ClearPlaying()
-						return ""
-					}
-					link := ""
-					title := ""
-
-					// pickout the link (can be anywhere, as long as there are no spaces).
-					for _, word := range args {
-						word = html.UnescapeString(word)
-						if strings.HasPrefix(word, "http://") || strings.HasPrefix(word, "https://") {
-							link = word
-						} else {
-							title = title + " " + word
-						}
-					}
-
-					cl.belongsTo.SetPlaying(title, link)
-					return ""
-				},
-			},
-
-			"unmod": Command{
-				HelpText: "Revoke a user's moderator privilages.  Moderators can only unmod themselves.",
-				Function: func(cl *Client, args []string) string {
-					if len(args) > 0 && !cl.IsAdmin {
-						return "You can only unmod yourself, not others."
-					}
-
-					if len(args) == 0 {
-						cl.Unmod()
-						return "You have unmodded yourself."
-					}
-
-					if err := cl.belongsTo.Unmod(args[0]); err != nil {
-						return err.Error()
-					}
-
-					return fmt.Sprintf(`%s has been unmodded.`, args[0])
-				},
-			},
-
-			"kick": Command{
-				HelpText: "Kick a user from chat.",
-				Function: func(cl *Client, args []string) string {
-					if len(args) == 0 {
-						return "Missing name to kick."
-					}
-					return cl.belongsTo.Kick(args[0])
-				},
-			},
-
-			"ban": Command{
-				HelpText: "Ban a user from chat.  They will not be able to re-join chat, but will still be able to view the stream.",
-				Function: func(cl *Client, args []string) string {
-					if len(args) == 0 {
-						return "missing name to ban."
-					}
-					fmt.Printf("[ban] Attempting to ban %s\n", strings.Join(args, ""))
-					return cl.belongsTo.Ban(args[0])
-				},
-			},
-
-			"unban": Command{
-				HelpText: "Remove a ban on a user.",
-				Function: func(cl *Client, args []string) string {
-					if len(args) == 0 {
-						return "missing name to unban."
-					}
-					fmt.Printf("[ban] Attempting to unban %s\n", strings.Join(args, ""))
-
-					err := settings.RemoveBan(args[0])
-					if err != nil {
-						return err.Error()
-					}
-					return ""
-				},
+		common.CNCount.String(): Command{
+			HelpText: "Display number of users in chat.",
+			Function: func(client *Client, args []string) string {
+				return fmt.Sprintf("Users in chat: %d", client.belongsTo.UserCount())
 			},
 		},
 
-		admin: map[string]Command{
-			"mod": Command{
-				HelpText: "Grant moderator privilages to a user.",
-				Function: func(cl *Client, args []string) string {
-					if len(args) == 0 {
-						return "Missing user to mod."
-					}
-					if err := cl.belongsTo.Mod(args[0]); err != nil {
-						return err.Error()
-					}
-					return fmt.Sprintf(`%s has been modded.`, args[0])
-				},
+		common.CNColor.String(): cmdColor,
+
+		common.CNWhoAmI.String(): cmdWhoAmI,
+
+		common.CNAuth.String(): Command{
+			HelpText: "Authenticate to admin",
+			Function: func(cl *Client, args []string) string {
+				if cl.IsAdmin {
+					return "You are already authenticated."
+				}
+
+				pw := html.UnescapeString(strings.Join(args, " "))
+
+				if settings.AdminPassword == pw {
+					cl.IsMod = true
+					cl.IsAdmin = true
+					fmt.Printf("[auth] %s used the admin password\n", cl.name)
+					return "Admin rights granted."
+				}
+
+				if cl.belongsTo.redeemModPass(pw) {
+					cl.IsMod = true
+					fmt.Printf("[auth] %s used a mod password\n", cl.name)
+					return "Moderator privileges granted."
+				}
+
+				fmt.Printf("[auth] %s gave an invalid password\n", cl.name)
+				return "Invalid password."
 			},
-
-			"reloadplayer": Command{
-				HelpText: "Reload the stream player for everybody in chat.",
-				Function: func(cl *Client, args []string) string {
-					//cl.belongsTo.AddCmdMsg(`<span class="svmsg">[SERVER] Video player reload forced.</span><script>initPlayer();</script><br />`)
-					cl.belongsTo.AddCmdMsg(common.CMD_REFRESHPLAYER, nil)
-					return "Reloading player for all chatters."
-				},
-			},
-
-			"reloademotes": Command{
-				HelpText: "Reload the emotes on the server.",
-				Function: func(cl *Client, args []string) string {
-					cl.ServerMessage("Reloading emotes")
-					num, err := LoadEmotes()
-					if err != nil {
-						fmt.Printf("Unbale to reload emotes: %s\n", err)
-						return fmt.Sprintf("ERROR: %s", err)
-					}
-
-					fmt.Printf("Loaded %d emotes\n", num)
-					return fmt.Sprintf("Emotes loaded: %d", num)
-				},
-			},
-
-			"modpass": Command{
-				HelpText: "Generate a single-use mod password.",
-				Function: func(cl *Client, args []string) string {
-					password := cl.belongsTo.generateModPass()
-					return "Single use password: " + password
-				},
-			},
-
-			//"reloadsettings": func(cl *Client, args []string) string {
-			//	return ""
-			//},
 		},
-	}
+
+		common.CNUsers.String(): Command{
+			HelpText: "Show a list of users in chat",
+			Function: func(cl *Client, args []string) string {
+				names := cl.belongsTo.GetNames()
+				return strings.Join(names, " ")
+			},
+		},
+	},
+
+	mod: map[string]Command{
+		common.CNSv.String(): Command{
+			HelpText: "Send a server announcement message.  It will show up red with a border in chat.",
+			Function: func(cl *Client, args []string) string {
+				if len(args) == 0 {
+					return "Missing message"
+				}
+				svmsg := formatLinks(strings.Join(ParseEmotesArray(args), " "))
+				//cl.belongsTo.AddCmdMsg(fmt.Sprintf(`<div class="announcement">%s</div>`, svmsg))
+				cl.belongsTo.AddMsg(cl, false, true, svmsg)
+				return ""
+			},
+		},
+
+		common.CNPlaying.String(): Command{
+			HelpText: "Set the title text and info link.",
+			Function: func(cl *Client, args []string) string {
+				// Clear/hide title if sent with no arguments.
+				if len(args) == 0 {
+					cl.belongsTo.ClearPlaying()
+					return ""
+				}
+				link := ""
+				title := ""
+
+				// pickout the link (can be anywhere, as long as there are no spaces).
+				for _, word := range args {
+					word = html.UnescapeString(word)
+					if strings.HasPrefix(word, "http://") || strings.HasPrefix(word, "https://") {
+						link = word
+					} else {
+						title = title + " " + word
+					}
+				}
+
+				cl.belongsTo.SetPlaying(title, link)
+				return ""
+			},
+		},
+
+		common.CNUnmod.String(): Command{
+			HelpText: "Revoke a user's moderator privilages.  Moderators can only unmod themselves.",
+			Function: func(cl *Client, args []string) string {
+				if len(args) > 0 && !cl.IsAdmin {
+					return "You can only unmod yourself, not others."
+				}
+
+				if len(args) == 0 {
+					cl.Unmod()
+					return "You have unmodded yourself."
+				}
+
+				if err := cl.belongsTo.Unmod(args[0]); err != nil {
+					return err.Error()
+				}
+
+				return fmt.Sprintf(`%s has been unmodded.`, args[0])
+			},
+		},
+
+		common.CNKick.String(): Command{
+			HelpText: "Kick a user from chat.",
+			Function: func(cl *Client, args []string) string {
+				if len(args) == 0 {
+					return "Missing name to kick."
+				}
+				return cl.belongsTo.Kick(args[0])
+			},
+		},
+
+		common.CNBan.String(): Command{
+			HelpText: "Ban a user from chat.  They will not be able to re-join chat, but will still be able to view the stream.",
+			Function: func(cl *Client, args []string) string {
+				if len(args) == 0 {
+					return "missing name to ban."
+				}
+				fmt.Printf("[ban] Attempting to ban %s\n", strings.Join(args, ""))
+				return cl.belongsTo.Ban(args[0])
+			},
+		},
+
+		common.CNUnban.String(): Command{
+			HelpText: "Remove a ban on a user.",
+			Function: func(cl *Client, args []string) string {
+				if len(args) == 0 {
+					return "missing name to unban."
+				}
+				fmt.Printf("[ban] Attempting to unban %s\n", strings.Join(args, ""))
+
+				err := settings.RemoveBan(args[0])
+				if err != nil {
+					return err.Error()
+				}
+				return ""
+			},
+		},
+	},
+
+	admin: map[string]Command{
+		common.CNMod.String(): Command{
+			HelpText: "Grant moderator privilages to a user.",
+			Function: func(cl *Client, args []string) string {
+				if len(args) == 0 {
+					return "Missing user to mod."
+				}
+				if err := cl.belongsTo.Mod(args[0]); err != nil {
+					return err.Error()
+				}
+				return fmt.Sprintf(`%s has been modded.`, args[0])
+			},
+		},
+
+		common.CNReloadPlayer.String(): Command{
+			HelpText: "Reload the stream player for everybody in chat.",
+			Function: func(cl *Client, args []string) string {
+				//cl.belongsTo.AddCmdMsg(`<span class="svmsg">[SERVER] Video player reload forced.</span><script>initPlayer();</script><br />`)
+				cl.belongsTo.AddCmdMsg(common.CmdRefreshPlayer, nil)
+				return "Reloading player for all chatters."
+			},
+		},
+
+		common.CNReloadEmotes.String(): Command{
+			HelpText: "Reload the emotes on the server.",
+			Function: func(cl *Client, args []string) string {
+				cl.ServerMessage("Reloading emotes")
+				num, err := LoadEmotes()
+				if err != nil {
+					fmt.Printf("Unbale to reload emotes: %s\n", err)
+					return fmt.Sprintf("ERROR: %s", err)
+				}
+
+				fmt.Printf("Loaded %d emotes\n", num)
+				return fmt.Sprintf("Emotes loaded: %d", num)
+			},
+		},
+
+		common.CNModpass.String(): Command{
+			HelpText: "Generate a single-use mod password.",
+			Function: func(cl *Client, args []string) string {
+				password := cl.belongsTo.generateModPass()
+				return "Single use password: " + password
+			},
+		},
+
+		//"reloadsettings": func(cl *Client, args []string) string {
+		//	return ""
+		//},
+	},
 }
 
 func (cc *CommandControl) RunCommand(command string, args []string, sender *Client) string {
@@ -289,8 +284,6 @@ func cmdHelp(cl *Client, args []string) string {
 	return `Opening help in new window.<script>window.open("` + url + `", "_blank", "menubar=0,status=0,toolbar=0,width=300,height=600")</script>`
 }
 
-var hlpTemplate = `<dl class="helptext"><dt>%s</dt><dd>%s</dd></dl>`
-
 // Return a full HTML page for the help text.  This should probably be rewritten with templates.
 func helpPage(ismod, isadmin bool) string {
 	if commands == nil {
@@ -298,20 +291,22 @@ func helpPage(ismod, isadmin bool) string {
 	}
 
 	text := []string{}
-	for key, cmd := range commands.user {
-		text = append(text, fmt.Sprintf(hlpTemplate, key, cmd.HelpText))
+	appendText := func(group map[string]Command) {
+		for key, cmd := range group {
+			for _, k := range strings.Split(key, common.CommandNameSeparator) {
+				text = append(text, fmt.Sprintf(`<dl class="helptext"><dt>%s</dt><dd>%s</dd></dl>`, k, cmd.HelpText))
+			}
+		}
 	}
 
+	appendText(commands.user)
+
 	if ismod {
-		for key, cmd := range commands.mod {
-			text = append(text, fmt.Sprintf(hlpTemplate, key, cmd.HelpText))
-		}
+		appendText(commands.mod)
 	}
 
 	if isadmin {
-		for key, cmd := range commands.mod {
-			text = append(text, fmt.Sprintf(hlpTemplate, key, cmd.HelpText))
-		}
+		appendText(commands.admin)
 	}
 
 	// This is ugly

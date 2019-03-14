@@ -7,6 +7,38 @@ import (
 	"strings"
 )
 
+const CommandNameSeparator = ","
+
+type ChatCommandNames []string
+
+func (c ChatCommandNames) String() string {
+	return strings.Join(c, CommandNameSeparator)
+}
+
+// Names for commands
+var (
+	// User Commands
+	CNMe     ChatCommandNames = []string{"me"}
+	CNHelp   ChatCommandNames = []string{"help"}
+	CNCount  ChatCommandNames = []string{"count"}
+	CNColor  ChatCommandNames = []string{"color", "colour"}
+	CNWhoAmI ChatCommandNames = []string{"w", "whoami"}
+	CNAuth   ChatCommandNames = []string{"auth"}
+	CNUsers  ChatCommandNames = []string{"users"}
+	// Mod Commands
+	CNSv      ChatCommandNames = []string{"sv"}
+	CNPlaying ChatCommandNames = []string{"playing"}
+	CNUnmod   ChatCommandNames = []string{"unmod"}
+	CNKick    ChatCommandNames = []string{"kick"}
+	CNBan     ChatCommandNames = []string{"ban"}
+	CNUnban   ChatCommandNames = []string{"unban"}
+	// Admin Commands
+	CNMod          ChatCommandNames = []string{"mod"}
+	CNReloadPlayer ChatCommandNames = []string{"reloadplayer"}
+	CNReloadEmotes ChatCommandNames = []string{"reloademotes"}
+	CNModpass      ChatCommandNames = []string{"modpass"}
+)
+
 type ChatData struct {
 	Type DataType
 	Data DataInterface
@@ -40,29 +72,30 @@ type DataInterface interface {
 }
 
 func (dc DataMessage) GetType() DataType {
-	return DT_CHAT
+	return DTChat
 }
 
 func (de DataError) GetType() DataType {
-	return DT_ERROR
+	return DTError
 }
 
 func (dc DataCommand) GetType() DataType {
-	return DT_COMMAND
+	return DTCommand
 }
 
 func (de DataEvent) GetType() DataType {
-	return DT_EVENT
+	return DTEvent
 }
 
 type DataType int
 
+// Data Types
 const (
-	DT_INVALID DataType = iota
-	DT_CHAT             // chat message
-	DT_ERROR            // something went wrong with the previous request
-	DT_COMMAND          // non-chat function
-	DT_EVENT            // join/leave/kick/ban events
+	DTInvalid DataType = iota
+	DTChat             // chat message
+	DTError            // something went wrong with the previous request
+	DTCommand          // non-chat function
+	DTEvent            // join/leave/kick/ban events
 )
 
 func ParseDataType(token json.Token) (DataType, error) {
@@ -70,51 +103,54 @@ func ParseDataType(token json.Token) (DataType, error) {
 	val, err := strconv.ParseInt(d, 10, 32)
 	if err != nil {
 		fmt.Printf("Invalid data type value: %q\n", d)
-		return DT_INVALID, err
+		return DTInvalid, err
 	}
 	return DataType(val), nil
 }
 
 type CommandType int
 
+// Command Types
 const (
-	CMD_PLAYING CommandType = iota
-	CMD_REFRESHPLAYER
-	CMD_PURGECHAT
-	CMD_HELP
+	CmdPlaying CommandType = iota
+	CmdRefreshPlayer
+	CmdPurgeChat
+	CmdHelp
 )
 
 type EventType int
 
+// Event Types
 const (
-	EV_JOIN EventType = iota
-	EV_LEAVE
-	EV_KICK
-	EV_BAN
-	EV_SERVERMESSAGE
+	EvJoin EventType = iota
+	EvLeave
+	EvKick
+	EvBan
+	EvServerMessage
 )
 
 type MessageType int
 
+// Message Types
 const (
-	MSG_CHAT   MessageType = iota // standard chat
-	MSG_ACTION                    // /me command
-	MSG_SERVER                    // server message
-	MSG_ERROR
+	MsgChat   MessageType = iota // standard chat
+	MsgAction                    // /me command
+	MsgServer                    // server message
+	MsgError
 )
 
 // TODO: Read this HTML from a template somewhere
 func (dc DataMessage) HTML() string {
 	fmt.Printf("message type: %d\n", dc.Type)
 	switch dc.Type {
-	case MSG_ACTION:
+	case MsgAction:
 		return `<div style="color:` + dc.Color + `"><span class="name">` + dc.From +
 			`</span> <span class="cmdme">` + dc.Message + `</span></div>`
 
-	case MSG_SERVER:
+	case MsgServer:
 		return `<div class="announcement">` + dc.Message + `</div>`
 
-	case MSG_ERROR:
+	case MsgError:
 		return `<div class="error">` + dc.Message + `</div>`
 
 	default:
@@ -125,16 +161,16 @@ func (dc DataMessage) HTML() string {
 
 func (de DataEvent) HTML() string {
 	switch de.Event {
-	case EV_KICK:
+	case EvKick:
 		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
 			de.User + `</span> has been kicked.</div>`
-	case EV_LEAVE:
+	case EvLeave:
 		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
 			de.User + `</span> has left the chat.</div>`
-	case EV_BAN:
+	case EvBan:
 		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
 			de.User + `</span> has been banned.</div>`
-	case EV_JOIN:
+	case EvJoin:
 		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
 			de.User + `</span> has joined the chat.</div>`
 	}
@@ -151,7 +187,7 @@ func (de DataCommand) HTML() string {
 
 func EncodeMessage(name, color, msg string, msgtype MessageType) (string, error) {
 	d := ChatData{
-		Type: DT_CHAT,
+		Type: DTChat,
 		Data: DataMessage{
 			From:    name,
 			Color:   color,
@@ -165,7 +201,7 @@ func EncodeMessage(name, color, msg string, msgtype MessageType) (string, error)
 
 func EncodeError(message string) (string, error) {
 	d := ChatData{
-		Type: DT_ERROR,
+		Type: DTError,
 		Data: DataError{Message: message},
 	}
 	return jsonifyChatData(d)
@@ -173,7 +209,7 @@ func EncodeError(message string) (string, error) {
 
 func EncodeCommand(command CommandType, args []string) (string, error) {
 	d := ChatData{
-		Type: DT_COMMAND,
+		Type: DTCommand,
 		Data: DataCommand{
 			Command:   command,
 			Arguments: args,
@@ -184,7 +220,7 @@ func EncodeCommand(command CommandType, args []string) (string, error) {
 
 func EncodeEvent(event EventType, name, color string) (string, error) {
 	d := ChatData{
-		Type: DT_EVENT,
+		Type: DTEvent,
 		Data: DataEvent{
 			Event: event,
 			User:  name,
@@ -231,25 +267,25 @@ func DecodeData(rawjson string) (DataInterface, error) {
 		} else {
 
 			switch DataType(data.Type) {
-			case DT_CHAT:
+			case DTChat:
 				d := DataMessage{}
 				if err := decoder.Decode(&d); err != nil {
 					return nil, fmt.Errorf("Unable to decode DataMessage: %s", err)
 				}
 				return d, nil
-			case DT_ERROR:
+			case DTError:
 				d := DataError{}
 				if err := decoder.Decode(&d); err != nil {
 					return nil, fmt.Errorf("Unable to decode DataError: %s", err)
 				}
 				return d, nil
-			case DT_COMMAND:
+			case DTCommand:
 				d := DataCommand{}
 				if err := decoder.Decode(&d); err != nil {
 					return nil, fmt.Errorf("Unable to decode DataCommand: %s", err)
 				}
 				return d, nil
-			case DT_EVENT:
+			case DTEvent:
 				d := DataEvent{}
 				if err := decoder.Decode(&d); err != nil {
 					return nil, fmt.Errorf("Unable to decode DataEvent: %s", err)

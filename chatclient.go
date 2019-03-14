@@ -119,7 +119,7 @@ func (cl *Client) Send(s string) {
 // Send server message to this client
 func (cl *Client) ServerMessage(msg string) {
 	msg = ParseEmotes(msg)
-	encoded, err := common.EncodeMessage("", "#ea6260", msg, common.MSG_ERROR)
+	encoded, err := common.EncodeMessage("", "#ea6260", msg, common.MsgError)
 	if err != nil {
 		fmt.Printf("Error encoding server message to %s: %s; Message: %s\n", cl.name, err, msg)
 		return

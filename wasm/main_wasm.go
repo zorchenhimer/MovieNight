@@ -15,7 +15,7 @@ func recieve(v []js.Value) {
 	}
 
 	fmt.Printf("Received: %s\n", v[0])
-	data, err := common.DecodeData(fmt.Sprintf("%s", v[0]))
+	data, err := common.DecodeData(v[0].String())
 	if err != nil {
 		fmt.Printf("Error decoding data: %s\n", err)
 		js.Call("appendMessages", v)
@@ -23,13 +23,13 @@ func recieve(v []js.Value) {
 	}
 
 	switch data.GetType() {
-	case common.DT_CHAT, common.DT_EVENT, common.DT_ERROR:
+	case common.DTChat, common.DTError, common.DTEvent:
 		js.Call("appendMessages", data.HTML())
-	case common.DT_COMMAND:
+	case common.DTCommand:
 		dc := data.(common.DataCommand)
 
 		switch dc.Command {
-		case common.CMD_PLAYING:
+		case common.CmdPlaying:
 			if dc.Arguments == nil || len(dc.Arguments) == 0 {
 				js.Call("setPlaying", "", "")
 
@@ -39,11 +39,11 @@ func recieve(v []js.Value) {
 			} else if len(dc.Arguments) == 2 {
 				js.Call("setPlaying", dc.Arguments[0], dc.Arguments[1])
 			}
-		case common.CMD_REFRESHPLAYER:
+		case common.CmdRefreshPlayer:
 			js.Call("initPlayer", nil)
-		case common.CMD_PURGECHAT:
+		case common.CmdPurgeChat:
 			fmt.Println("//TODO: chat purge command received.")
-		case common.CMD_HELP:
+		case common.CmdHelp:
 			js.Call("appendMesages", data.HTML())
 			// TODO: open window
 			//js.Call("")
