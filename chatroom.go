@@ -39,7 +39,7 @@ type ChatRoom struct {
 //initializing the chatroom
 func newChatRoom() (*ChatRoom, error) {
 	cr := &ChatRoom{
-		queue:    make(chan string, 5),
+		queue:    make(chan string, 100),
 		clients:  make(map[string]*Client),
 		tempConn: make(map[string]*websocket.Conn),
 	}
@@ -349,22 +349,27 @@ func (cr *ChatRoom) UserCount() int {
 
 //broadcasting all the messages in the queue in one block
 func (cr *ChatRoom) BroadCast() {
-	msgBlock := ""
-infLoop:
+	var msgs []string
 	for {
+		leave := false
 		select {
 		case m := <-cr.queue:
-			msgBlock += m
+			msgs = append(msgs, m)
 		default:
-			break infLoop
+			leave = true
+		}
+		if leave {
+			break
 		}
 	}
-	if len(msgBlock) > 0 {
-		for _, client := range cr.clients {
-			client.Send(msgBlock)
-		}
-		for _, conn := range cr.tempConn {
-			connSend(msgBlock, conn)
+	for _, msg := range msgs {
+		if len(msg) > 0 {
+			for _, client := range cr.clients {
+				client.Send(msg)
+			}
+			for _, conn := range cr.tempConn {
+				connSend(msg, conn)
+			}
 		}
 	}
 }
