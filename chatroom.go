@@ -54,7 +54,7 @@ func newChatRoom() (*ChatRoom, error) {
 	go func() {
 		for {
 			cr.BroadCast()
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(50 * time.Millisecond)
 		}
 	}()
 	return cr, nil
@@ -275,7 +275,11 @@ func (cr *ChatRoom) AddMsg(from *Client, isAction, isServer bool, msg string) {
 		return
 	}
 
-	cr.queue <- data
+	select {
+	case cr.queue <- data:
+	default:
+		fmt.Println("Unable to queue chat message. Channel full.")
+	}
 }
 
 func (cr *ChatRoom) AddCmdMsg(command common.CommandType, args []string) {
@@ -287,7 +291,11 @@ func (cr *ChatRoom) AddCmdMsg(command common.CommandType, args []string) {
 		return
 	}
 
-	cr.queue <- data
+	select {
+	case cr.queue <- data:
+	default:
+		fmt.Println("Unable to queue command message.  Channel full.")
+	}
 }
 
 func (cr *ChatRoom) AddEventMsg(event common.EventType, name, color string) {
@@ -298,7 +306,12 @@ func (cr *ChatRoom) AddEventMsg(event common.EventType, name, color string) {
 		//cr.queue <- msg
 		return
 	}
-	cr.queue <- data
+
+	select {
+	case cr.queue <- data:
+	default:
+		fmt.Println("Unable to queue event message.  Channel full.")
+	}
 }
 
 func (cr *ChatRoom) Unmod(name string) error {
@@ -349,27 +362,22 @@ func (cr *ChatRoom) UserCount() int {
 
 //broadcasting all the messages in the queue in one block
 func (cr *ChatRoom) BroadCast() {
-	var msgs []string
-	for {
-		leave := false
+	running := true
+	for running {
 		select {
-		case m := <-cr.queue:
-			msgs = append(msgs, m)
+		case msg := <-cr.queue:
+			if len(msg) > 0 {
+				cr.clientsMtx.Lock()
+				for _, client := range cr.clients {
+					client.Send(msg)
+				}
+				for _, conn := range cr.tempConn {
+					connSend(msg, conn)
+				}
+				cr.clientsMtx.Unlock()
+			}
 		default:
-			leave = true
-		}
-		if leave {
-			break
-		}
-	}
-	for _, msg := range msgs {
-		if len(msg) > 0 {
-			for _, client := range cr.clients {
-				client.Send(msg)
-			}
-			for _, conn := range cr.tempConn {
-				connSend(msg, conn)
-			}
+			running = false
 		}
 	}
 }
