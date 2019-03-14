@@ -244,33 +244,33 @@ func (cc *CommandControl) RunCommand(command string, args []string, sender *Clie
 
 	// Look for user command
 	if userCmd, ok := cc.user[cmd]; ok {
-		fmt.Printf("[user] %s /%s %s\n", sender.name, cmd, strings.Join(args, " "))
+		fmt.Printf("[user] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
 		return userCmd.Function(sender, args)
 	}
 
 	// Look for mod command
 	if modCmd, ok := cc.mod[cmd]; ok {
 		if sender.IsMod || sender.IsAdmin {
-			fmt.Printf("[mod] %s /%s %s\n", sender.name, cmd, strings.Join(args, " "))
+			fmt.Printf("[mod] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
 			return modCmd.Function(sender, args)
 		}
 
-		fmt.Printf("[mod REJECTED] %s /%s %s\n", sender.name, cmd, strings.Join(args, " "))
+		fmt.Printf("[mod REJECTED] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
 		return "You are not a mod Jebaited"
 	}
 
 	// Look for admin command
 	if adminCmd, ok := cc.admin[cmd]; ok {
 		if sender.IsAdmin {
-			fmt.Printf("[admin] %s /%s %s\n", sender.name, cmd, strings.Join(args, " "))
+			fmt.Printf("[admin] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
 			return adminCmd.Function(sender, args)
 		}
-		fmt.Printf("[admin REJECTED] %s /%s %s\n", sender.name, cmd, strings.Join(args, " "))
+		fmt.Printf("[admin REJECTED] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
 		return "You are not the admin Jebaited"
 	}
 
 	// Command not found
-	fmt.Printf("[cmd] %s /%s %s\n", sender.name, cmd, strings.Join(args, " "))
+	fmt.Printf("[cmd] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
 	return "Invalid command."
 }
 
