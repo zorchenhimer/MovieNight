@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/zorchenhimer/MovieNight/common"
+
 	"github.com/gorilla/websocket"
 	"github.com/nareix/joy4/av/avutil"
 	"github.com/nareix/joy4/av/pubsub"
@@ -106,15 +108,15 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 		//first message has to be the name
 		// loop through name since websocket is opened once
 		for client == nil {
-			_, msg, err := conn.ReadMessage()
+			var data common.ClientData
+			err := conn.ReadJSON(&data)
 			if err != nil {
 				fmt.Printf("[handler] Client closed connection: %s\n", conn.RemoteAddr().String())
 				conn.Close()
 				return
 			}
 
-			name := string(msg)
-			client, err = chat.Join(name, uid)
+			client, err = chat.Join(data.Message, uid)
 			if err != nil {
 				switch err.(type) {
 				case UserFormatError, UserTakenError:
@@ -133,12 +135,13 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 
 		//then watch for incoming messages
 		for {
-			_, msg, err := conn.ReadMessage()
+			var data common.ClientData
+			err := conn.ReadJSON(&data)
 			if err != nil { //if error then assuming that the connection is closed
 				client.Exit()
 				return
 			}
-			client.NewMsg(string(msg))
+			client.NewMsg(data)
 		}
 
 	}()
@@ -172,6 +175,9 @@ func handleIndexTemplate(w http.ResponseWriter, r *http.Request) {
 		data.Chat = false
 		data.Title += " - video"
 	}
+
+	// Force browser to replace cache since file was not changed
+	w.Header().Set("Cache-Control", "no-cache, must-revalidate")
 
 	err = t.Execute(w, data)
 	if err != nil {

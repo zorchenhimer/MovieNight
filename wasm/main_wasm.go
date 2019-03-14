@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -10,20 +11,31 @@ import (
 
 func recieve(v []js.Value) {
 	if len(v) == 0 {
-		fmt.Printf("No data received")
+		fmt.Println("No data received")
 		return
 	}
 
-	data, err := common.DecodeData(v[0].String())
+	chat, err := common.DecodeData(v[0].String())
 	if err != nil {
 		fmt.Printf("Error decoding data: %s\n", err)
 		js.Call("appendMessages", v)
 		return
 	}
 
-	switch data.GetType() {
-	case common.DTChat, common.DTError, common.DTEvent:
-		js.Call("appendMessages", data.HTML())
+	data, err := chat.GetData()
+	if err != nil {
+		fmt.Printf("Error parsing DataInterface: %v", err)
+		js.Call("appendMessages", v)
+	}
+
+	switch chat.Type {
+	case common.DTEvent:
+		// on join or leave, update list of possible user names
+		fallthrough
+	case common.DTChat, common.DTError:
+		if !chat.Hidden {
+			js.Call("appendMessages", data.HTML())
+		}
 	case common.DTCommand:
 		dc := data.(common.DataCommand)
 
@@ -43,25 +55,52 @@ func recieve(v []js.Value) {
 		case common.CmdPurgeChat:
 			fmt.Println("//TODO: chat purge command received.")
 		case common.CmdHelp:
-			js.Call("appendMesages", data.HTML())
+			if !chat.Hidden {
+				js.Call("appendMessages", data.HTML())
+			}
 			// TODO: open window
 			//js.Call("")
 		}
-		return
 	}
 }
 
-func send(v []js.Value) {
-	if len(v) != 1 {
-		fmt.Printf("expected 1 parameter, got %d", len(v))
-		return
+func websocketSend(msg string, dataType common.ClientDataType) error {
+	data, err := json.Marshal(common.ClientData{
+		Type:    dataType,
+		Message: msg,
+	})
+	if err != nil {
+		return fmt.Errorf("could not marshal data: %v", err)
 	}
-	js.Call("websocketSend", v)
+
+	js.Call("websocketSend", string(data))
+	return nil
+}
+
+func send(this js.Value, v []js.Value) interface{} {
+	if len(v) != 1 {
+		showSendError(fmt.Errorf("expected 1 parameter, got %d", len(v)))
+		return false
+	}
+
+	err := websocketSend(v[0].String(), common.CdMessage)
+	if err != nil {
+		showSendError(err)
+		return false
+	}
+	return true
+}
+
+func showSendError(err error) {
+	if err != nil {
+		fmt.Printf("Could not send: %v\n", err)
+		js.Call("appendMessages", `<div><span style="color: red;">Could not send message</span></div>`)
+	}
 }
 
 func main() {
 	js.Set("recieveMessage", js.CallbackOf(recieve))
-	js.Set("sendMessage", js.CallbackOf(send))
+	js.Set("sendMessage", js.FuncOf(send))
 
 	// This is needed so the goroutine does not end
 	for {

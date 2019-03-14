@@ -2,68 +2,65 @@ package common
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 )
 
-const CommandNameSeparator = ","
-
-type ChatCommandNames []string
-
-func (c ChatCommandNames) String() string {
-	return strings.Join(c, CommandNameSeparator)
+type DataInterface interface {
+	HTML() string
 }
 
-// Names for commands
-var (
-	// User Commands
-	CNMe     ChatCommandNames = []string{"me"}
-	CNHelp   ChatCommandNames = []string{"help"}
-	CNCount  ChatCommandNames = []string{"count"}
-	CNColor  ChatCommandNames = []string{"color", "colour"}
-	CNWhoAmI ChatCommandNames = []string{"w", "whoami"}
-	CNAuth   ChatCommandNames = []string{"auth"}
-	CNUsers  ChatCommandNames = []string{"users"}
-	// Mod Commands
-	CNSv      ChatCommandNames = []string{"sv"}
-	CNPlaying ChatCommandNames = []string{"playing"}
-	CNUnmod   ChatCommandNames = []string{"unmod"}
-	CNKick    ChatCommandNames = []string{"kick"}
-	CNBan     ChatCommandNames = []string{"ban"}
-	CNUnban   ChatCommandNames = []string{"unban"}
-	// Admin Commands
-	CNMod          ChatCommandNames = []string{"mod"}
-	CNReloadPlayer ChatCommandNames = []string{"reloadplayer"}
-	CNReloadEmotes ChatCommandNames = []string{"reloademotes"}
-	CNModpass      ChatCommandNames = []string{"modpass"}
-)
-
-var ChatCommands = []ChatCommandNames{
-	CNMe, CNHelp, CNCount, CNColor, CNWhoAmI, CNAuth, CNUsers,
-	CNSv, CNPlaying, CNUnmod, CNKick, CNBan, CNUnban,
-	CNMod, CNReloadPlayer, CNReloadEmotes, CNModpass,
+type ChatData struct {
+	Hidden bool
+	Type   DataType
+	Data   json.RawMessage
 }
 
-func GetFullChatCommand(c string) string {
-	for _, names := range ChatCommands {
-		for _, n := range names {
-			if c == n {
-				return names.String()
-			}
-		}
+func (c ChatData) GetData() (DataInterface, error) {
+	var data DataInterface
+	var err error
+
+	switch c.Type {
+	case DTInvalid:
+		return nil, errors.New("data type is invalid")
+	case DTChat:
+		d := DataMessage{}
+		err = json.Unmarshal(c.Data, &d)
+		data = d
+	case DTError:
+		d := DataError{}
+		err = json.Unmarshal(c.Data, &d)
+		data = d
+	case DTCommand:
+		d := DataCommand{}
+		err = json.Unmarshal(c.Data, &d)
+		data = d
+	case DTEvent:
+		d := DataEvent{}
+		err = json.Unmarshal(c.Data, &d)
+		data = d
+	case DTClient:
+		d := ClientData{}
+		err = json.Unmarshal(c.Data, &d)
+		data = d
 	}
-	return ""
+
+	return data, err
+}
+
+func newChatData(hidden bool, dtype DataType, d DataInterface) (ChatData, error) {
+	rawData, err := json.Marshal(d)
+	return ChatData{
+		Hidden: hidden,
+		Type:   dtype,
+		Data:   rawData,
+	}, err
 }
 
 type ClientData struct {
 	Type    ClientDataType
 	Message string
-}
-
-type ChatData struct {
-	Type DataType
-	Data DataInterface
 }
 
 type DataError struct {
@@ -86,31 +83,6 @@ type DataEvent struct {
 	Event EventType
 	User  string
 	Color string
-}
-
-type DataInterface interface {
-	GetType() DataType
-	HTML() string
-}
-
-func (c ClientData) GetType() DataType {
-	return DTClient
-}
-
-func (d DataMessage) GetType() DataType {
-	return DTChat
-}
-
-func (d DataError) GetType() DataType {
-	return DTError
-}
-
-func (d DataCommand) GetType() DataType {
-	return DTCommand
-}
-
-func (d DataEvent) GetType() DataType {
-	return DTEvent
 }
 
 type ClientDataType int
@@ -136,8 +108,7 @@ func ParseDataType(token json.Token) (DataType, error) {
 	d := fmt.Sprintf("%.0f", token)
 	val, err := strconv.ParseInt(d, 10, 32)
 	if err != nil {
-		fmt.Printf("Invalid data type value: %q\n", d)
-		return DTInvalid, err
+		return DTInvalid, fmt.Errorf("invalid data type value: %q\n", d)
 	}
 	return DataType(val), nil
 }
@@ -224,46 +195,45 @@ func (de DataCommand) HTML() string {
 }
 
 func EncodeMessage(name, color, msg string, msgtype MessageType) (string, error) {
-	d := ChatData{
-		Type: DTChat,
-		Data: DataMessage{
-			From:    name,
-			Color:   color,
-			Message: msg,
-			Type:    msgtype,
-		},
+	d, err := newChatData(false, DTChat, DataMessage{
+		From:    name,
+		Color:   color,
+		Message: msg,
+		Type:    msgtype,
+	})
+	if err != nil {
+		return "", err
 	}
-	j, err := jsonifyChatData(d)
-	return j, err
+	return jsonifyChatData(d)
 }
 
 func EncodeError(message string) (string, error) {
-	d := ChatData{
-		Type: DTError,
-		Data: DataError{Message: message},
+	d, err := newChatData(false, DTError, DataError{Message: message})
+	if err != nil {
+		return "", err
 	}
 	return jsonifyChatData(d)
 }
 
 func EncodeCommand(command CommandType, args []string) (string, error) {
-	d := ChatData{
-		Type: DTCommand,
-		Data: DataCommand{
-			Command:   command,
-			Arguments: args,
-		},
+	d, err := newChatData(false, DTCommand, DataCommand{
+		Command:   command,
+		Arguments: args,
+	})
+	if err != nil {
+		return "", err
 	}
 	return jsonifyChatData(d)
 }
 
 func EncodeEvent(event EventType, name, color string) (string, error) {
-	d := ChatData{
-		Type: DTEvent,
-		Data: DataEvent{
-			Event: event,
-			User:  name,
-			Color: color,
-		},
+	d, err := newChatData(false, DTEvent, DataEvent{
+		Event: event,
+		User:  name,
+		Color: color,
+	})
+	if err != nil {
+		return "", err
 	}
 	return jsonifyChatData(d)
 }
@@ -276,64 +246,8 @@ func jsonifyChatData(data ChatData) (string, error) {
 	return string(raw), nil
 }
 
-func DecodeData(rawjson string) (DataInterface, error) {
-	data := ChatData{}
-	decoder := json.NewDecoder(strings.NewReader(rawjson))
-
-	// Open bracket
-	_, err := decoder.Token()
-	if err != nil {
-		return nil, fmt.Errorf("Open bracket token error: %s", err)
-	}
-
-	for decoder.More() {
-		key, err := decoder.Token()
-		if err != nil {
-			return nil, fmt.Errorf("Error decoding token: %s", err)
-		}
-
-		if key.(string) == "Type" {
-			value, err := decoder.Token()
-			if err != nil {
-				return nil, fmt.Errorf("Error decoding data value: %q", err)
-			}
-
-			data.Type, err = ParseDataType(value)
-			if err != nil {
-				return nil, fmt.Errorf("Error parsing data type: %d", data.Type)
-			}
-		} else {
-
-			switch DataType(data.Type) {
-			case DTChat:
-				d := DataMessage{}
-				if err := decoder.Decode(&d); err != nil {
-					return nil, fmt.Errorf("Unable to decode DataMessage: %s", err)
-				}
-				return d, nil
-			case DTError:
-				d := DataError{}
-				if err := decoder.Decode(&d); err != nil {
-					return nil, fmt.Errorf("Unable to decode DataError: %s", err)
-				}
-				return d, nil
-			case DTCommand:
-				d := DataCommand{}
-				if err := decoder.Decode(&d); err != nil {
-					return nil, fmt.Errorf("Unable to decode DataCommand: %s", err)
-				}
-				return d, nil
-			case DTEvent:
-				d := DataEvent{}
-				if err := decoder.Decode(&d); err != nil {
-					return nil, fmt.Errorf("Unable to decode DataEvent: %s", err)
-				}
-				return d, nil
-			default:
-				return nil, fmt.Errorf("Invalid data type: %d", data.Type)
-			}
-
-		}
-	}
-	return nil, fmt.Errorf("Incomplete data")
+func DecodeData(rawjson string) (ChatData, error) {
+	var data ChatData
+	err := json.Unmarshal([]byte(rawjson), &data)
+	return data, err
 }

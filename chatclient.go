@@ -53,7 +53,8 @@ func ParseEmotes(msg string) string {
 }
 
 //Client has a new message to broadcast
-func (cl *Client) NewMsg(msg string) {
+func (cl *Client) NewMsg(data common.ClientData) {
+	msg := data.Message
 	msg = html.EscapeString(msg)
 	msg = removeDumbSpaces(msg)
 	msg = strings.Trim(msg, " ")
