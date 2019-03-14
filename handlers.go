@@ -165,17 +165,13 @@ func handleIndexTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	path := strings.Split(strings.TrimLeft(r.URL.Path, "/"), "/")
-	fmt.Printf("%#v\n", path)
 	if path[0] == "chat" {
 		data.Video = false
 		data.Title += " - chat"
-
 	} else if path[0] == "video" {
 		data.Chat = false
 		data.Title += " - video"
 	}
-
-	fmt.Println(data)
 
 	err = t.Execute(w, data)
 	if err != nil {
