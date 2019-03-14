@@ -39,6 +39,28 @@ var (
 	CNModpass      ChatCommandNames = []string{"modpass"}
 )
 
+var ChatCommands = []ChatCommandNames{
+	CNMe, CNHelp, CNCount, CNColor, CNWhoAmI, CNAuth, CNUsers,
+	CNSv, CNPlaying, CNUnmod, CNKick, CNBan, CNUnban,
+	CNMod, CNReloadPlayer, CNReloadEmotes, CNModpass,
+}
+
+func GetFullChatCommand(c string) string {
+	for _, names := range ChatCommands {
+		for _, n := range names {
+			if c == n {
+				return names.String()
+			}
+		}
+	}
+	return ""
+}
+
+type ClientData struct {
+	Type    ClientDataType
+	Message string
+}
+
 type ChatData struct {
 	Type DataType
 	Data DataInterface
@@ -71,21 +93,32 @@ type DataInterface interface {
 	HTML() string
 }
 
-func (dc DataMessage) GetType() DataType {
+func (c ClientData) GetType() DataType {
+	return DTClient
+}
+
+func (d DataMessage) GetType() DataType {
 	return DTChat
 }
 
-func (de DataError) GetType() DataType {
+func (d DataError) GetType() DataType {
 	return DTError
 }
 
-func (dc DataCommand) GetType() DataType {
+func (d DataCommand) GetType() DataType {
 	return DTCommand
 }
 
-func (de DataEvent) GetType() DataType {
+func (d DataEvent) GetType() DataType {
 	return DTEvent
 }
+
+type ClientDataType int
+
+const (
+	CdMessage ClientDataType = iota // a normal message from the client meant to be broadcast
+	CdUsers                         // get a list of users
+)
 
 type DataType int
 
@@ -96,6 +129,7 @@ const (
 	DTError            // something went wrong with the previous request
 	DTCommand          // non-chat function
 	DTEvent            // join/leave/kick/ban events
+	DTClient           // a message coming from the client
 )
 
 func ParseDataType(token json.Token) (DataType, error) {
@@ -138,6 +172,11 @@ const (
 	MsgServer                    // server message
 	MsgError
 )
+
+func (c ClientData) HTML() string {
+	// Client data is for client to server communication only, so clients should not see this
+	return `<div style="color: red;"><span>The developer messed up. You should not be seeing this.</span></div>`
+}
 
 // TODO: Read this HTML from a template somewhere
 func (dc DataMessage) HTML() string {
