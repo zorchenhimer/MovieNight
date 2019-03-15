@@ -3,8 +3,6 @@ package common
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"strconv"
 )
 
 type DataInterface interface {
@@ -63,8 +61,17 @@ type ClientData struct {
 	Message string
 }
 
+func (c ClientData) HTML() string {
+	// Client data is for client to server communication only, so clients should not see this
+	return `<div style="color: red;"><span>The developer messed up. You should not be seeing this.</span></div>`
+}
+
 type DataError struct {
 	Message string
+}
+
+func (de DataError) HTML() string {
+	return `<div class="svmsg"><b>Error</b>: ` + de.Message + `</div>`
 }
 
 type DataMessage struct {
@@ -74,15 +81,56 @@ type DataMessage struct {
 	Type    MessageType
 }
 
+// TODO: Read this HTML from a template somewhere
+func (dc DataMessage) HTML() string {
+	switch dc.Type {
+	case MsgAction:
+		return `<div style="color:` + dc.Color + `"><span class="name">` + dc.From +
+			`</span> <span class="cmdme">` + dc.Message + `</span></div>`
+
+	case MsgServer:
+		return `<div class="announcement">` + dc.Message + `</div>`
+
+	case MsgError:
+		return `<div class="error">` + dc.Message + `</div>`
+
+	default:
+		return `<div><span class="name" style="color:` + dc.Color + `">` + dc.From +
+			`</span><b>:</b> <span class="msg">` + dc.Message + `</span></div>`
+	}
+}
+
 type DataCommand struct {
 	Command   CommandType
 	Arguments []string
+}
+
+func (de DataCommand) HTML() string {
+	return ""
 }
 
 type DataEvent struct {
 	Event EventType
 	User  string
 	Color string
+}
+
+func (de DataEvent) HTML() string {
+	switch de.Event {
+	case EvKick:
+		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
+			de.User + `</span> has been kicked.</div>`
+	case EvLeave:
+		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
+			de.User + `</span> has left the chat.</div>`
+	case EvBan:
+		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
+			de.User + `</span> has been banned.</div>`
+	case EvJoin:
+		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
+			de.User + `</span> has joined the chat.</div>`
+	}
+	return ""
 }
 
 type ClientDataType int
@@ -103,15 +151,6 @@ const (
 	DTEvent            // join/leave/kick/ban events
 	DTClient           // a message coming from the client
 )
-
-func ParseDataType(token json.Token) (DataType, error) {
-	d := fmt.Sprintf("%.0f", token)
-	val, err := strconv.ParseInt(d, 10, 32)
-	if err != nil {
-		return DTInvalid, fmt.Errorf("invalid data type value: %q\n", d)
-	}
-	return DataType(val), nil
-}
 
 type CommandType int
 
@@ -143,56 +182,6 @@ const (
 	MsgServer                    // server message
 	MsgError
 )
-
-func (c ClientData) HTML() string {
-	// Client data is for client to server communication only, so clients should not see this
-	return `<div style="color: red;"><span>The developer messed up. You should not be seeing this.</span></div>`
-}
-
-// TODO: Read this HTML from a template somewhere
-func (dc DataMessage) HTML() string {
-	switch dc.Type {
-	case MsgAction:
-		return `<div style="color:` + dc.Color + `"><span class="name">` + dc.From +
-			`</span> <span class="cmdme">` + dc.Message + `</span></div>`
-
-	case MsgServer:
-		return `<div class="announcement">` + dc.Message + `</div>`
-
-	case MsgError:
-		return `<div class="error">` + dc.Message + `</div>`
-
-	default:
-		return `<div><span class="name" style="color:` + dc.Color + `">` + dc.From +
-			`</span><b>:</b> <span class="msg">` + dc.Message + `</span></div>`
-	}
-}
-
-func (de DataEvent) HTML() string {
-	switch de.Event {
-	case EvKick:
-		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</span> has been kicked.</div>`
-	case EvLeave:
-		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</span> has left the chat.</div>`
-	case EvBan:
-		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</span> has been banned.</div>`
-	case EvJoin:
-		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</span> has joined the chat.</div>`
-	}
-	return ""
-}
-
-func (de DataError) HTML() string {
-	return `<div class="svmsg"><b>Error</b>: ` + de.Message + `</div>`
-}
-
-func (de DataCommand) HTML() string {
-	return ""
-}
 
 func EncodeMessage(name, color, msg string, msgtype MessageType) (string, error) {
 	d, err := newChatData(false, DTChat, DataMessage{
