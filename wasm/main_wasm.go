@@ -3,14 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/dennwc/dom/js"
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
-var names []string
+var (
+	names []js.Value
+)
 
 func recieve(v []js.Value) {
 	if len(v) == 0 {
@@ -37,19 +38,22 @@ func recieve(v []js.Value) {
 		h := data.(common.HiddenMessage)
 		switch h.Type {
 		case common.CdUsers:
-			names = nil
+			var names []string
 			for _, i := range h.Data.([]interface{}) {
 				names = append(names, i.(string))
 			}
 		}
 	case common.DTEvent:
 		d := data.(common.DataEvent)
-		if d.Event == common.EvJoin {
+		if d.Event == common.EvJoin ||
+			d.Event == common.EvBan ||
+			d.Event == common.EvKick ||
+			d.Event == common.EvLeave {
 			websocketSend("", common.CdUsers)
 		}
 		// on join or leave, update list of possible user names
 		fallthrough
-	case common.DTChat, common.DTError:
+	case common.DTChat:
 		js.Call("appendMessages", data.HTML())
 	case common.DTCommand:
 		d := data.(common.DataCommand)
@@ -113,9 +117,9 @@ func showSendError(err error) {
 func main() {
 	js.Set("recieveMessage", js.CallbackOf(recieve))
 	js.Set("sendMessage", js.FuncOf(send))
-	js.Set("getNames", js.FuncOf(func(_ js.Value, v []js.Value) interface{} {
-		return strings.Join(names, ",")
-	}))
+
+	// Get names on first run
+	websocketSend("", common.CdUsers)
 
 	// This is needed so the goroutine does not end
 	for {

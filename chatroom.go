@@ -18,8 +18,9 @@ import (
 )
 
 const (
-	UsernameMaxLength int = 36
-	UsernameMinLength int = 3
+	UsernameMaxLength  int    = 36
+	UsernameMinLength  int    = 3
+	ColorServerMessage string = "#ea6260"
 )
 
 var re_username *regexp.Regexp = regexp.MustCompile(`^[0-9a-zA-Z_-]+$`)
@@ -29,8 +30,8 @@ type ChatRoom struct {
 	clientsMtx sync.Mutex
 	tempConn   map[string]*websocket.Conn
 
-	queue    chan string
-	modqueue chan string // mod and admin broadcast messages
+	queue    chan common.ChatData
+	modqueue chan common.ChatData // mod and admin broadcast messages
 
 	playing     string
 	playingLink string
@@ -42,8 +43,8 @@ type ChatRoom struct {
 //initializing the chatroom
 func newChatRoom() (*ChatRoom, error) {
 	cr := &ChatRoom{
-		queue:    make(chan string, 100),
-		modqueue: make(chan string, 100),
+		queue:    make(chan common.ChatData, 100),
+		modqueue: make(chan common.ChatData, 100),
 		clients:  make(map[string]*Client),
 		tempConn: make(map[string]*websocket.Conn),
 	}
@@ -159,7 +160,7 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 	delete(cr.tempConn, uid)
 
 	fmt.Printf("[join] %s %s\n", host, name)
-	playingCommand, err := common.EncodeCommand(common.CmdPlaying, []string{cr.playing, cr.playingLink})
+	playingCommand, err := common.NewChatCommand(common.CmdPlaying, []string{cr.playing, cr.playingLink})()
 	if err != nil {
 		fmt.Printf("Unable to encode playing command on join: %s\n", err)
 	} else {
@@ -265,15 +266,9 @@ func (cr *ChatRoom) AddMsg(from *Client, isAction, isServer bool, msg string) {
 		t = common.MsgServer
 	}
 
-	data, err := common.EncodeMessage(
-		from.name,
-		from.color,
-		msg,
-		t)
-
+	data, err := common.NewChatMessage(from.name, from.color, msg, t)()
 	if err != nil {
 		fmt.Printf("Error encoding chat message: %s", err)
-		cr.queue <- msg
 		return
 	}
 
@@ -285,8 +280,7 @@ func (cr *ChatRoom) AddMsg(from *Client, isAction, isServer bool, msg string) {
 }
 
 func (cr *ChatRoom) AddCmdMsg(command common.CommandType, args []string) {
-	data, err := common.EncodeCommand(command, args)
-
+	data, err := common.NewChatCommand(command, args)()
 	if err != nil {
 		fmt.Printf("Error encoding command: %s", err)
 		return
@@ -300,7 +294,7 @@ func (cr *ChatRoom) AddCmdMsg(command common.CommandType, args []string) {
 }
 
 func (cr *ChatRoom) AddModNotice(message string) {
-	data, err := common.EncodeMessage("", "", message, common.MsgNotice)
+	data, err := common.NewChatMessage("", "", message, common.MsgNotice)()
 	if err != nil {
 		fmt.Printf("Error encoding notice: %v", err)
 		return
@@ -314,7 +308,7 @@ func (cr *ChatRoom) AddModNotice(message string) {
 }
 
 func (cr *ChatRoom) AddEventMsg(event common.EventType, name, color string) {
-	data, err := common.EncodeEvent(event, name, color)
+	data, err := common.NewChatEvent(event, name, color)()
 
 	if err != nil {
 		fmt.Printf("Error encoding command: %s", err)
@@ -338,7 +332,7 @@ func (cr *ChatRoom) Unmod(name string) error {
 	}
 
 	client.Unmod()
-	client.ServerMessage(`You have been unmodded.`)
+	client.SendServerMessage(`You have been unmodded.`)
 	return nil
 }
 
@@ -352,7 +346,7 @@ func (cr *ChatRoom) Mod(name string) error {
 	}
 
 	client.IsMod = true
-	client.ServerMessage(`You have been modded.`)
+	client.SendServerMessage(`You have been modded.`)
 	return nil
 }
 
@@ -378,17 +372,14 @@ func (cr *ChatRoom) UserCount() int {
 func (cr *ChatRoom) BroadCast() {
 	running := true
 	for running {
+		cr.clientsMtx.Lock()
 		select {
 		case msg := <-cr.queue:
-			if len(msg) > 0 {
-				cr.clientsMtx.Lock()
-				for _, client := range cr.clients {
-					client.Send(msg)
-				}
-				for _, conn := range cr.tempConn {
-					connSend(msg, conn)
-				}
-				cr.clientsMtx.Unlock()
+			for _, client := range cr.clients {
+				client.Send(msg)
+			}
+			for _, conn := range cr.tempConn {
+				conn.WriteJSON(msg)
 			}
 		default:
 			// No messages to send
@@ -399,18 +390,15 @@ func (cr *ChatRoom) BroadCast() {
 		// Mod queue
 		select {
 		case msg := <-cr.modqueue:
-			if len(msg) > 0 {
-				cr.clientsMtx.Lock()
-				for _, client := range cr.clients {
-					if client.IsMod || client.IsAdmin {
-						client.Send(msg)
-					}
+			for _, client := range cr.clients {
+				if client.IsMod || client.IsAdmin {
+					client.Send(msg)
 				}
-				cr.clientsMtx.Unlock()
 			}
 		default:
 			running = false
 		}
+		cr.clientsMtx.Unlock()
 	}
 }
 

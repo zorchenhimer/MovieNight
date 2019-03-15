@@ -149,7 +149,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 func handleIndexTemplate(w http.ResponseWriter, r *http.Request) {
 	t, err := template.ParseFiles("./static/index.html")
 	if err != nil {
-		fmt.Printf("[ERR] could not parse template file, %v\n", err)
+		fmt.Printf("Error parsing template file, %v\n", err)
 		return
 	}
 
@@ -180,7 +180,7 @@ func handleIndexTemplate(w http.ResponseWriter, r *http.Request) {
 
 	err = t.Execute(w, data)
 	if err != nil {
-		fmt.Printf("[ERR] could not execute file, %v", err)
+		fmt.Printf("Error executing file, %v", err)
 	}
 }
 

@@ -11,10 +11,6 @@ import (
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
-func connSend(s string, c *websocket.Conn) {
-	c.WriteMessage(websocket.TextMessage, []byte(s))
-}
-
 type Client struct {
 	name          string // Display name
 	conn          *websocket.Conn
@@ -56,12 +52,19 @@ func (cl *Client) NewMsg(data common.ClientData) {
 	switch data.Type {
 	case common.CdUsers:
 		fmt.Printf("[chat|hidden] <%s> get list of users\n", cl.name)
-		s, err := common.EncodeHiddenMessage(data.Type, chat.GetNames())
-		if err != nil {
-			fmt.Printf("[ERR] could not encode user list, %v", err)
-			return
+
+		names := chat.GetNames()
+		idx := -1
+		for i := range names {
+			if names[i] == cl.name {
+				idx = i
+			}
 		}
-		cl.Send(s)
+
+		err := cl.SendChatData(common.NewChatHiddenMessage(data.Type, append(names[:idx], names[idx+1:]...)))
+		if err != nil {
+			fmt.Printf("Error sending chat data: %v\n", err)
+		}
 	case common.CdMessage:
 		msg := html.EscapeString(data.Message)
 		msg = removeDumbSpaces(msg)
@@ -81,7 +84,10 @@ func (cl *Client) NewMsg(data common.ClientData) {
 
 			response := commands.RunCommand(cmd, args, cl)
 			if response != "" {
-				cl.ServerMessage(response)
+				err := cl.SendServerMessage(ParseEmotes(msg))
+				if err != nil {
+					fmt.Printf("Error command results %v\n", err)
+				}
 				return
 			}
 
@@ -103,6 +109,30 @@ func (cl *Client) NewMsg(data common.ClientData) {
 	}
 }
 
+func (cl *Client) SendChatData(newData common.NewChatDataFunc) error {
+	cd, err := newData()
+	if err != nil {
+		return fmt.Errorf("could not create chatdata of type %d: %v", cd.Type, err)
+	}
+	return cl.Send(cd)
+}
+
+func (cl *Client) Send(data common.ChatData) error {
+	err := cl.conn.WriteJSON(data)
+	if err != nil {
+		return fmt.Errorf("could not send message: %v", err)
+	}
+	return nil
+}
+
+func (cl *Client) SendServerMessage(s string) error {
+	err := cl.SendChatData(common.NewChatMessage("", ColorServerMessage, s, common.MsgServer))
+	if err != nil {
+		return fmt.Errorf("could send server message to %s: %s; Message: %s\n", cl.name, err, s)
+	}
+	return nil
+}
+
 // Make links clickable
 func formatLinks(input string) string {
 	newMsg := []string{}
@@ -119,22 +149,6 @@ func formatLinks(input string) string {
 //Exiting out
 func (cl *Client) Exit() {
 	cl.belongsTo.Leave(cl.name, cl.color)
-}
-
-//Sending message block to the client
-func (cl *Client) Send(s string) {
-	connSend(s, cl.conn)
-}
-
-// Send server message to this client
-func (cl *Client) ServerMessage(msg string) {
-	msg = ParseEmotes(msg)
-	encoded, err := common.EncodeMessage("", "#ea6260", msg, common.MsgError)
-	if err != nil {
-		fmt.Printf("[ERR] could not server message to %s: %s; Message: %s\n", cl.name, err, msg)
-		return
-	}
-	cl.Send(encoded)
 }
 
 // Outgoing messages

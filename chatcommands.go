@@ -229,7 +229,7 @@ var commands = &CommandControl{
 		common.CNReloadEmotes.String(): Command{
 			HelpText: "Reload the emotes on the server.",
 			Function: func(cl *Client, args []string) string {
-				cl.ServerMessage("Reloading emotes")
+				cl.SendServerMessage("Reloading emotes")
 				num, err := LoadEmotes()
 				if err != nil {
 					fmt.Printf("Unbale to reload emotes: %s\n", err)

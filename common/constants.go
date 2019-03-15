@@ -13,7 +13,6 @@ type DataType int
 const (
 	DTInvalid DataType = iota
 	DTChat             // chat message
-	DTError            // something went wrong with the previous request
 	DTCommand          // non-chat function
 	DTEvent            // join/leave/kick/ban events
 	DTClient           // a message coming from the client
@@ -48,6 +47,6 @@ const (
 	MsgChat   MessageType = iota // standard chat
 	MsgAction                    // /me command
 	MsgServer                    // server message
-	MsgError
-	MsgNotice // Like MsgServer, but for mods and admins only.
+	MsgError                     // something went wrong
+	MsgNotice                    // Like MsgServer, but for mods and admins only.
 )

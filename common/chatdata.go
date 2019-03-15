@@ -6,6 +6,8 @@ import (
 	"fmt"
 )
 
+type NewChatDataFunc func() (ChatData, error)
+
 type DataInterface interface {
 	HTML() string
 }
@@ -24,10 +26,6 @@ func (c ChatData) GetData() (DataInterface, error) {
 		return nil, errors.New("data type is invalid")
 	case DTChat:
 		d := DataMessage{}
-		err = json.Unmarshal(c.Data, &d)
-		data = d
-	case DTError:
-		d := DataError{}
 		err = json.Unmarshal(c.Data, &d)
 		data = d
 	case DTCommand:
@@ -71,22 +69,6 @@ func (c ClientData) HTML() string {
 	return `<div style="color: red;"><span>The developer messed up. You should not be seeing this.</span></div>`
 }
 
-type DataError struct {
-	Message string
-}
-
-func (de DataError) HTML() string {
-	return `<div class="svmsg"><b>Error</b>: ` + de.Message + `</div>`
-}
-
-func EncodeError(message string) (string, error) {
-	d, err := newChatData(DTError, DataError{Message: message})
-	if err != nil {
-		return "", err
-	}
-	return jsonifyChatData(d)
-}
-
 type DataMessage struct {
 	From    string
 	Color   string
@@ -116,17 +98,15 @@ func (dc DataMessage) HTML() string {
 	}
 }
 
-func EncodeMessage(name, color, msg string, msgtype MessageType) (string, error) {
-	d, err := newChatData(DTChat, DataMessage{
-		From:    name,
-		Color:   color,
-		Message: msg,
-		Type:    msgtype,
-	})
-	if err != nil {
-		return "", err
+func NewChatMessage(name, color, msg string, msgtype MessageType) NewChatDataFunc {
+	return func() (ChatData, error) {
+		return newChatData(DTChat, DataMessage{
+			From:    name,
+			Color:   color,
+			Message: msg,
+			Type:    msgtype,
+		})
 	}
-	return jsonifyChatData(d)
 }
 
 type DataCommand struct {
@@ -138,15 +118,13 @@ func (de DataCommand) HTML() string {
 	return ""
 }
 
-func EncodeCommand(command CommandType, args []string) (string, error) {
-	d, err := newChatData(DTCommand, DataCommand{
-		Command:   command,
-		Arguments: args,
-	})
-	if err != nil {
-		return "", err
+func NewChatCommand(command CommandType, args []string) NewChatDataFunc {
+	return func() (ChatData, error) {
+		return newChatData(DTCommand, DataCommand{
+			Command:   command,
+			Arguments: args,
+		})
 	}
-	return jsonifyChatData(d)
 }
 
 type DataEvent struct {
@@ -173,16 +151,14 @@ func (de DataEvent) HTML() string {
 	return ""
 }
 
-func EncodeEvent(event EventType, name, color string) (string, error) {
-	d, err := newChatData(DTEvent, DataEvent{
-		Event: event,
-		User:  name,
-		Color: color,
-	})
-	if err != nil {
-		return "", err
+func NewChatEvent(event EventType, name, color string) NewChatDataFunc {
+	return func() (ChatData, error) {
+		return newChatData(DTEvent, DataEvent{
+			Event: event,
+			User:  name,
+			Color: color,
+		})
 	}
-	return jsonifyChatData(d)
 }
 
 // DataHidden is for the server to send instructions and data
@@ -196,15 +172,13 @@ func (h HiddenMessage) HTML() string {
 	return ""
 }
 
-func EncodeHiddenMessage(clientType ClientDataType, data interface{}) (string, error) {
-	d, err := newChatData(DTHidden, HiddenMessage{
-		Type: clientType,
-		Data: data,
-	})
-	if err != nil {
-		return "", err
+func NewChatHiddenMessage(clientType ClientDataType, data interface{}) NewChatDataFunc {
+	return func() (ChatData, error) {
+		return newChatData(DTHidden, HiddenMessage{
+			Type: clientType,
+			Data: data,
+		})
 	}
-	return jsonifyChatData(d)
 }
 
 func jsonifyChatData(data ChatData) (string, error) {
