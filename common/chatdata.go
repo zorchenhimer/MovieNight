@@ -74,6 +74,14 @@ func (de DataError) HTML() string {
 	return `<div class="svmsg"><b>Error</b>: ` + de.Message + `</div>`
 }
 
+func EncodeError(message string) (string, error) {
+	d, err := newChatData(false, DTError, DataError{Message: message})
+	if err != nil {
+		return "", err
+	}
+	return jsonifyChatData(d)
+}
+
 type DataMessage struct {
 	From    string
 	Color   string
@@ -100,6 +108,19 @@ func (dc DataMessage) HTML() string {
 	}
 }
 
+func EncodeMessage(name, color, msg string, msgtype MessageType) (string, error) {
+	d, err := newChatData(false, DTChat, DataMessage{
+		From:    name,
+		Color:   color,
+		Message: msg,
+		Type:    msgtype,
+	})
+	if err != nil {
+		return "", err
+	}
+	return jsonifyChatData(d)
+}
+
 type DataCommand struct {
 	Command   CommandType
 	Arguments []string
@@ -107,6 +128,17 @@ type DataCommand struct {
 
 func (de DataCommand) HTML() string {
 	return ""
+}
+
+func EncodeCommand(command CommandType, args []string) (string, error) {
+	d, err := newChatData(false, DTCommand, DataCommand{
+		Command:   command,
+		Arguments: args,
+	})
+	if err != nil {
+		return "", err
+	}
+	return jsonifyChatData(d)
 }
 
 type DataEvent struct {
@@ -131,88 +163,6 @@ func (de DataEvent) HTML() string {
 			de.User + `</span> has joined the chat.</div>`
 	}
 	return ""
-}
-
-type ClientDataType int
-
-const (
-	CdMessage ClientDataType = iota // a normal message from the client meant to be broadcast
-	CdUsers                         // get a list of users
-)
-
-type DataType int
-
-// Data Types
-const (
-	DTInvalid DataType = iota
-	DTChat             // chat message
-	DTError            // something went wrong with the previous request
-	DTCommand          // non-chat function
-	DTEvent            // join/leave/kick/ban events
-	DTClient           // a message coming from the client
-)
-
-type CommandType int
-
-// Command Types
-const (
-	CmdPlaying CommandType = iota
-	CmdRefreshPlayer
-	CmdPurgeChat
-	CmdHelp
-)
-
-type EventType int
-
-// Event Types
-const (
-	EvJoin EventType = iota
-	EvLeave
-	EvKick
-	EvBan
-	EvServerMessage
-)
-
-type MessageType int
-
-// Message Types
-const (
-	MsgChat   MessageType = iota // standard chat
-	MsgAction                    // /me command
-	MsgServer                    // server message
-	MsgError
-)
-
-func EncodeMessage(name, color, msg string, msgtype MessageType) (string, error) {
-	d, err := newChatData(false, DTChat, DataMessage{
-		From:    name,
-		Color:   color,
-		Message: msg,
-		Type:    msgtype,
-	})
-	if err != nil {
-		return "", err
-	}
-	return jsonifyChatData(d)
-}
-
-func EncodeError(message string) (string, error) {
-	d, err := newChatData(false, DTError, DataError{Message: message})
-	if err != nil {
-		return "", err
-	}
-	return jsonifyChatData(d)
-}
-
-func EncodeCommand(command CommandType, args []string) (string, error) {
-	d, err := newChatData(false, DTCommand, DataCommand{
-		Command:   command,
-		Arguments: args,
-	})
-	if err != nil {
-		return "", err
-	}
-	return jsonifyChatData(d)
 }
 
 func EncodeEvent(event EventType, name, color string) (string, error) {
