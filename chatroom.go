@@ -56,12 +56,7 @@ func newChatRoom() (*ChatRoom, error) {
 	fmt.Printf("Loaded %d emotes\n", num)
 
 	//the "heartbeat" for broadcasting messages
-	go func() {
-		for {
-			cr.BroadCast()
-			time.Sleep(50 * time.Millisecond)
-		}
-	}()
+	go cr.BroadCast()
 	return cr, nil
 }
 
@@ -370,8 +365,7 @@ func (cr *ChatRoom) UserCount() int {
 
 //broadcasting all the messages in the queue in one block
 func (cr *ChatRoom) BroadCast() {
-	running := true
-	for running {
+	for {
 		cr.clientsMtx.Lock()
 		select {
 		case msg := <-cr.queue:
@@ -381,14 +375,6 @@ func (cr *ChatRoom) BroadCast() {
 			for _, conn := range cr.tempConn {
 				conn.WriteJSON(msg)
 			}
-		default:
-			// No messages to send
-			// This default block is required so the above case
-			// does not block.
-		}
-
-		// Mod queue
-		select {
 		case msg := <-cr.modqueue:
 			for _, client := range cr.clients {
 				if client.IsMod || client.IsAdmin {
@@ -396,7 +382,10 @@ func (cr *ChatRoom) BroadCast() {
 				}
 			}
 		default:
-			running = false
+			time.Sleep(50 * time.Millisecond)
+			// No messages to send
+			// This default block is required so the above case
+			// does not block.
 		}
 		cr.clientsMtx.Unlock()
 	}
