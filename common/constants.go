@@ -17,6 +17,7 @@ const (
 	DTCommand          // non-chat function
 	DTEvent            // join/leave/kick/ban events
 	DTClient           // a message coming from the client
+	DTHidden           // a message that is purely instruction and data, not shown to user
 )
 
 type CommandType int

@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 type DataInterface interface {
@@ -10,9 +11,8 @@ type DataInterface interface {
 }
 
 type ChatData struct {
-	Hidden bool
-	Type   DataType
-	Data   json.RawMessage
+	Type DataType
+	Data json.RawMessage
 }
 
 func (c ChatData) GetData() (DataInterface, error) {
@@ -42,17 +42,22 @@ func (c ChatData) GetData() (DataInterface, error) {
 		d := ClientData{}
 		err = json.Unmarshal(c.Data, &d)
 		data = d
+	case DTHidden:
+		d := HiddenMessage{}
+		err = json.Unmarshal(c.Data, &d)
+		data = d
+	default:
+		err = fmt.Errorf("unhandled data type: %d", c.Type)
 	}
 
 	return data, err
 }
 
-func newChatData(hidden bool, dtype DataType, d DataInterface) (ChatData, error) {
+func newChatData(dtype DataType, d DataInterface) (ChatData, error) {
 	rawData, err := json.Marshal(d)
 	return ChatData{
-		Hidden: hidden,
-		Type:   dtype,
-		Data:   rawData,
+		Type: dtype,
+		Data: rawData,
 	}, err
 }
 
@@ -75,7 +80,7 @@ func (de DataError) HTML() string {
 }
 
 func EncodeError(message string) (string, error) {
-	d, err := newChatData(false, DTError, DataError{Message: message})
+	d, err := newChatData(DTError, DataError{Message: message})
 	if err != nil {
 		return "", err
 	}
@@ -109,7 +114,7 @@ func (dc DataMessage) HTML() string {
 }
 
 func EncodeMessage(name, color, msg string, msgtype MessageType) (string, error) {
-	d, err := newChatData(false, DTChat, DataMessage{
+	d, err := newChatData(DTChat, DataMessage{
 		From:    name,
 		Color:   color,
 		Message: msg,
@@ -131,7 +136,7 @@ func (de DataCommand) HTML() string {
 }
 
 func EncodeCommand(command CommandType, args []string) (string, error) {
-	d, err := newChatData(false, DTCommand, DataCommand{
+	d, err := newChatData(DTCommand, DataCommand{
 		Command:   command,
 		Arguments: args,
 	})
@@ -166,10 +171,32 @@ func (de DataEvent) HTML() string {
 }
 
 func EncodeEvent(event EventType, name, color string) (string, error) {
-	d, err := newChatData(false, DTEvent, DataEvent{
+	d, err := newChatData(DTEvent, DataEvent{
 		Event: event,
 		User:  name,
 		Color: color,
+	})
+	if err != nil {
+		return "", err
+	}
+	return jsonifyChatData(d)
+}
+
+// DataHidden is for the server to send instructions and data
+// to the client without the purpose of outputting it on the chat
+type HiddenMessage struct {
+	Type ClientDataType
+	Data interface{}
+}
+
+func (h HiddenMessage) HTML() string {
+	return ""
+}
+
+func EncodeHiddenMessage(clientType ClientDataType, data interface{}) (string, error) {
+	d, err := newChatData(DTHidden, HiddenMessage{
+		Type: clientType,
+		Data: data,
 	})
 	if err != nil {
 		return "", err

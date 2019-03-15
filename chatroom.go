@@ -98,6 +98,9 @@ func randomColor() string {
 }
 
 func (cr *ChatRoom) JoinTemp(conn *websocket.Conn) (string, error) {
+	defer cr.clientsMtx.Unlock()
+	cr.clientsMtx.Lock()
+
 	if conn == nil {
 		return "", errors.New("conn should not be nil")
 	}
@@ -119,6 +122,9 @@ func (cr *ChatRoom) JoinTemp(conn *websocket.Conn) (string, error) {
 //registering a new client
 //returns pointer to a Client, or Nil, if the name is already taken
 func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
+	defer cr.clientsMtx.Unlock()
+	cr.clientsMtx.Lock()
+
 	conn, hasConn := cr.tempConn[uid]
 	if !hasConn {
 		return nil, errors.New("connection is missing from temp connections")
@@ -128,8 +134,6 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 		return nil, UserFormatError{Name: name}
 	}
 
-	defer cr.clientsMtx.Unlock()
-	cr.clientsMtx.Lock() //preventing simultaneous access to the `clients` map
 	if _, exists := cr.clients[strings.ToLower(name)]; exists {
 		return nil, UserTakenError{Name: name}
 	}
@@ -151,14 +155,12 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 	delete(cr.tempConn, uid)
 
 	fmt.Printf("[join] %s %s\n", host, name)
-	//client.Send(cr.GetPlayingString())
 	playingCommand, err := common.EncodeCommand(common.CmdPlaying, []string{cr.playing, cr.playingLink})
 	if err != nil {
 		fmt.Printf("Unable to encode playing command on join: %s\n", err)
 	} else {
 		client.Send(playingCommand)
 	}
-	//cr.AddMsg(fmt.Sprintf("<i><b style=\"color:%s\">%s</b> has joined the chat.</i><br />", client.color, name))
 	cr.AddEventMsg(common.EvJoin, name, client.color)
 	return client, nil
 }
@@ -177,7 +179,6 @@ func (cr *ChatRoom) Leave(name, color string) {
 	client.conn.Close()
 	cr.delClient(name)
 
-	//cr.AddMsg(fmt.Sprintf("<i><b style=\"color:%s\">%s</b> has left the chat.</i><br />", color, name))
 	cr.AddEventMsg(common.EvLeave, name, color)
 	fmt.Printf("[leave] %s %s\n", client.Host(), client.name)
 }
@@ -205,7 +206,6 @@ func (cr *ChatRoom) Kick(name string) string {
 	client.conn.Close()
 	cr.delClient(name)
 
-	//cr.AddMsg(fmt.Sprintf("<i><b>%s</b> has been kicked.</i><br />", name))
 	cr.AddEventMsg(common.EvKick, name, color)
 	fmt.Printf("[kick] %s %s has been kicked\n", host, name)
 	return ""
@@ -242,10 +242,8 @@ func (cr *ChatRoom) Ban(name string) string {
 	err = settings.AddBan(host, names)
 	if err != nil {
 		fmt.Printf("[BAN] Error banning %q: %s\n", name, err)
-		//cr.AddMsg(fmt.Sprintf("<i><b>%s</b> has been kicked.</i><br />", name))
 		cr.AddEventMsg(common.EvKick, name, color)
 	} else {
-		//cr.AddMsg(fmt.Sprintf("<i><b>%s</b> has been banned.</i><br />", name))
 		cr.AddEventMsg(common.EvBan, name, color)
 	}
 	return ""
@@ -287,7 +285,6 @@ func (cr *ChatRoom) AddCmdMsg(command common.CommandType, args []string) {
 
 	if err != nil {
 		fmt.Printf("Error encoding command: %s", err)
-		//cr.queue <- msg
 		return
 	}
 
@@ -303,7 +300,6 @@ func (cr *ChatRoom) AddEventMsg(event common.EventType, name, color string) {
 
 	if err != nil {
 		fmt.Printf("Error encoding command: %s", err)
-		//cr.queue <- msg
 		return
 	}
 
@@ -385,20 +381,14 @@ func (cr *ChatRoom) BroadCast() {
 func (cr *ChatRoom) ClearPlaying() {
 	cr.playing = ""
 	cr.playingLink = ""
-	//cr.AddCmdMsg(`<script>setPlaying("","");</script>`)
 	cr.AddCmdMsg(common.CmdPlaying, []string{"", ""})
 }
 
 func (cr *ChatRoom) SetPlaying(title, link string) {
 	cr.playing = title
 	cr.playingLink = link
-	//cr.AddCmdMsg(cr.GetPlayingString())
 	cr.AddCmdMsg(common.CmdPlaying, []string{title, link})
 }
-
-//func (cr *ChatRoom) GetPlayingString() string {
-//	return fmt.Sprintf(`<script>setPlaying("%s","%s");</script>`, cr.playing, cr.playingLink)
-//}
 
 func (cr *ChatRoom) GetNames() []string {
 	names := []string{}

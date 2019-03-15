@@ -96,7 +96,6 @@ var commands = &CommandControl{
 					return "Missing message"
 				}
 				svmsg := formatLinks(strings.Join(ParseEmotesArray(args), " "))
-				//cl.belongsTo.AddCmdMsg(fmt.Sprintf(`<div class="announcement">%s</div>`, svmsg))
 				cl.belongsTo.AddMsg(cl, false, true, svmsg)
 				return ""
 			},
@@ -203,7 +202,6 @@ var commands = &CommandControl{
 		common.CNReloadPlayer.String(): Command{
 			HelpText: "Reload the stream player for everybody in chat.",
 			Function: func(cl *Client, args []string) string {
-				//cl.belongsTo.AddCmdMsg(`<span class="svmsg">[SERVER] Video player reload forced.</span><script>initPlayer();</script><br />`)
 				cl.belongsTo.AddCmdMsg(common.CmdRefreshPlayer, nil)
 				return "Reloading player for all chatters."
 			},
@@ -231,10 +229,6 @@ var commands = &CommandControl{
 				return "Single use password: " + password
 			},
 		},
-
-		//"reloadsettings": func(cl *Client, args []string) string {
-		//	return ""
-		//},
 	},
 }
 

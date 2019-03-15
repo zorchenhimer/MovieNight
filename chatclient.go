@@ -36,7 +36,6 @@ func ParseEmotesArray(words []string) []string {
 		for key, val := range emotes {
 			if key == word {
 				newWords = append(newWords, fmt.Sprintf("<img src=\"/emotes/%s\" title=\"%s\" />", val, key))
-				//fmt.Printf("[emote] %s\n", val)
 				found = true
 			}
 		}
@@ -54,43 +53,53 @@ func ParseEmotes(msg string) string {
 
 //Client has a new message to broadcast
 func (cl *Client) NewMsg(data common.ClientData) {
-	msg := data.Message
-	msg = html.EscapeString(msg)
-	msg = removeDumbSpaces(msg)
-	msg = strings.Trim(msg, " ")
+	switch data.Type {
+	case common.CdUsers:
+		fmt.Printf("[chat|hidden] <%s> get list of users\n", cl.name)
+		s, err := common.EncodeHiddenMessage(data.Type, chat.GetNames())
+		if err != nil {
+			fmt.Printf("[ERR] could not encode user list, %v", err)
+			return
+		}
+		cl.Send(s)
+	case common.CdMessage:
+		msg := html.EscapeString(data.Message)
+		msg = removeDumbSpaces(msg)
+		msg = strings.Trim(msg, " ")
 
-	// Don't send zero-length messages
-	if len(msg) == 0 {
-		return
-	}
-
-	if strings.HasPrefix(msg, "/") {
-		// is a command
-		msg = msg[1:len(msg)]
-		fullcmd := strings.Split(msg, " ")
-		cmd := strings.ToLower(fullcmd[0])
-		args := fullcmd[1:len(fullcmd)]
-
-		response := commands.RunCommand(cmd, args, cl)
-		if response != "" {
-			cl.ServerMessage(response)
+		// Don't send zero-length messages
+		if len(msg) == 0 {
 			return
 		}
 
-	} else {
-		// Trim long messages
-		if len(msg) > 400 {
-			msg = msg[0:400]
+		if strings.HasPrefix(msg, "/") {
+			// is a command
+			msg = msg[1:len(msg)]
+			fullcmd := strings.Split(msg, " ")
+			cmd := strings.ToLower(fullcmd[0])
+			args := fullcmd[1:len(fullcmd)]
+
+			response := commands.RunCommand(cmd, args, cl)
+			if response != "" {
+				cl.ServerMessage(response)
+				return
+			}
+
+		} else {
+			// Trim long messages
+			if len(msg) > 400 {
+				msg = msg[0:400]
+			}
+
+			fmt.Printf("[chat] <%s> %q\n", cl.name, msg)
+
+			// Enable links for mods and admins
+			if cl.IsMod || cl.IsAdmin {
+				msg = formatLinks(msg)
+			}
+
+			cl.Message(msg)
 		}
-
-		fmt.Printf("[chat] <%s> %q\n", cl.name, msg)
-
-		// Enable links for mods and admins
-		if cl.IsMod || cl.IsAdmin {
-			msg = formatLinks(msg)
-		}
-
-		cl.Message(msg)
 	}
 }
 
@@ -122,26 +131,22 @@ func (cl *Client) ServerMessage(msg string) {
 	msg = ParseEmotes(msg)
 	encoded, err := common.EncodeMessage("", "#ea6260", msg, common.MsgError)
 	if err != nil {
-		fmt.Printf("Error encoding server message to %s: %s; Message: %s\n", cl.name, err, msg)
+		fmt.Printf("[ERR] could not server message to %s: %s; Message: %s\n", cl.name, err, msg)
 		return
 	}
 	cl.Send(encoded)
-	//cl.Send(`<span class="svmsg">` + msg + `</span><br />`)
 }
 
 // Outgoing messages
 func (cl *Client) Message(msg string) {
 	msg = ParseEmotes(msg)
 	cl.belongsTo.AddMsg(cl, false, false, msg)
-	//`<span class="name" style="color:` + cl.color + `">` + cl.name +
-	//	`</span><b>:</b> <span class="msg">` + msg + `</span><br />`)
 }
 
 // Outgoing /me command
 func (cl *Client) Me(msg string) {
 	msg = ParseEmotes(msg)
 	cl.belongsTo.AddMsg(cl, true, false, msg)
-	//cl.belongsTo.AddMsg(fmt.Sprintf(`<span style="color:%s"><span class="name">%s</span> <span class="cmdme">%s</span><br />`, cl.color, cl.name, msg))
 }
 
 func (cl *Client) Mod() {

@@ -6,10 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	//"github.com/nareix/joy4/av/avutil"
-	//"github.com/nareix/joy4/av/pubsub"
 	"github.com/nareix/joy4/format"
-	//"github.com/nareix/joy4/format/flv"
 	"github.com/nareix/joy4/format/rtmp"
 )
 
@@ -69,9 +66,4 @@ func main() {
 	fmt.Println("Listen and serve ", *addr)
 
 	server.ListenAndServe()
-
-	// ffmpeg -re -i movie.flv -c copy -f flv rtmp://localhost/movie
-	// ffmpeg -f avfoundation -i "0:0" .... -f flv rtmp://localhost/screen
-	// ffplay http://localhost:8089/movie
-	// ffplay http://localhost:8089/screen
 }

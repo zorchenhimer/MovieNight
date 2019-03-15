@@ -76,7 +76,6 @@ func wsStaticFiles(w http.ResponseWriter, r *http.Request) {
 
 func wsEmotes(w http.ResponseWriter, r *http.Request) {
 	emotefile := filepath.Base(r.URL.Path)
-	//fmt.Printf("serving emote: %s\n", emotefile)
 	http.ServeFile(w, r, "./static/emotes/"+emotefile)
 }
 

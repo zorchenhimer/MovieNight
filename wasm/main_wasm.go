@@ -3,11 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/dennwc/dom/js"
 	"github.com/zorchenhimer/MovieNight/common"
 )
+
+var names []string
 
 func recieve(v []js.Value) {
 	if len(v) == 0 {
@@ -24,42 +27,51 @@ func recieve(v []js.Value) {
 
 	data, err := chat.GetData()
 	if err != nil {
-		fmt.Printf("Error parsing DataInterface: %v", err)
+		fmt.Printf("Error parsing DataInterface: %v\n", err)
 		js.Call("appendMessages", v)
+		return
 	}
 
 	switch chat.Type {
+	case common.DTHidden:
+		h := data.(common.HiddenMessage)
+		switch h.Type {
+		case common.CdUsers:
+			names = nil
+			for _, i := range h.Data.([]interface{}) {
+				names = append(names, i.(string))
+			}
+		}
 	case common.DTEvent:
+		d := data.(common.DataEvent)
+		if d.Event == common.EvJoin {
+			websocketSend("", common.CdUsers)
+		}
 		// on join or leave, update list of possible user names
 		fallthrough
 	case common.DTChat, common.DTError:
-		if !chat.Hidden {
-			js.Call("appendMessages", data.HTML())
-		}
+		js.Call("appendMessages", data.HTML())
 	case common.DTCommand:
-		dc := data.(common.DataCommand)
+		d := data.(common.DataCommand)
 
-		switch dc.Command {
+		switch d.Command {
 		case common.CmdPlaying:
-			if dc.Arguments == nil || len(dc.Arguments) == 0 {
+			if d.Arguments == nil || len(d.Arguments) == 0 {
 				js.Call("setPlaying", "", "")
 
-			} else if len(dc.Arguments) == 1 {
-				js.Call("setPlaying", dc.Arguments[0], "")
+			} else if len(d.Arguments) == 1 {
+				js.Call("setPlaying", d.Arguments[0], "")
 
-			} else if len(dc.Arguments) == 2 {
-				js.Call("setPlaying", dc.Arguments[0], dc.Arguments[1])
+			} else if len(d.Arguments) == 2 {
+				js.Call("setPlaying", d.Arguments[0], d.Arguments[1])
 			}
 		case common.CmdRefreshPlayer:
 			js.Call("initPlayer", nil)
 		case common.CmdPurgeChat:
 			fmt.Println("//TODO: chat purge command received.")
 		case common.CmdHelp:
-			if !chat.Hidden {
-				js.Call("appendMessages", data.HTML())
-			}
+			js.Call("appendMessages", data.HTML())
 			// TODO: open window
-			//js.Call("")
 		}
 	}
 }
@@ -101,6 +113,9 @@ func showSendError(err error) {
 func main() {
 	js.Set("recieveMessage", js.CallbackOf(recieve))
 	js.Set("sendMessage", js.FuncOf(send))
+	js.Set("getNames", js.FuncOf(func(_ js.Value, v []js.Value) interface{} {
+		return strings.Join(names, ",")
+	}))
 
 	// This is needed so the goroutine does not end
 	for {
