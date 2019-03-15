@@ -137,6 +137,12 @@ span.svmsg {
     color: white;
 }
 
+.notice {
+    color: #595959;
+    font-size: 75%;
+    text-align: center;
+}
+
 dt {
     font-weight: bold;
 }

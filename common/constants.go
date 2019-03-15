@@ -49,4 +49,5 @@ const (
 	MsgAction                    // /me command
 	MsgServer                    // server message
 	MsgError
+	MsgNotice // Like MsgServer, but for mods and admins only.
 )

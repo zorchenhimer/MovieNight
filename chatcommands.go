@@ -64,16 +64,19 @@ var commands = &CommandControl{
 				if settings.AdminPassword == pw {
 					cl.IsMod = true
 					cl.IsAdmin = true
+					cl.belongsTo.AddModNotice(cl.name + " used the admin password")
 					fmt.Printf("[auth] %s used the admin password\n", cl.name)
 					return "Admin rights granted."
 				}
 
 				if cl.belongsTo.redeemModPass(pw) {
 					cl.IsMod = true
+					cl.belongsTo.AddModNotice(cl.name + " used a mod password")
 					fmt.Printf("[auth] %s used a mod password\n", cl.name)
 					return "Moderator privileges granted."
 				}
 
+				cl.belongsTo.AddModNotice(cl.name + " attempted to auth without success")
 				fmt.Printf("[auth] %s gave an invalid password\n", cl.name)
 				return "Invalid password."
 			},
@@ -96,6 +99,7 @@ var commands = &CommandControl{
 					return "Missing message"
 				}
 				svmsg := formatLinks(strings.Join(ParseEmotesArray(args), " "))
+				cl.belongsTo.AddModNotice("Server message from " + cl.name)
 				cl.belongsTo.AddMsg(cl, false, true, svmsg)
 				return ""
 			},
@@ -122,6 +126,16 @@ var commands = &CommandControl{
 					}
 				}
 
+				title = strings.TrimSpace(title)
+				link = strings.TrimSpace(link)
+
+				// Send a notice to the mods and admins
+				if len(link) == 0 {
+					cl.belongsTo.AddModNotice(cl.name + " set the playing title to '" + title + "' with no link")
+				} else {
+					cl.belongsTo.AddModNotice(cl.name + " set the playing title to '" + title + "' with link '" + link + "'")
+				}
+
 				cl.belongsTo.SetPlaying(title, link)
 				return ""
 			},
@@ -136,6 +150,7 @@ var commands = &CommandControl{
 
 				if len(args) == 0 {
 					cl.Unmod()
+					cl.belongsTo.AddModNotice(cl.name + " has unmodded themselves")
 					return "You have unmodded yourself."
 				}
 
@@ -143,6 +158,7 @@ var commands = &CommandControl{
 					return err.Error()
 				}
 
+				cl.belongsTo.AddModNotice(cl.name + " has unmodded " + args[0])
 				return fmt.Sprintf(`%s has been unmodded.`, args[0])
 			},
 		},
@@ -180,6 +196,7 @@ var commands = &CommandControl{
 				if err != nil {
 					return err.Error()
 				}
+				cl.belongsTo.AddModNotice(cl.name + " has unbanned " + args[0])
 				return ""
 			},
 		},
@@ -195,6 +212,7 @@ var commands = &CommandControl{
 				if err := cl.belongsTo.Mod(args[0]); err != nil {
 					return err.Error()
 				}
+				cl.belongsTo.AddModNotice(cl.name + " has modded " + args[0])
 				return fmt.Sprintf(`%s has been modded.`, args[0])
 			},
 		},
@@ -202,6 +220,7 @@ var commands = &CommandControl{
 		common.CNReloadPlayer.String(): Command{
 			HelpText: "Reload the stream player for everybody in chat.",
 			Function: func(cl *Client, args []string) string {
+				cl.belongsTo.AddModNotice(cl.name + " has modded forced a player reload")
 				cl.belongsTo.AddCmdMsg(common.CmdRefreshPlayer, nil)
 				return "Reloading player for all chatters."
 			},
@@ -217,6 +236,7 @@ var commands = &CommandControl{
 					return fmt.Sprintf("ERROR: %s", err)
 				}
 
+				cl.belongsTo.AddModNotice(cl.name + " has reloaded emotes")
 				fmt.Printf("Loaded %d emotes\n", num)
 				return fmt.Sprintf("Emotes loaded: %d", num)
 			},

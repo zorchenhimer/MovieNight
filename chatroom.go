@@ -25,10 +25,13 @@ const (
 var re_username *regexp.Regexp = regexp.MustCompile(`^[0-9a-zA-Z_-]+$`)
 
 type ChatRoom struct {
-	clients     map[string]*Client // this needs to be a pointer.
-	clientsMtx  sync.Mutex
-	tempConn    map[string]*websocket.Conn
-	queue       chan string
+	clients    map[string]*Client // this needs to be a pointer.
+	clientsMtx sync.Mutex
+	tempConn   map[string]*websocket.Conn
+
+	queue    chan string
+	modqueue chan string // mod and admin broadcast messages
+
 	playing     string
 	playingLink string
 
@@ -40,6 +43,7 @@ type ChatRoom struct {
 func newChatRoom() (*ChatRoom, error) {
 	cr := &ChatRoom{
 		queue:    make(chan string, 100),
+		modqueue: make(chan string, 100),
 		clients:  make(map[string]*Client),
 		tempConn: make(map[string]*websocket.Conn),
 	}
@@ -295,6 +299,20 @@ func (cr *ChatRoom) AddCmdMsg(command common.CommandType, args []string) {
 	}
 }
 
+func (cr *ChatRoom) AddModNotice(message string) {
+	data, err := common.EncodeMessage("", "", message, common.MsgNotice)
+	if err != nil {
+		fmt.Printf("Error encoding notice: %v", err)
+		return
+	}
+
+	select {
+	case cr.modqueue <- data:
+	default:
+		fmt.Println("Unable to queue notice.  Channel full.")
+	}
+}
+
 func (cr *ChatRoom) AddEventMsg(event common.EventType, name, color string) {
 	data, err := common.EncodeEvent(event, name, color)
 
@@ -369,6 +387,24 @@ func (cr *ChatRoom) BroadCast() {
 				}
 				for _, conn := range cr.tempConn {
 					connSend(msg, conn)
+				}
+				cr.clientsMtx.Unlock()
+			}
+		default:
+			// No messages to send
+			// This default block is required so the above case
+			// does not block.
+		}
+
+		// Mod queue
+		select {
+		case msg := <-cr.modqueue:
+			if len(msg) > 0 {
+				cr.clientsMtx.Lock()
+				for _, client := range cr.clients {
+					if client.IsMod || client.IsAdmin {
+						client.Send(msg)
+					}
 				}
 				cr.clientsMtx.Unlock()
 			}
