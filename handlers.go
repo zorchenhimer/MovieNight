@@ -119,14 +119,14 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				switch err.(type) {
 				case UserFormatError, UserTakenError:
-					fmt.Printf("[handler] %v\n", err)
+					fmt.Printf("[handler|%s] %v\n", errorName(err), err)
 				case BannedUserError:
-					fmt.Printf("[BAN] %v\n", err)
+					fmt.Printf("[handler|%s] %v\n", errorName(err), err)
 					// close connection since banned users shouldn't be connecting
 					conn.Close()
 				default:
 					// for now all errors not caught need to be warned
-					fmt.Printf("[handler] %v\n", err)
+					fmt.Printf("[handler|uncaught] %v\n", err)
 					conn.Close()
 				}
 			}

@@ -2,8 +2,13 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 )
+
+func errorName(err error) string {
+	return reflect.ValueOf(err).Type().Name()
+}
 
 // UserNameError is a base error for errors that deal with user names
 type UserNameError struct {
