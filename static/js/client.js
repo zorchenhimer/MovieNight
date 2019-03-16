@@ -51,10 +51,10 @@ function startGo() {
 
 function getWsUri() {
     port = window.location.port;
-    if (port == "") {
-        port = "8089";
+    if (port != "") {
+        port = ":" + port;
     }
-    return "ws://" + window.location.hostname + ":" + port + "/ws";
+    return "ws://" + window.location.hostname + port + "/ws";
 }
 
 let maxMessageCount = 0
