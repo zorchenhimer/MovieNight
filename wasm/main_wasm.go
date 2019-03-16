@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	keyTab  = 9
-	keyUp   = 38
-	keyDown = 40
+	keyTab   = 9
+	keyEnter = 13
+	keyUp    = 38
+	keyDown  = 40
 )
 
 var (
@@ -51,7 +52,7 @@ func processMessageKey(this js.Value, v []js.Value) interface{} {
 			}
 		}
 		currentName = filteredNames[newidx]
-	case keyTab:
+	case keyTab, keyEnter:
 		msg := js.Get("msg")
 		val := msg.Get("value").String()
 		newval := val[:startIdx] + currentName
