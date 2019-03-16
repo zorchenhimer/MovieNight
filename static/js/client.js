@@ -115,10 +115,9 @@ function sendChat() {
 }
 
 function updateSuggestionCss(m) {
-    console.log("UPDATING SUGGESTS CSS")
     if ($("#suggestions").children().length > 0) {
         div = $("#suggestions")[0]
-        $(div).css("bottom", `calc(${$("#chat").css("height")} - ${$("#messages").css("height")} - 5px)`)
+        $(div).css("bottom", `calc(${$("#chat").css("height")} - ${$("#messages").css("height")} - 10px)`)
         $(div).css("right", `calc(${$("#chat").css("width")} - ${$(div).css("width")} + 5px)`)
     }
 }
@@ -145,14 +144,14 @@ function chatOnload() {
     $("#send").click(() => $("#msg").focus());
 
     $("#msg").on("keydown", (e) => {
-        console.log(e)
         if (processMessageKey(e)) {
-            console.log(`prevented ${e.key}`)
             e.preventDefault();
         }
     });
 
-    $("#msg").on("input", (e) => { console.log(e); processMessage(e) });
+    $("#msg").on("input", () => processMessage());
+
+    $("#name").focus();
 
     // make sure startGo is last function called ignoring the autologin code
     startGo();
