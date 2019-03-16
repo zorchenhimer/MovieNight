@@ -256,18 +256,19 @@ func debugValues(v []js.Value) {
 }
 
 func main() {
-	js.Set("recieveMessage", js.CallbackOf(recieve))
-	js.Set("processMessage", js.CallbackOf(processMessage))
 	js.Set("processMessageKey", js.FuncOf(processMessageKey))
 	js.Set("sendMessage", js.FuncOf(send))
-	js.Set("debugValues", js.CallbackOf(debugValues))
 
-	// Get names on first run
-	websocketSend("", common.CdUsers)
+	js.Set("recieveMessage", js.CallbackOf(recieve))
+	js.Set("processMessage", js.CallbackOf(processMessage))
+	js.Set("debugValues", js.CallbackOf(debugValues))
 
 	// This is needed so the goroutine does not end
 	for {
-		websocketSend("", common.CdPing)
-		time.Sleep(time.Second)
+		// heatbeat to keep connection alive to deal with nginx
+		if js.Get("inChat").Bool() {
+			websocketSend("", common.CdPing)
+		}
+		time.Sleep(time.Second * 10)
 	}
 }

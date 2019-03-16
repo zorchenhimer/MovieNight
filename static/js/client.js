@@ -70,12 +70,14 @@ function appendMessages(msg) {
     $("#messages").append(msg).scrollTop(9e6);
 }
 
+inChat = false
 function openChat() {
     console.log("chat opening");
     $("#joinbox").css("display", "none");
     $("#chat").css("display", "grid");
     $("#msg").val("");
     $("#msg").focus();
+    inChat = true;
 }
 
 function closeChat() {
@@ -83,6 +85,7 @@ function closeChat() {
     $("#joinbox").css("display", "");
     $("#chat").css("display", "none");
     $("#error").html("That name was already used!");
+    inChat = false;
 }
 
 function join() {
