@@ -209,8 +209,12 @@ func recieve(v []js.Value) {
 		case common.CmdPurgeChat:
 			fmt.Println("//TODO: chat purge command received.")
 		case common.CmdHelp:
+			url := "/help"
+			if d.Arguments != nil && len(d.Arguments) > 0 {
+				url = d.Arguments[0]
+			}
 			js.Call("appendMessages", data.HTML())
-			// TODO: open window
+			js.Call(`window.open("` + url + `", "_blank", "menubar=0,status=0,toolbar=0,width=300,height=600")`)
 		}
 	}
 }

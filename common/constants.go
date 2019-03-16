@@ -30,6 +30,15 @@ const (
 	CmdHelp
 )
 
+type CommandLevel int
+
+// Command access levels
+const (
+	CmdUser CommandLevel = iota
+	CmdMod
+	CmdAdmin
+)
+
 type EventType int
 
 // Event Types

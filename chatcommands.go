@@ -24,8 +24,6 @@ type Command struct {
 
 type CommandFunction func(client *Client, args []string) string
 
-//type HelpFunction func(client *Client) string
-
 var commands = &CommandControl{
 	user: map[string]Command{
 		common.CNMe.String(): Command{
@@ -291,43 +289,33 @@ func (cc *CommandControl) RunCommand(command string, args []string, sender *Clie
 func cmdHelp(cl *Client, args []string) string {
 	url := "/help"
 	if cl.IsMod {
-		url = "/modhelp"
+		url = "/help?mod=1"
 	}
 
 	if cl.IsAdmin {
-		url = "/adminhelp"
+		url = "/help?mod=1&admin=1"
 	}
 
-	return `Opening help in new window.<script>window.open("` + url + `", "_blank", "menubar=0,status=0,toolbar=0,width=300,height=600")</script>`
+	cl.SendChatData(common.NewChatCommand(common.CmdHelp, []string{url}))
+	return `Opening help in new window.`
 }
 
-// Return a full HTML page for the help text.  This should probably be rewritten with templates.
-func helpPage(ismod, isadmin bool) string {
-	if commands == nil {
-		return "No commands loaded Jebaited"
+func getHelp(lvl common.CommandLevel) map[string]string {
+	var cmdList map[string]Command
+	switch lvl {
+	case common.CmdUser:
+		cmdList = commands.user
+	case common.CmdMod:
+		cmdList = commands.mod
+	case common.CmdAdmin:
+		cmdList = commands.admin
 	}
 
-	text := []string{}
-	appendText := func(group map[string]Command) {
-		for key, cmd := range group {
-			for _, k := range strings.Split(key, common.CommandNameSeparator) {
-				text = append(text, fmt.Sprintf(`<dl class="helptext"><dt>%s</dt><dd>%s</dd></dl>`, k, cmd.HelpText))
-			}
-		}
+	helptext := map[string]string{}
+	for name, cmd := range cmdList {
+		helptext[name] = cmd.HelpText
 	}
-
-	appendText(commands.user)
-
-	if ismod {
-		appendText(commands.mod)
-	}
-
-	if isadmin {
-		appendText(commands.admin)
-	}
-
-	// This is ugly
-	return `<html><head><title>Help</title><link rel="stylesheet" type="text/css" href="/static/site.css"></head><body>` + strings.Join(text, "") + `</body></html>`
+	return helptext
 }
 
 // Commands below have more than one invoking command (aliases).

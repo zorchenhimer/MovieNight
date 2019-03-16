@@ -55,17 +55,6 @@ func wsStaticFiles(w http.ResponseWriter, r *http.Request) {
 	case "/justvideo":
 		http.ServeFile(w, r, "./static/justvideo.html")
 		return
-
-	// TODO: use a template for this, lol.
-	case "/help":
-		w.Write([]byte(helpPage(false, false)))
-		return
-	case "/modhelp":
-		w.Write([]byte(helpPage(true, false)))
-		return
-	case "/adminhelp":
-		w.Write([]byte(helpPage(true, true)))
-		return
 	}
 
 	goodPath := r.URL.Path[8:len(r.URL.Path)]
@@ -150,8 +139,41 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
+func handleHelpTemplate(w http.ResponseWriter, r *http.Request) {
+	t, err := template.ParseFiles("./static/base.html", "./static/help.html")
+	if err != nil {
+		fmt.Printf("Error parsing template file, %v\n", err)
+		return
+	}
+
+	type Data struct {
+		Title         string
+		Commands      map[string]string
+		ModCommands   map[string]string
+		AdminCommands map[string]string
+	}
+
+	data := Data{
+		Title:    "Help",
+		Commands: getHelp(common.CmdUser),
+	}
+
+	if len(r.URL.Query().Get("mod")) > 0 {
+		data.ModCommands = getHelp(common.CmdMod)
+	}
+
+	if len(r.URL.Query().Get("admin")) > 0 {
+		data.AdminCommands = getHelp(common.CmdAdmin)
+	}
+
+	err = t.Execute(w, data)
+	if err != nil {
+		fmt.Printf("Error executing file, %v", err)
+	}
+}
+
 func handleIndexTemplate(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("./static/index.html")
+	t, err := template.ParseFiles("./static/base.html", "./static/main.html")
 	if err != nil {
 		fmt.Printf("Error parsing template file, %v\n", err)
 		return

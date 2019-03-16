@@ -35,9 +35,7 @@ func main() {
 	http.HandleFunc("/favicon.ico", wsStaticFiles)
 	http.HandleFunc("/chat", handleIndexTemplate)
 	http.HandleFunc("/video", handleIndexTemplate)
-	http.HandleFunc("/help", wsStaticFiles)
-	http.HandleFunc("/modhelp", wsStaticFiles)
-	http.HandleFunc("/adminhelp", wsStaticFiles)
+	http.HandleFunc("/help", handleHelpTemplate)
 
 	http.HandleFunc("/", handleDefault)
 

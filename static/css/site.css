@@ -178,3 +178,7 @@ span.svmsg {
 #suggestions div.selectedName {
     background: red;
 }
+
+#helpbody {
+    color: #B1B1B1;
+}

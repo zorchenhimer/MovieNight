@@ -1,0 +1,29 @@
+{{define "header"}}
+{{end}}
+
+{{define "body"}}
+<div id="helpbody">
+    <h2>Commands</h2>
+    <dl>
+        {{range $k, $v := .Commands}}
+        <dt>{{$k}}</dt><dd>{{$v}}</dd>
+        {{end}}
+    </dl>
+    {{if .ModCommands}}
+    <h2>Moderator</h2>
+    <dl>
+        {{range $k, $v := .ModCommands}}
+        <dt>{{$k}}</dt><dd>{{$v}}</dd>
+        {{end}}
+    </dl>
+    {{end}}
+    {{if .AdminCommands}}
+    <h2>Administrator</h2>
+    <dl>
+        {{range $k, $v := .AdminCommands}}
+        <dt>{{$k}}</dt><dd>{{$v}}</dd>
+        {{end}}
+    </dl>
+    {{end}}
+</div>
+{{end}}

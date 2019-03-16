@@ -1,16 +1,4 @@
-<!doctype html>
-<html>
-
-<head>
-    <meta charset='utf-8'>
-    <title>{{ .Title }}</title>
-    <link rel="stylesheet" type="text/css" href="/static/css/hack/hack.css">
-    <link rel="stylesheet" type="text/css" href="/static/css/site.css">
-    <script type="application/javascript" src="/static/js/jquery.js"></script>
-    <script type="application/javascript" src="/static/js/flv.min.js"></script>
-    <script type="application/javascript" src="/static/js/wasm_exec.js"></script>
-    <script type="application/javascript" src="/static/js/client.js"></script>
-
+{{define "header"}}
     {{ if .Chat }}
     <script>
         maxMessageCount = {{ .MessageHistoryCount }}
@@ -46,10 +34,9 @@
     </style>
     {{ end }}
     {{ end }}
-</head>
+{{end}}
 
-<body class="scrollbar">
-    <div class="root">
+{{define "body"}}
         {{ if .Video }}
         <div id="video">
             <video id="videoElement" controls autoplay x5-video-player-type="h5" x5-video-player-fullscreen="true"
@@ -57,11 +44,7 @@
                 Your browser is too old and doesn't support HTML5 video.
                 <script>initPlayer();</script>
             </video>
-            <div id="infoBox">
-                <div id="info">
-                    <span id="playing"></span>
-                    <a href="" target="_blank" id="playinglink"></a>
-                </div>
+            <div>
                 <button id="reload" class="button" onclick="initPlayer();">Reload Player</button>
             </div>
         </div>
@@ -69,6 +52,12 @@
 
         {{ if .Chat }}
         <div>
+            <div id="infoBox">
+                <div id="info">
+                    <span id="playing"></span>
+                    <a href="" target="_blank" id="playinglink"></a>
+                </div>
+            </div>
             <div id="error"></div>
             <div id="chat" style="display: none;">
                 <div id="messages" class="scrollbar"></div>
@@ -83,7 +72,4 @@
             </div>
         </div>
         {{ end }}
-    </div>
-</body>
-
-</html>
+{{end}}
