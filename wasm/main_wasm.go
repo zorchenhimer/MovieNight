@@ -111,8 +111,6 @@ func processMessage(v []js.Value) {
 
 				caretIdx += len(word)
 			}
-		} else {
-			fmt.Println("No names to proccess")
 		}
 	}
 
@@ -251,11 +249,18 @@ func showSendError(err error) {
 	}
 }
 
+func debugValues(v []js.Value) {
+	fmt.Printf("currentName %#v\n", currentName)
+	fmt.Printf("names %#v\n", names)
+	fmt.Printf("filteredNames %#v\n", filteredNames)
+}
+
 func main() {
 	js.Set("recieveMessage", js.CallbackOf(recieve))
 	js.Set("processMessage", js.CallbackOf(processMessage))
 	js.Set("processMessageKey", js.FuncOf(processMessageKey))
 	js.Set("sendMessage", js.FuncOf(send))
+	js.Set("debugValues", js.CallbackOf(debugValues))
 
 	// Get names on first run
 	websocketSend("", common.CdUsers)
