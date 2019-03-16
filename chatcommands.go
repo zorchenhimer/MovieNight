@@ -243,6 +243,7 @@ var commands = &CommandControl{
 		common.CNModpass.String(): Command{
 			HelpText: "Generate a single-use mod password.",
 			Function: func(cl *Client, args []string) string {
+				cl.belongsTo.AddModNotice(cl.name + " generated a mod password")
 				password := cl.belongsTo.generateModPass()
 				return "Single use password: " + password
 			},
