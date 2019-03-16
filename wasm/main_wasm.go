@@ -261,6 +261,7 @@ func main() {
 
 	// This is needed so the goroutine does not end
 	for {
-		time.Sleep(time.Minute)
+		websocketSend("", common.CdPing)
+		time.Sleep(time.Second)
 	}
 }

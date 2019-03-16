@@ -5,6 +5,7 @@ type ClientDataType int
 const (
 	CdMessage ClientDataType = iota // a normal message from the client meant to be broadcast
 	CdUsers                         // get a list of users
+	CdPing                          // ping the server to keep the connection alive
 )
 
 type DataType int
