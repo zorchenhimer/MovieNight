@@ -1,6 +1,6 @@
 .PHONY: sync fmt vet
 
-all: vet fmt MovieNight MovieNight.exe static/main.wasm
+all: fmt vet MovieNight MovieNight.exe static/main.wasm
 
 MovieNight.exe: *.go common/*.go
 	GOOS=windows GOARCH=amd64 go build -o MovieNight.exe
