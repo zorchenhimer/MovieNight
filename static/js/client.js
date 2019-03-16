@@ -21,7 +21,7 @@ function setPlaying(title, link) {
 
     $('#playing').show();
     $('#playing').text(title);
-    document.title = "Movie Night | " + title
+    document.title = "Movie Night | " + title;
 
     if (link === "") {
         $('#playinglink').hide();
@@ -43,28 +43,28 @@ function startGo() {
 
     const go = new Go();
     WebAssembly.instantiateStreaming(fetch("/static/main.wasm"), go.importObject).then((result) => {
-        go.run(result.instance)
+        go.run(result.instance);
     }).catch((err) => {
         console.error(err);
     });
 }
 
 function getWsUri() {
-    port = window.location.port
+    port = window.location.port;
     if (port == "") {
-        port = "8089"
+        port = "8089";
     }
-    return "ws://" + window.location.hostname + ":" + port + "/ws"
+    return "ws://" + window.location.hostname + ":" + port + "/ws";
 }
 
 let maxMessageCount = 0
 function appendMessages(msg) {
-    let msgs = $("#messages").find('div')
+    let msgs = $("#messages").find('div');
 
     // let's just say that if the max count is less than 1, then the count is infinite
     // the server side should take care of chaking max count ranges
     if (msgs.length > maxMessageCount) {
-        msgs.first().remove()
+        msgs.first().remove();
     }
 
     $("#messages").append(msg).scrollTop(9e6);
@@ -72,25 +72,30 @@ function appendMessages(msg) {
 
 function openChat() {
     console.log("chat opening");
-    $("#joinbox").css("display", "none")
-    $("#chat").css("display", "grid")
-    $("#msg").focus()
+    $("#joinbox").css("display", "none");
+    $("#chat").css("display", "grid");
+    $("#msg").val("");
+    $("#msg").focus();
 }
 
 function closeChat() {
-    console.log("chat closing")
-    $("#joinbox").css("display", "")
-    $("#chat").css("display", "none")
-    $("#error").html("That name was already used!")
+    console.log("chat closing");
+    $("#joinbox").css("display", "");
+    $("#chat").css("display", "none");
+    $("#error").html("That name was already used!");
 }
 
 function join() {
     let name = $("#name").val();
-    if (name.length < 3 || name.length > 36) {
+    if (name.length < 1 || name.length > 36) {
         $("#error").html("Please input a name between 3 and 36 characters");
         return;
     }
-    sendMessage($("#name").val());
+    if (!sendMessage($("#name").val())) {
+        $("#error").val("could not join");
+        return;
+    }
+    $("#error").val("");
     openChat();
 }
 
@@ -101,7 +106,7 @@ ws.onclose = () => closeChat();
 ws.onerror = (e) => console.log("Websocket Error:", e);
 
 function websocketSend(data) {
-    ws.send(data)
+    ws.send(data);
 }
 
 function sendChat() {
@@ -109,20 +114,46 @@ function sendChat() {
     $("#msg").val("");
 }
 
+function updateSuggestionCss(m) {
+    console.log("UPDATING SUGGESTS CSS")
+    if ($("#suggestions").children().length > 0) {
+        div = $("#suggestions")[0]
+        $(div).css("bottom", `calc(${$("#chat").css("height")} - ${$("#messages").css("height")} - 5px)`)
+        $(div).css("right", `calc(${$("#chat").css("width")} - ${$(div).css("width")} + 5px)`)
+    }
+}
 
 function chatOnload() {
-    startGo();
-
     $("#name").keypress(function (evt) {
         if (evt.originalEvent.keyCode == 13) {
-            $("#join").trigger("click")
+            $("#join").trigger("click");
         }
-    })
+    });
 
     $("#msg").keypress(function (evt) {
         if (evt.originalEvent.keyCode == 13 && !evt.originalEvent.shiftKey) {
-            $("#send").trigger("click")
+            $("#send").trigger("click");
             evt.preventDefault();
         }
-    })
+    });
+
+    window.onresize = updateSuggestionCss;
+    var suggestionObserver = new MutationObserver(
+        (mutations) => mutations.forEach(() => updateSuggestionCss())
+    ).observe($("#suggestions")[0], { childList: true })
+
+    $("#send").click(() => $("#msg").focus());
+
+    $("#msg").on("keydown", (e) => {
+        console.log(e)
+        if (processMessageKey(e)) {
+            console.log(`prevented ${e.key}`)
+            e.preventDefault();
+        }
+    });
+
+    $("#msg").on("input", (e) => { console.log(e); processMessage(e) });
+
+    // make sure startGo is last function called ignoring the autologin code
+    startGo();
 }

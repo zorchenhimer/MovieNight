@@ -3,15 +3,154 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/dennwc/dom/js"
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
-var (
-	names []js.Value
+const (
+	keyTab  = 9
+	keyUp   = 38
+	keyDown = 40
 )
+
+var (
+	currentName   string
+	names         []string
+	filteredNames []string
+)
+
+// The returned value is a bool deciding to prevent the event from propagating
+func processMessageKey(this js.Value, v []js.Value) interface{} {
+	keyCode := v[0].Get("keyCode").Int()
+
+	fmt.Println("KEY", v[0].Get("key"))
+	switch keyCode {
+	case keyUp, keyDown:
+		if len(filteredNames) > 0 {
+			newidx := 0
+			for i, n := range filteredNames {
+				if n == currentName {
+					newidx = i
+					if keyCode == keyDown {
+						newidx = i + 1
+						if newidx == len(filteredNames) {
+							newidx--
+						}
+					} else if keyCode == keyUp {
+						newidx = i - 1
+						if newidx < 0 {
+							newidx = 0
+						}
+					}
+					break
+				}
+			}
+			currentName = filteredNames[newidx]
+		}
+	case keyTab:
+		if len(filteredNames) > 0 {
+			fmt.Println("todo replace text")
+		}
+	default:
+		// We only want to handle the caught keys, so return early
+		return false
+	}
+
+	updateSuggestionDiv()
+	return true
+}
+
+func processMessage(v []js.Value) {
+	text := strings.ToLower(v[0].Get("currentTarget", "value").String())
+	idx := v[0].Get("currentTarget", "selectionStart").Int()
+	fmt.Println(text, idx)
+
+	filteredNames = nil
+	if len(text) == 0 {
+		// There is nothing to check
+		fmt.Println("maybe implement cleanup - REMOVE THIS BEFORE COMMITING - Text is empty")
+	} else if len(names) > 0 {
+		var caretIdx int
+		textParts := strings.Split(text, " ")
+
+		for i, word := range textParts {
+			// Increase caret index at beginning if not first word to account for spaces
+			if i != 0 {
+				caretIdx++
+			}
+
+			// It is possible to have a double space "  ", which will lead to an
+			// empty string element in the slice. Also check that the index of the
+			// cursor is between the start of the word and the end
+			fmt.Println(caretIdx, idx, caretIdx+len(word))
+
+			if len(word) > 0 && word[0] == '@' &&
+				caretIdx <= idx && idx <= caretIdx+len(word) {
+				fmt.Println("SOMENOE IS ATTING ME")
+
+				// fill filtered first so the "modifier" keys can modify it
+				for _, n := range names {
+					if len(word) == 1 || strings.HasPrefix(strings.ToLower(n), word[1:]) {
+						filteredNames = append(filteredNames, n)
+					}
+				}
+			}
+
+			if len(filteredNames) > 0 {
+				break
+			}
+
+			caretIdx += len(word)
+		}
+	} else {
+		fmt.Println("No names to proccess")
+	}
+
+	updateSuggestionDiv()
+}
+
+func updateSuggestionDiv() {
+	const selectedClass = ` class="selectedName"`
+
+	var divs []string
+	fmt.Println("FIL", filteredNames)
+
+	if len(filteredNames) > 0 {
+		// set current name to first if not set already
+		if currentName == "" {
+			currentName = filteredNames[0]
+		}
+
+		fmt.Printf("CURRENT %s\n", currentName)
+
+		var hasCurrentName bool
+		divs = make([]string, len(filteredNames))
+
+		// Create inner body of html
+		for i := range filteredNames {
+			fmt.Println(filteredNames[i])
+			divs[i] = "<div"
+			if filteredNames[i] == currentName {
+				hasCurrentName = true
+				divs[i] += selectedClass
+			}
+			divs[i] += ">" + filteredNames[i] + "</div>"
+		}
+
+		fmt.Println("divs", divs)
+
+		if !hasCurrentName {
+			divs[0] = divs[0][:4] + selectedClass + divs[0][4:]
+		}
+
+		fmt.Println(strings.Join(divs, "\n"))
+	}
+	// The \n is so it's easier to read th source in web browsers for the dev
+	js.Get("suggestions").Set("innerHTML", strings.Join(divs, "\n"))
+}
 
 func recieve(v []js.Value) {
 	if len(v) == 0 {
@@ -38,7 +177,7 @@ func recieve(v []js.Value) {
 		h := data.(common.HiddenMessage)
 		switch h.Type {
 		case common.CdUsers:
-			var names []string
+			names = nil
 			for _, i := range h.Data.([]interface{}) {
 				names = append(names, i.(string))
 			}
@@ -116,6 +255,8 @@ func showSendError(err error) {
 
 func main() {
 	js.Set("recieveMessage", js.CallbackOf(recieve))
+	js.Set("processMessage", js.CallbackOf(processMessage))
+	js.Set("processMessageKey", js.FuncOf(processMessageKey))
 	js.Set("sendMessage", js.FuncOf(send))
 
 	// Get names on first run

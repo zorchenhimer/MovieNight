@@ -4,7 +4,8 @@
 <head>
     <meta charset='utf-8'>
     <title>{{ .Title }}</title>
-    <link rel="stylesheet" type="text/css" href="/static/site.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/hack/hack.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/site.css">
     <script type="application/javascript" src="/static/js/jquery.js"></script>
     <script type="application/javascript" src="/static/js/flv.min.js"></script>
     <script type="application/javascript" src="/static/js/wasm_exec.js"></script>
@@ -22,6 +23,10 @@
         #joinbox {
             grid-column: 1 / 3;
         }
+
+        .root {
+            grid-template-columns: 1fr;
+        }
     </style>
     {{ end }}
     {{ end }}
@@ -34,42 +39,51 @@
             height: 100%;
             grid-column: 1 / 3;
         }
+
+        .root {
+            grid-template-columns: 1fr;
+        }
     </style>
     {{ end }}
     {{ end }}
 </head>
 
 <body class="scrollbar">
-    {{ if .Video }}
-    <div id="video">
-        <video id="videoElement" controls autoplay x5-video-player-type="h5" x5-video-player-fullscreen="true"
-            playsinline webkit-playsinline>
-            Your browser is too old and doesn't support HTML5 video.
-            <script>initPlayer();</script>
-        </video>
-        <div id="infoBox">
-            <div id="info">
-                <span id="playing"></span>
-                <a href="" target="_blank" id="playinglink"></a>
+    <div class="root">
+        {{ if .Video }}
+        <div id="video">
+            <video id="videoElement" controls autoplay x5-video-player-type="h5" x5-video-player-fullscreen="true"
+                playsinline webkit-playsinline>
+                Your browser is too old and doesn't support HTML5 video.
+                <script>initPlayer();</script>
+            </video>
+            <div id="infoBox">
+                <div id="info">
+                    <span id="playing"></span>
+                    <a href="" target="_blank" id="playinglink"></a>
+                </div>
+                <button id="reload" class="button" onclick="initPlayer();">Reload Player</button>
             </div>
-            <button id="reload" class="button" onclick="initPlayer();">Reload Player</button>
         </div>
-    </div>
-    {{ end }}
+        {{ end }}
 
-    {{ if .Chat }}
-    <div id="chat" style="display: none;">
-        <div id="messages" class="scrollbar"></div>
-        <textarea id="msg"></textarea>
-        <button id="send" class="button" onclick="sendChat();">Send</button>
+        {{ if .Chat }}
+        <div>
+            <div id="error"></div>
+            <div id="chat" style="display: none;">
+                <div id="messages" class="scrollbar"></div>
+                <div id="suggestions"></div>
+                <textarea id="msg"></textarea>
+                <button id="send" class="button" onclick="sendChat();">Send</button>
+            </div>
+            <div id="joinbox">
+                <p style="color:#e5e0e5">Please enter your name to Join the chat</P>
+                <input id="name" maxlength="36">
+                <button id="join" onclick="join();">Join</button>
+            </div>
+        </div>
+        {{ end }}
     </div>
-    <div id="joinbox">
-        <p style="color:#e5e0e5">Please enter your name to Join the chat</P>
-        <input id="name" maxlength="36">
-        <button id="join" onclick="join();">Join</button>
-    </div>
-    {{ end }}
-
 </body>
 
 </html>
