@@ -125,6 +125,13 @@ function updateSuggestionCss(m) {
     }
 }
 
+// Make this on all pages so video page also doesn't do this
+$(document).on("keydown", function (e) {
+    if (e.which === 8 && !$(e.target).is("input, textarea")) {
+        e.preventDefault();
+    }
+});
+
 function chatOnload() {
     $("#name").keypress(function (evt) {
         if (evt.originalEvent.keyCode == 13) {
