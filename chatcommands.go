@@ -142,11 +142,11 @@ var commands = &CommandControl{
 		common.CNUnmod.String(): Command{
 			HelpText: "Revoke a user's moderator privilages.  Moderators can only unmod themselves.",
 			Function: func(cl *Client, args []string) string {
-				if len(args) > 0 && !cl.IsAdmin {
+				if len(args) > 0 && !cl.IsAdmin && cl.name != args[0] {
 					return "You can only unmod yourself, not others."
 				}
 
-				if len(args) == 0 {
+				if len(args) == 0 || (len(args) == 1 && args[0] == cl.name) {
 					cl.Unmod()
 					cl.belongsTo.AddModNotice(cl.name + " has unmodded themselves")
 					return "You have unmodded yourself."
