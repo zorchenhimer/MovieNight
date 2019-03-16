@@ -214,7 +214,7 @@ func recieve(v []js.Value) {
 				url = d.Arguments[0]
 			}
 			js.Call("appendMessages", data.HTML())
-			js.Call(`window.open("` + url + `", "_blank", "menubar=0,status=0,toolbar=0,width=300,height=600")`)
+			js.Get("window").Call("open", url, "_blank", "menubar=0,status=0,toolbar=0,width=300,height=600")
 		}
 	}
 }
