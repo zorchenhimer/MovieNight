@@ -77,6 +77,7 @@ function openChat() {
     $("#chat").css("display", "grid");
     $("#msg").val("");
     $("#msg").focus();
+    $("#hidden").css("display", "");
     inChat = true;
 }
 
@@ -85,6 +86,7 @@ function closeChat() {
     $("#joinbox").css("display", "");
     $("#chat").css("display", "none");
     $("#error").html("That name was already used!");
+    $("#hidden").css("display", "none");
     inChat = false;
 }
 
@@ -122,6 +124,13 @@ function updateSuggestionCss(m) {
         div = $("#suggestions")[0]
         $(div).css("bottom", `calc(${$("#chat").css("height")} - ${$("#messages").css("height")} - 10px)`)
         $(div).css("right", `calc(${$("#chat").css("width")} - ${$(div).css("width")} + 5px)`)
+    }
+}
+
+function auth() {
+    let pass = prompt("pass please")
+    if (pass != "") {
+        sendMessage("/auth " + pass);
     }
 }
 

@@ -11,10 +11,6 @@
         #joinbox {
             grid-column: 1 / 3;
         }
-
-        .root {
-            grid-template-columns: 1fr;
-        }
     </style>
     {{ end }}
     {{ end }}
@@ -44,18 +40,21 @@
                 Your browser is too old and doesn't support HTML5 video.
                 <script>initPlayer();</script>
             </video>
-            <div>
-                <button id="reload" class="button" onclick="initPlayer();">Reload Player</button>
-            </div>
         </div>
         {{ end }}
 
         {{ if .Chat }}
         <div>
-            <div id="infoBox">
-                <div id="info">
-                    <span id="playing"></span>
-                    <a href="" target="_blank" id="playinglink"></a>
+            <div id="hidden" style="display: none;">
+                <div id="infoBox">
+                    <div id="info">
+                        <span id="playing"></span>
+                        <a href="" target="_blank" id="playinglink"></a>
+                    </div>
+                </div>
+                <div id="chatButtons">
+                    <button class="button pretty-button" onclick="auth();">Auth</button>
+                    <button class="button pretty-button" onclick="initPlayer();">Reload Player</button>
                 </div>
             </div>
             <div id="error"></div>
