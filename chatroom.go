@@ -365,28 +365,30 @@ func (cr *ChatRoom) UserCount() int {
 //broadcasting all the messages in the queue in one block
 func (cr *ChatRoom) BroadCast() {
 	for {
-		cr.clientsMtx.Lock()
 		select {
 		case msg := <-cr.queue:
+			cr.clientsMtx.Lock()
 			for _, client := range cr.clients {
 				client.Send(msg)
 			}
 			for _, conn := range cr.tempConn {
 				conn.WriteJSON(msg)
 			}
+			cr.clientsMtx.Unlock()
 		case msg := <-cr.modqueue:
+			cr.clientsMtx.Lock()
 			for _, client := range cr.clients {
 				if client.IsMod || client.IsAdmin {
 					client.Send(msg)
 				}
 			}
+			cr.clientsMtx.Unlock()
 		default:
 			time.Sleep(50 * time.Millisecond)
 			// No messages to send
 			// This default block is required so the above case
 			// does not block.
 		}
-		cr.clientsMtx.Unlock()
 	}
 }
 
