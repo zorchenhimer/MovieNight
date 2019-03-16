@@ -83,7 +83,10 @@ func (cl *Client) NewMsg(data common.ClientData) {
 
 			response := commands.RunCommand(cmd, args, cl)
 			if response != "" {
-				err := cl.SendChatData(common.NewChatMessage("", "", ParseEmotes(response), common.MsgCommandResponse))
+				err := cl.SendChatData(common.NewChatMessage("", "",
+					ParseEmotes(response),
+					common.CmdUser,
+					common.MsgCommandResponse))
 				if err != nil {
 					fmt.Printf("Error command results %v\n", err)
 				}
@@ -125,7 +128,8 @@ func (cl *Client) Send(data common.ChatData) error {
 }
 
 func (cl *Client) SendServerMessage(s string) error {
-	err := cl.SendChatData(common.NewChatMessage("", ColorServerMessage, s, common.MsgServer))
+	err := cl.SendChatData(common.NewChatMessage("",
+		ColorServerMessage, s, common.CmdUser, common.MsgServer))
 	if err != nil {
 		return fmt.Errorf("could send server message to %s: %s; Message: %s\n", cl.name, err, s)
 	}

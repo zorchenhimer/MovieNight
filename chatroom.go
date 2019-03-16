@@ -260,7 +260,15 @@ func (cr *ChatRoom) AddMsg(from *Client, isAction, isServer bool, msg string) {
 		t = common.MsgServer
 	}
 
-	data, err := common.NewChatMessage(from.name, from.color, msg, t)()
+	lvl := common.CmdUser
+	if from.IsMod {
+		lvl = common.CmdMod
+	}
+	if from.IsAdmin {
+		lvl = common.CmdAdmin
+	}
+
+	data, err := common.NewChatMessage(from.name, from.color, msg, lvl, t)()
 	if err != nil {
 		fmt.Printf("Error encoding chat message: %s", err)
 		return
@@ -288,7 +296,7 @@ func (cr *ChatRoom) AddCmdMsg(command common.CommandType, args []string) {
 }
 
 func (cr *ChatRoom) AddModNotice(message string) {
-	data, err := common.NewChatMessage("", "", message, common.MsgNotice)()
+	data, err := common.NewChatMessage("", "", message, common.CmdUser, common.MsgNotice)()
 	if err != nil {
 		fmt.Printf("Error encoding notice: %v", err)
 		return

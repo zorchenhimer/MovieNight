@@ -73,6 +73,7 @@ type DataMessage struct {
 	From    string
 	Color   string
 	Message string
+	Level   CommandLevel
 	Type    MessageType
 }
 
@@ -94,19 +95,28 @@ func (dc DataMessage) HTML() string {
 
 	case MsgCommandResponse:
 		return `<div class="command">` + dc.Message + `</div>`
+
 	default:
-		return `<div><span class="name" style="color:` + dc.Color + `">` + dc.From +
+		badge := ""
+		switch dc.Level {
+		case CmdMod:
+			badge = `<img src="/static/img/mod.png" class="badge" />`
+		case CmdAdmin:
+			badge = `<img src="/static/img/admin.png" class="badge" />`
+		}
+		return `<div>` + badge + `<span class="name" style="color:` + dc.Color + `">` + dc.From +
 			`</span><b>:</b> <span class="msg">` + dc.Message + `</span></div>`
 	}
 }
 
-func NewChatMessage(name, color, msg string, msgtype MessageType) NewChatDataFunc {
+func NewChatMessage(name, color, msg string, lvl CommandLevel, msgtype MessageType) NewChatDataFunc {
 	return func() (ChatData, error) {
 		return newChatData(DTChat, DataMessage{
 			From:    name,
 			Color:   color,
 			Message: msg,
 			Type:    msgtype,
+			Level:   lvl,
 		})
 	}
 }
