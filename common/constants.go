@@ -45,9 +45,10 @@ type MessageType int
 
 // Message Types
 const (
-	MsgChat   MessageType = iota // standard chat
-	MsgAction                    // /me command
-	MsgServer                    // server message
-	MsgError                     // something went wrong
-	MsgNotice                    // Like MsgServer, but for mods and admins only.
+	MsgChat            MessageType = iota // standard chat
+	MsgAction                             // /me command
+	MsgServer                             // server message
+	MsgError                              // something went wrong
+	MsgNotice                             // Like MsgServer, but for mods and admins only.
+	MsgCommandResponse                    // The response to a command
 )

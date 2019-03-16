@@ -83,7 +83,7 @@ func (cl *Client) NewMsg(data common.ClientData) {
 
 			response := commands.RunCommand(cmd, args, cl)
 			if response != "" {
-				err := cl.SendServerMessage(ParseEmotes(msg))
+				err := cl.SendChatData(common.NewChatMessage("", "", ParseEmotes(response), common.MsgCommandResponse))
 				if err != nil {
 					fmt.Printf("Error command results %v\n", err)
 				}

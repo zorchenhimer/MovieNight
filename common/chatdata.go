@@ -92,6 +92,8 @@ func (dc DataMessage) HTML() string {
 	case MsgNotice:
 		return `<div class="notice">` + dc.Message + `</div>`
 
+	case MsgCommandResponse:
+		return `<div class="command">` + dc.Message + `</div>`
 	default:
 		return `<div><span class="name" style="color:` + dc.Color + `">` + dc.From +
 			`</span><b>:</b> <span class="msg">` + dc.Message + `</span></div>`

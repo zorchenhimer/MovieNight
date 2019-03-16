@@ -89,6 +89,10 @@ span.svmsg {
     text-align: center;
 }
 
+.command {
+    color: #B1B1B1;
+}
+
 #error {
     color: #f00000;
     padding: 5px;
