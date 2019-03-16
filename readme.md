@@ -13,17 +13,9 @@ online.
 
 To just download and run:
 ```bash
-go get -u -v github.com/zorchenhimer/MovieNight
+$ go get -u -v github.com/zorchenhimer/MovieNight
 
-MovieNight  -l :8089 -k longSecurityKey
-```
-
-To download and compile for development:
-```bash
-git clone github.com/zorchenhimer/MovieNight
-cd MovieNight
-make
-./MovieNight -l :8089 -k longSecurityKey
+$ MovieNight  -l :8089 -k longSecurityKey
 ```
 
 ## Usage
