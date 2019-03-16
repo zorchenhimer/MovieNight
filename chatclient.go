@@ -7,13 +7,12 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/gorilla/websocket"
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
 type Client struct {
 	name          string // Display name
-	conn          *websocket.Conn
+	conn          *chatConnection
 	belongsTo     *ChatRoom
 	color         string
 	IsMod         bool
@@ -118,7 +117,7 @@ func (cl *Client) SendChatData(newData common.NewChatDataFunc) error {
 }
 
 func (cl *Client) Send(data common.ChatData) error {
-	err := cl.conn.WriteJSON(data)
+	err := cl.conn.WriteData(data)
 	if err != nil {
 		return fmt.Errorf("could not send message: %v", err)
 	}

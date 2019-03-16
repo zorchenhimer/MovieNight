@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
@@ -28,7 +27,7 @@ var re_username *regexp.Regexp = regexp.MustCompile(`^[0-9a-zA-Z_-]+$`)
 type ChatRoom struct {
 	clients    map[string]*Client // this needs to be a pointer.
 	clientsMtx sync.Mutex
-	tempConn   map[string]*websocket.Conn
+	tempConn   map[string]*chatConnection
 
 	queue    chan common.ChatData
 	modqueue chan common.ChatData // mod and admin broadcast messages
@@ -46,7 +45,7 @@ func newChatRoom() (*ChatRoom, error) {
 		queue:    make(chan common.ChatData, 100),
 		modqueue: make(chan common.ChatData, 100),
 		clients:  make(map[string]*Client),
-		tempConn: make(map[string]*websocket.Conn),
+		tempConn: make(map[string]*chatConnection),
 	}
 
 	num, err := LoadEmotes()
@@ -97,7 +96,7 @@ func randomColor() string {
 		nums[3], nums[4], nums[5])
 }
 
-func (cr *ChatRoom) JoinTemp(conn *websocket.Conn) (string, error) {
+func (cr *ChatRoom) JoinTemp(conn *chatConnection) (string, error) {
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock()
 

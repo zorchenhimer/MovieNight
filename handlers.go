@@ -90,15 +90,19 @@ var upgrader = websocket.Upgrader{
 func wsHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
-
 	if err != nil {
 		fmt.Println("Error upgrading to websocket:", err)
 		return
 	}
+
+	chatConn := &chatConnection{
+		Conn: conn,
+	}
+
 	go func() {
 		var client *Client
 
-		uid, err := chat.JoinTemp(conn)
+		uid, err := chat.JoinTemp(chatConn)
 		if err != nil {
 			fmt.Printf("[handler] could not do a temp join, %v\n", err)
 			conn.Close()
@@ -108,7 +112,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 		// loop through name since websocket is opened once
 		for client == nil {
 			var data common.ClientData
-			err := conn.ReadJSON(&data)
+			err := chatConn.ReadData(&data)
 			if err != nil {
 				fmt.Printf("[handler] Client closed connection: %s\n", conn.RemoteAddr().String())
 				conn.Close()
