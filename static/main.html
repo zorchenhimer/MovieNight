@@ -1,76 +1,78 @@
 {{define "header"}}
-    {{ if .Chat }}
-    <script type="application/javascript" src="/static/js/wasm_exec.js"></script>
-    <script type="application/javascript" src="/static/js/chat.js"></script>
-    <script>
-        maxMessageCount = {{ .MessageHistoryCount }}
-    </script>
-    <style>
-        .root {
-            display: grid;
-        }
-    </style>
-    {{ end }}
+{{ if .Chat }}
+<script type="application/javascript" src="/static/js/wasm_exec.js"></script>
+<script type="application/javascript" src="/static/js/chat.js"></script>
+<script>
+    maxMessageCount = {{ .MessageHistoryCount }}
+</script>
+<style>
+    .root {
+        display: grid;
+    }
+</style>
+{{ end }}
 
-    {{ if .Video }}
-        <script type="application/javascript" src="/static/js/flv.min.js"></script>
-        <script type="application/javascript" src="/static/js/video.js"></script>
-        {{ if not .Chat }}
-            <style>
-                #videoElement {
-                    height: 99vh;
-                }
-            </style>
-        {{ end }}
-    {{ end }}
+{{ if .Video }}
+<script type="application/javascript" src="/static/js/flv.min.js"></script>
+<script type="application/javascript" src="/static/js/video.js"></script>
+{{ if not .Chat }}
+<style>
+    #videoElement {
+        height: 99vh;
+    }
+</style>
+{{ end }}
+{{ end }}
 
-    {{ if and .Video .Chat }}
-    <style>
-        .root {
-            grid-template-columns: 5fr 1fr;
-        }
-    </style>
-    {{ end }}
+{{ if and .Video .Chat }}
+<style>
+    .root {
+        grid-template-columns: 5fr 1fr;
+    }
+</style>
+{{ end }}
 {{end}}
 
 {{define "body"}}
-        {{ if .Video }}
-            <video id="videoElement" controls autoplay x5-video-player-type="h5" x5-video-player-fullscreen="true"
-                playsinline webkit-playsinline>
-                Your browser is too old and doesn't support HTML5 video.
-            </video>
-        {{ end }}
+{{ if .Video }}
+<video id="videoElement" controls autoplay x5-video-player-type="h5" x5-video-player-fullscreen="true" playsinline
+    webkit-playsinline>
+    Your browser is too old and doesn't support HTML5 video.
+</video>
+{{ end }}
 
-        {{ if .Chat }}
-        <div id="chatwindow">
-            <div id="chat" style="display: none;">
-                <input id="hiddenColorPicker" type="color" hidden/>
-                <div id="notifiyBox"></div>
-                <div id="hidden">
-                    <div id="chatButtons">
-                        <button class="button pretty-button" onclick="auth();">Auth</button>
-                        <button class="button pretty-button" onclick="help();">Help</button>
-                        <button class="button pretty-button" onclick="$('#hiddenColorPicker').trigger('click');">Color</button>
-                        {{ if .Video }}
-                            <button class="button pretty-button" onclick="initPlayer();">Reload Player</button>
-                        {{ end }}
-                    </div>
-                    <hr/>
-                    <a id="playing" target="_blank"></a>
-                </div>
-                <div id="messages" class="scrollbar"></div>
-                <div id="msgbox">
-                    <div id="suggestions"></div>
-                    <textarea id="msg"></textarea>
-                </div>
-                <button id="send" class="button" onclick="sendChat();">Send</button>
-                <div><!-- This is an empty div so there can be an empty space below the send button --></div>
+{{ if .Chat }}
+<div id="chatwindow">
+    <div id="chat" style="display: none;">
+        <input id="hiddenColorPicker" type="color" hidden />
+        <div id="notifiyBox"></div>
+        <div id="hidden">
+            <div id="chatButtons">
+                <button class="button pretty-button" onclick="auth();">Auth</button>
+                <button class="button pretty-button" onclick="help();">Help</button>
+                <button class="button pretty-button" onclick="$('#hiddenColorPicker').trigger('click');">Color</button>
+                {{ if .Video }}
+                <button class="button pretty-button" onclick="initPlayer();">Reload Player</button>
+                {{ end }}
             </div>
-            <div id="joinbox">
-                <p style="color:#e5e0e5">Please enter your name to Join the chat</P>
-                <input id="name" maxlength="36">
-                <button id="join" class="button pretty-button" onclick="join();">Join</button>
-            </div>
+            <hr />
+            <a id="playing" target="_blank"></a>
         </div>
-        {{ end }}
+        <div id="messages" class="scrollbar"></div>
+        <div id="msgbox">
+            <div id="suggestions"></div>
+            <textarea id="msg"></textarea>
+        </div>
+        <button id="send" class="button" onclick="sendChat();">Send</button>
+        <div>
+            <!-- This is an empty div so there can be an empty space below the send button -->
+        </div>
+    </div>
+    <div id="joinbox">
+        <p style="color:#e5e0e5">Please enter your name to Join the chat</P>
+        <input id="name" maxlength="36">
+        <button id="join" class="button pretty-button" onclick="join();">Join</button>
+    </div>
+</div>
+{{ end }}
 {{end}}
