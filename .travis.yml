@@ -1,9 +1,7 @@
 language: go
 
 before_install:
-    - go get golang.org/x/tools/cmd/goimports
-    - go get github.com/dennwc/dom/js
-    - go get -u -v ./...
+    - make get
 
 go:
     - 1.12.x

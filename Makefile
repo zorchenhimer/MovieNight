@@ -1,4 +1,4 @@
-.PHONY: sync fmt vet
+.PHONY: fmt vet get clean
 
 all: fmt vet MovieNight MovieNight.exe static/main.wasm
 
@@ -17,12 +17,11 @@ clean:
 fmt:
 	goimports -w .
 
+get:
+	go get -u -v ./...
+	GOOS=js GOARCH=wasm go get -u -v ./...
+	go get golang.org/x/tools/cmd/goimports
+
 vet:
 	go vet ./...
 	GOOS=js GOARCH=wasm go vet ./...
-
-sync:
-	scp -i /c/movienight/movienight-deploy.key -r . zorchenhimer@movienight.zorchenhimer.com:/home/zorchenhimer/movienight
-
-run: all
-	./MovieNight.exe
