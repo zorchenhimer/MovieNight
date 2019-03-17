@@ -1,6 +1,6 @@
 # MovieNight stream server
 
-![Build status](https://api.travis-ci.org/zorchenhimer/MovieNight.svg?branch=master)
+[![Build status](https://api.travis-ci.org/zorchenhimer/MovieNight.svg?branch=master)](https://travis-ci.org/zorchenhimer/MovieNight)
 
 This is a single-instance streaming server with chat.  Originally written to
 replace Rabbit as the platform for watching movies with a group of people
