@@ -34,6 +34,18 @@ Now you can view the stream at
 http://your.domain.host:8089/
 ```
 
+There is a video only version at
+
+```text
+http://your.domain.host:8089/video
+```
+
+and a chat only version at
+
+```text
+http://your.domain.host:8089/chat
+```
+
 The default listen port is `:8089`.  It can be changed by providing a new port
 at startup:
 
