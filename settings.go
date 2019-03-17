@@ -18,6 +18,7 @@ type Settings struct {
 	filename        string
 	cmdLineKey      string // stream key from the command line
 	MaxMessageCount int
+	TitleLength     int // maximum length of the title that can be set with the /playing
 	AdminPassword   string
 	Bans            []BanInfo
 	StreamKey       string
@@ -38,6 +39,10 @@ func init() {
 	}
 	if len(settings.StreamKey) == 0 {
 		panic("Missing stream key is settings.json")
+	}
+
+	if settings.TitleLength <= 0 {
+		settings.TitleLength = 50
 	}
 
 	// Save admin password to file

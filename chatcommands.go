@@ -127,6 +127,10 @@ var commands = &CommandControl{
 				title = strings.TrimSpace(title)
 				link = strings.TrimSpace(link)
 
+				if len(title) > settings.TitleLength {
+					return fmt.Sprintf("Title too long (%d/%d)", len(title), settings.TitleLength)
+				}
+
 				// Send a notice to the mods and admins
 				if len(link) == 0 {
 					cl.belongsTo.AddModNotice(cl.name + " set the playing title to '" + title + "' with no link")
