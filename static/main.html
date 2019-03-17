@@ -1,74 +1,75 @@
 {{define "header"}}
     {{ if .Chat }}
+    <script type="application/javascript" src="/static/js/wasm_exec.js"></script>
+    <script type="application/javascript" src="/static/js/chat.js"></script>
     <script>
         maxMessageCount = {{ .MessageHistoryCount }}
-        window.onload = chatOnload;
     </script>
-    <!-- If it is only the chat window, the the chat needs to be fullscreen -->
-    {{ if not .Video }}
     <style>
-        #chat,
-        #joinbox {
-            grid-column: 1 / 3;
+        .root {
+            display: grid;
         }
     </style>
-    {{ end }}
     {{ end }}
 
     {{ if .Video }}
-    {{ if not .Chat }}
-    <style>
-        #video {
-            width: 100%;
-            height: 100%;
-            grid-column: 1 / 3;
-        }
+        <script type="application/javascript" src="/static/js/flv.min.js"></script>
+        <script type="application/javascript" src="/static/js/video.js"></script>
+        {{ if not .Chat }}
+            <style>
+                #videoElement {
+                    height: 99vh;
+                }
+            </style>
+        {{ end }}
+    {{ end }}
 
+    {{ if and .Video .Chat }}
+    <style>
         .root {
-            grid-template-columns: 1fr;
+            grid-template-columns: 5fr 1fr;
         }
     </style>
-    {{ end }}
     {{ end }}
 {{end}}
 
 {{define "body"}}
         {{ if .Video }}
-        <div id="video">
             <video id="videoElement" controls autoplay x5-video-player-type="h5" x5-video-player-fullscreen="true"
                 playsinline webkit-playsinline>
                 Your browser is too old and doesn't support HTML5 video.
-                <script>initPlayer();</script>
             </video>
-        </div>
         {{ end }}
 
         {{ if .Chat }}
-        <div>
-            <div id="hidden" style="display: none;">
-                <div id="infoBox">
-                    <div id="info">
-                        <span id="playing"></span>
-                        <a href="" target="_blank" id="playinglink"></a>
-                    </div>
-                </div>
-                <div id="chatButtons">
-                    <button class="button pretty-button" onclick="auth();">Auth</button>
-                    <button class="button pretty-button" onclick="help();">Help</button>
-                    <button class="button pretty-button" onclick="initPlayer();">Reload Player</button>
-                </div>
-            </div>
-            <div id="error"></div>
+        <div id="chatwindow">
             <div id="chat" style="display: none;">
+                <input id="hiddenColorPicker" type="color" hidden/>
+                <div id="notifiyBox"></div>
+                <div id="hidden">
+                    <div id="chatButtons">
+                        <button class="button pretty-button" onclick="auth();">Auth</button>
+                        <button class="button pretty-button" onclick="help();">Help</button>
+                        <button class="button pretty-button" onclick="$('#hiddenColorPicker').trigger('click');">Color</button>
+                        {{ if .Video }}
+                            <button class="button pretty-button" onclick="initPlayer();">Reload Player</button>
+                        {{ end }}
+                    </div>
+                    <hr/>
+                    <a id="playing" target="_blank"></a>
+                </div>
                 <div id="messages" class="scrollbar"></div>
-                <div id="suggestions"></div>
-                <textarea id="msg"></textarea>
+                <div id="msgbox">
+                    <div id="suggestions"></div>
+                    <textarea id="msg"></textarea>
+                </div>
                 <button id="send" class="button" onclick="sendChat();">Send</button>
+                <div><!-- This is an empty div so there can be an empty space below the send button --></div>
             </div>
             <div id="joinbox">
                 <p style="color:#e5e0e5">Please enter your name to Join the chat</P>
                 <input id="name" maxlength="36">
-                <button id="join" onclick="join();">Join</button>
+                <button id="join" class="button pretty-button" onclick="join();">Join</button>
             </div>
         </div>
         {{ end }}

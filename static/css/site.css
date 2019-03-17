@@ -1,6 +1,7 @@
 :root {
     --var-border: 1px solid #606060;
     --var-message-color: #f4f4f4;
+    --var-contrast-color: #1bf7ec;
 }
 
 html {
@@ -37,10 +38,12 @@ span.svmsg {
 }
 
 .root {
-    display: grid;
-    grid-template-columns: 5fr 1fr;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
+}
+
+.pretty-button {
+    padding: 5px 10px;
 }
 
 .button {
@@ -49,11 +52,7 @@ span.svmsg {
     font-size: 16px;
     font-weight: bold;
     border: none;
-}
-
-.pretty-button {
-    padding: 5px 10px;
-    border-radius: 3px;
+    border-radius: 5px;
 }
 
 .button:hover {
@@ -98,44 +97,51 @@ span.svmsg {
     color: #B1B1B1;
 }
 
-#video {
-    display: grid;
-    grid-template-rows: auto 1fr;
-}
-
 #videoElement {
-    background: #000000;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
     width: 100%;
-    height: calc(100vh - 9em);
 }
 
-#error {
-    color: #f00000;
-    padding: 5px;
-    font-weight: bold;
+#chatwindow {
+    position: relative;
+    height: 100vh;
 }
 
-#infoBox {
-    display: grid;
-    grid-template-columns: 1fr 200px;
-    padding-left: 10px;
-    vertical-align: center;
-    height: 3.5em;
+#hidden {
+    display: none;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    margin: 0px 5px;
+    padding: 3px;
+    background: #393940;
 }
 
-#info {
-    display: grid;
-    grid-template-rows: auto auto;
-    color: #8b6a96;
+#hidden:hover,
+#notifiyBox:hover~#hidden {
+    display: unset;
+}
+
+#notifiyBox {
+    color: var(--var-contrast-color);
+    padding: 10px;
     font-weight: bold;
 }
 
 #playing {
+    color: var(--var-contrast-color);
     font-size: x-Large;
 }
 
 #chatButtons {
-    margin: 5px 10px;
+    margin: 5px;
+}
+
+#chatButtons button {
+    margin: 5px 0px;
 }
 
 #joinbox {
@@ -144,13 +150,14 @@ span.svmsg {
 
 #chat {
     display: grid;
-    grid-template-rows: 1fr 6em 2em;
-    margin: 5px;
+    grid-template-rows: 2.5em 1fr 6em 2.5em 1em;
+    grid-gap: 10px;
+    margin: 0px 5px;
+    height: 100%;
 }
 
 #messages {
     min-height: 15em;
-    height: calc(100vh - 9em);
     color: var(--var-message-color);
     opacity: 0%;
     overflow-y: scroll;
@@ -162,14 +169,9 @@ span.svmsg {
     word-wrap: break-word;
 }
 
-#msg {
-    background: transparent;
-    border: var(--var-border);
-    border-radius: 5px;
-    margin: 5px 0px;
-    padding: 5px;
-    color: var(--var-message-color);
-    resize: none;
+#msgbox {
+    position: relative;
+    display: grid;
 }
 
 #suggestions {
@@ -180,12 +182,21 @@ span.svmsg {
     color: var(--var-message-color);
 }
 
+#msg {
+    background: transparent;
+    border: var(--var-border);
+    border-radius: 5px;
+    padding: 5px;
+    color: var(--var-message-color);
+    resize: none;
+}
+
 #suggestions div {
     padding: 5px;
 }
 
 #suggestions div.selectedName {
-    background: red;
+    color: var(--var-contrast-color);
 }
 
 #helpbody {
