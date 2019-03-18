@@ -27,6 +27,7 @@ var (
 	CNKick    ChatCommandNames = []string{"kick"}
 	CNBan     ChatCommandNames = []string{"ban"}
 	CNUnban   ChatCommandNames = []string{"unban"}
+	CNPurge   ChatCommandNames = []string{"purge"}
 	// Admin Commands
 	CNMod          ChatCommandNames = []string{"mod"}
 	CNReloadPlayer ChatCommandNames = []string{"reloadplayer"}
@@ -36,7 +37,7 @@ var (
 
 var ChatCommands = []ChatCommandNames{
 	CNMe, CNHelp, CNCount, CNColor, CNWhoAmI, CNAuth, CNUsers,
-	CNSv, CNPlaying, CNUnmod, CNKick, CNBan, CNUnban,
+	CNSv, CNPlaying, CNUnmod, CNKick, CNBan, CNUnban, CNPurge,
 	CNMod, CNReloadPlayer, CNReloadEmotes, CNModpass,
 }
 

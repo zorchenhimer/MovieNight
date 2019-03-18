@@ -207,7 +207,8 @@ func recieve(v []js.Value) {
 		case common.CmdRefreshPlayer:
 			js.Call("initPlayer", nil)
 		case common.CmdPurgeChat:
-			fmt.Println("//TODO: chat purge command received.")
+			js.Call("purgeChat", nil)
+			js.Call("appendMessages", data.HTML())
 		case common.CmdHelp:
 			url := "/help"
 			if d.Arguments != nil && len(d.Arguments) > 0 {

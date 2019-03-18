@@ -127,7 +127,12 @@ type DataCommand struct {
 }
 
 func (de DataCommand) HTML() string {
-	return ""
+	switch de.Command {
+	case CmdPurgeChat:
+		return `<div class="notice">Chat has been purged by a moderator.</div>`
+	default:
+		return ""
+	}
 }
 
 func NewChatCommand(command CommandType, args []string) NewChatDataFunc {

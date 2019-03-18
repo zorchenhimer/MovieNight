@@ -49,6 +49,10 @@ function appendMessages(msg) {
     $("#messages").append(msg).scrollTop(9e6);
 }
 
+function purgeChat() {
+    $('#messages').empty()
+}
+
 inChat = false
 function openChat() {
     console.log("chat opening");

@@ -202,6 +202,15 @@ var commands = &CommandControl{
 				return ""
 			},
 		},
+
+		common.CNPurge.String(): Command{
+			HelpText: "Purge the chat.",
+			Function: func(cl *Client, args []string) string {
+				fmt.Println("[purge] clearing chat")
+				cl.belongsTo.AddCmdMsg(common.CmdPurgeChat, nil)
+				return ""
+			},
+		},
 	},
 
 	admin: map[string]Command{
