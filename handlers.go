@@ -47,7 +47,7 @@ func (self writeFlusher) Flush() error {
 func wsStaticFiles(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/favicon.ico":
-		http.ServeFile(w, r, "./static/favicon.png")
+		http.ServeFile(w, r, "./favicon.png")
 		return
 	case "/justchat":
 		http.ServeFile(w, r, "./static/justchat.html")
