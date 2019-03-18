@@ -56,8 +56,8 @@
                 {{ end }}
             </div>
             <hr />
-            <a id="playing" target="_blank"></a>
         </div>
+        <a id="playing" target="_blank"></a>
         <div id="messages" class="scrollbar"></div>
         <div id="msgbox">
             <div id="suggestions"></div>
@@ -69,9 +69,11 @@
         </div>
     </div>
     <div id="joinbox">
-        <p style="color:#e5e0e5">Please enter your name to Join the chat</P>
-        <input id="name" maxlength="36">
-        <button id="join" class="button pretty-button" onclick="join();">Join</button>
+        <div style="color: #e5e0e5; text-align: center;">Please enter your name<br />to join the chat</div>
+        <div>
+            <input id="name" maxlength="36">
+            <button id="join" class="button pretty-button" onclick="join();">Join</button>
+        </div>
     </div>
 </div>
 {{ end }}
