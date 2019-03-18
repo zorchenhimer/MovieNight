@@ -28,6 +28,7 @@ type Settings struct {
 	AdminPassword   string
 	StreamKey       string
 	ListenAddress   string
+	ApprovedEmotes  []EmoteSet // list of channels that have been approved for emote use.  Global emotes are always "approved".
 	Bans            []BanInfo
 	LogLevel        common.LogLevel
 	LogFile         string
