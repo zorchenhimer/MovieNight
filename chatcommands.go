@@ -274,7 +274,7 @@ var commands = &CommandControl{
 			HelpText: "Reload the emotes on the server.",
 			Function: func(cl *Client, args []string) string {
 				cl.SendServerMessage("Reloading emotes")
-				num, err := LoadEmotes()
+				num, err := common.LoadEmotes()
 				if err != nil {
 					fmt.Printf("Unbale to reload emotes: %s\n", err)
 					return fmt.Sprintf("ERROR: %s", err)
@@ -401,7 +401,7 @@ var cmdColor = Command{
 		}
 
 		if len(args) == 0 {
-			cl.color = randomColor()
+			cl.color = common.RandomColor()
 			return "Random color chosen: " + cl.color
 		}
 

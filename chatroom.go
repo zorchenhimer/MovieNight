@@ -6,9 +6,6 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"math/rand"
-	"path/filepath"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -21,8 +18,6 @@ const (
 	UsernameMinLength  int    = 3
 	ColorServerMessage string = "#ea6260"
 )
-
-var re_username *regexp.Regexp = regexp.MustCompile(`^[0-9a-zA-Z_-]+$`)
 
 type ChatRoom struct {
 	clients    map[string]*Client // this needs to be a pointer. key is suid.
@@ -48,7 +43,7 @@ func newChatRoom() (*ChatRoom, error) {
 		tempConn: make(map[string]*chatConnection),
 	}
 
-	num, err := LoadEmotes()
+	num, err := common.LoadEmotes()
 	if err != nil {
 		return nil, fmt.Errorf("error loading emotes: %s", err)
 	}
@@ -57,43 +52,6 @@ func newChatRoom() (*ChatRoom, error) {
 	//the "heartbeat" for broadcasting messages
 	go cr.BroadCast()
 	return cr, nil
-}
-
-func LoadEmotes() (int, error) {
-	newEmotes := map[string]string{}
-
-	emotePNGs, err := filepath.Glob("./static/emotes/*.png")
-	if err != nil {
-		return 0, fmt.Errorf("unable to glob emote directory: %s\n", err)
-	}
-
-	emoteGIFs, err := filepath.Glob("./static/emotes/*.gif")
-	if err != nil {
-		return 0, fmt.Errorf("unable to glob emote directory: %s\n", err)
-	}
-	globbed_files := []string(emotePNGs)
-	globbed_files = append(globbed_files, emoteGIFs...)
-
-	fmt.Println("Loading emotes...")
-	for _, file := range globbed_files {
-		file = filepath.Base(file)
-		key := file[0 : len(file)-4]
-		newEmotes[key] = file
-		fmt.Printf("%s ", key)
-	}
-	common.Emotes = newEmotes
-	fmt.Println("")
-	return len(common.Emotes), nil
-}
-
-func randomColor() string {
-	nums := []int32{}
-	for i := 0; i < 6; i++ {
-		nums = append(nums, rand.Int31n(15))
-	}
-	return fmt.Sprintf("#%X%X%X%X%X%X",
-		nums[0], nums[1], nums[2],
-		nums[3], nums[4], nums[5])
 }
 
 func (cr *ChatRoom) JoinTemp(conn *chatConnection) (string, error) {
@@ -129,7 +87,7 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 		return nil, errors.New("connection is missing from temp connections")
 	}
 
-	if len(name) < UsernameMinLength || len(name) > UsernameMaxLength || !re_username.MatchString(name) {
+	if len(name) < UsernameMinLength || len(name) > UsernameMaxLength || !common.IsValidName(name) {
 		return nil, UserFormatError{Name: name}
 	}
 
@@ -144,7 +102,7 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 		name:      name,
 		conn:      conn,
 		belongsTo: cr,
-		color:     randomColor(),
+		color:     common.RandomColor(),
 	}
 
 	host := client.Host()
@@ -500,7 +458,7 @@ func (cr *ChatRoom) changeName(oldName, newName string, forced bool) error {
 	cr.clientsMtx.Lock()
 	defer cr.clientsMtx.Unlock()
 
-	if !re_username.MatchString(newName) {
+	if !common.IsValidName(newName) {
 		return fmt.Errorf("%q nick is not a valid name", newName)
 	}
 
