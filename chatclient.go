@@ -18,32 +18,7 @@ type Client struct {
 	IsMod         bool
 	IsAdmin       bool
 	IsColorForced bool
-}
-
-var emotes map[string]string
-
-func ParseEmotesArray(words []string) []string {
-	newWords := []string{}
-	for _, word := range words {
-		word = strings.Trim(word, "[]")
-
-		found := false
-		for key, val := range emotes {
-			if key == word {
-				newWords = append(newWords, fmt.Sprintf("<img src=\"/emotes/%s\" title=\"%s\" />", val, key))
-				found = true
-			}
-		}
-		if !found {
-			newWords = append(newWords, word)
-		}
-	}
-	return newWords
-}
-
-func ParseEmotes(msg string) string {
-	words := ParseEmotesArray(strings.Split(msg, " "))
-	return strings.Join(words, " ")
+	IsNameForced  bool
 }
 
 //Client has a new message to broadcast
@@ -84,7 +59,7 @@ func (cl *Client) NewMsg(data common.ClientData) {
 			response := commands.RunCommand(cmd, args, cl)
 			if response != "" {
 				err := cl.SendChatData(common.NewChatMessage("", "",
-					ParseEmotes(response),
+					common.ParseEmotes(response),
 					common.CmdUser,
 					common.MsgCommandResponse))
 				if err != nil {
@@ -156,13 +131,13 @@ func (cl *Client) Exit() {
 
 // Outgoing messages
 func (cl *Client) Message(msg string) {
-	msg = ParseEmotes(msg)
+	msg = common.ParseEmotes(msg)
 	cl.belongsTo.AddMsg(cl, false, false, msg)
 }
 
 // Outgoing /me command
 func (cl *Client) Me(msg string) {
-	msg = ParseEmotes(msg)
+	msg = common.ParseEmotes(msg)
 	cl.belongsTo.AddMsg(cl, true, false, msg)
 }
 

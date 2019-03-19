@@ -187,10 +187,8 @@ func recieve(v []js.Value) {
 		}
 	case common.DTEvent:
 		d := data.(common.DataEvent)
-		if d.Event == common.EvJoin ||
-			d.Event == common.EvBan ||
-			d.Event == common.EvKick ||
-			d.Event == common.EvLeave {
+		// A server message is the only event that doesn't deal with names.
+		if d.Event != common.EvServerMessage {
 			websocketSend("", common.CdUsers)
 		}
 		// on join or leave, update list of possible user names

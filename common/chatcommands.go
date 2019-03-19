@@ -20,6 +20,7 @@ var (
 	CNWhoAmI ChatCommandNames = []string{"w", "whoami"}
 	CNAuth   ChatCommandNames = []string{"auth"}
 	CNUsers  ChatCommandNames = []string{"users"}
+	CNNick   ChatCommandNames = []string{"nick", "name"}
 	// Mod Commands
 	CNSv      ChatCommandNames = []string{"sv"}
 	CNPlaying ChatCommandNames = []string{"playing"}
@@ -38,7 +39,7 @@ var (
 var ChatCommands = []ChatCommandNames{
 	CNMe, CNHelp, CNCount, CNColor, CNWhoAmI, CNAuth, CNUsers,
 	CNSv, CNPlaying, CNUnmod, CNKick, CNBan, CNUnban, CNPurge,
-	CNMod, CNReloadPlayer, CNReloadEmotes, CNModpass,
+	CNMod, CNReloadPlayer, CNReloadEmotes, CNModpass, CNNick,
 }
 
 func GetFullChatCommand(c string) string {

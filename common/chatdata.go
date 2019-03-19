@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type NewChatDataFunc func() (ChatData, error)
@@ -164,6 +165,26 @@ func (de DataEvent) HTML() string {
 	case EvJoin:
 		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
 			de.User + `</span> has joined the chat.</div>`
+	case EvNameChange:
+		names := strings.Split(de.User, ":")
+		if len(names) != 2 {
+			return `<div class="event">Somebody changed their name, but IDK who ` +
+				ParseEmotes("Jebaited") + `.</div>`
+		}
+
+		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
+			names[0] + `</span> has changed their name to <span class="name" style="color:` +
+			de.Color + `">` + names[1] + `</span>.</div>`
+	case EvNameChangeForced:
+		names := strings.Split(de.User, ":")
+		if len(names) != 2 {
+			return `<div class="event">An admin changed somebody's name, but IDK who ` +
+				ParseEmotes("Jebaited") + `.</div>`
+		}
+
+		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
+			names[0] + `</span> has had their name changed to <span class="name" style="color:` +
+			de.Color + `">` + names[1] + `</span> by an admin.</div>`
 	}
 	return ""
 }

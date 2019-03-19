@@ -48,6 +48,8 @@ const (
 	EvKick
 	EvBan
 	EvServerMessage
+	EvNameChange
+	EvNameChangeForced
 )
 
 type MessageType int

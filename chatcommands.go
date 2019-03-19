@@ -87,6 +87,39 @@ var commands = &CommandControl{
 				return strings.Join(names, " ")
 			},
 		},
+
+		common.CNNick.String(): Command{
+			HelpText: "Change display name",
+			Function: func(cl *Client, args []string) string {
+				if len(args) == 0 {
+					return "Missing name to change to."
+				}
+
+				newName := args[0]
+				oldName := cl.name
+				forced := false
+				if len(args) == 2 {
+					if !cl.IsAdmin {
+						return "Only admins can do that PeepoSus"
+					}
+
+					oldName = args[0]
+					newName = args[1]
+					forced = true
+				}
+
+				if len(args) == 1 && cl.IsNameForced && !cl.IsAdmin {
+					return "You cannot change your name once it has been changed by an admin."
+				}
+
+				err := cl.belongsTo.changeName(oldName, newName, forced)
+				if err != nil {
+					return "Unable to change name: " + err.Error()
+				}
+
+				return ""
+			},
+		},
 	},
 
 	mod: map[string]Command{
@@ -96,7 +129,7 @@ var commands = &CommandControl{
 				if len(args) == 0 {
 					return "Missing message"
 				}
-				svmsg := formatLinks(strings.Join(ParseEmotesArray(args), " "))
+				svmsg := formatLinks(strings.Join(common.ParseEmotesArray(args), " "))
 				cl.belongsTo.AddModNotice("Server message from " + cl.name)
 				cl.belongsTo.AddMsg(cl, false, true, svmsg)
 				return ""

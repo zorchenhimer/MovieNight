@@ -25,7 +25,7 @@ const (
 var re_username *regexp.Regexp = regexp.MustCompile(`^[0-9a-zA-Z_-]+$`)
 
 type ChatRoom struct {
-	clients    map[string]*Client // this needs to be a pointer.
+	clients    map[string]*Client // this needs to be a pointer. key is suid.
 	clientsMtx sync.Mutex
 	tempConn   map[string]*chatConnection
 
@@ -81,9 +81,9 @@ func LoadEmotes() (int, error) {
 		newEmotes[key] = file
 		fmt.Printf("%s ", key)
 	}
-	emotes = newEmotes
+	common.Emotes = newEmotes
 	fmt.Println("")
-	return len(emotes), nil
+	return len(common.Emotes), nil
 }
 
 func randomColor() string {
@@ -133,8 +133,11 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 		return nil, UserFormatError{Name: name}
 	}
 
-	if _, exists := cr.clients[strings.ToLower(name)]; exists {
-		return nil, UserTakenError{Name: name}
+	nameLower := strings.ToLower(name)
+	for _, client := range cr.clients {
+		if strings.ToLower(client.name) == nameLower {
+			return nil, UserTakenError{Name: name}
+		}
 	}
 
 	client := &Client{
@@ -150,7 +153,7 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 		return nil, newBannedUserError(host, name, names)
 	}
 
-	cr.clients[strings.ToLower(name)] = client
+	cr.clients[uid] = client
 	delete(cr.tempConn, uid)
 
 	fmt.Printf("[join] %s %s\n", host, name)
@@ -429,9 +432,12 @@ func (cr *ChatRoom) delClient(name string) {
 }
 
 func (cr *ChatRoom) getClient(name string) (*Client, error) {
-	if client, ok := cr.clients[strings.ToLower(name)]; ok {
-		return client, nil
+	for _, client := range cr.clients {
+		if client.name == name {
+			return client, nil
+		}
 	}
+
 	return nil, fmt.Errorf("client with that name not found")
 }
 
@@ -488,4 +494,44 @@ func existsInSlice(slice []string, needle string) bool {
 		}
 	}
 	return false
+}
+
+func (cr *ChatRoom) changeName(oldName, newName string, forced bool) error {
+	cr.clientsMtx.Lock()
+	defer cr.clientsMtx.Unlock()
+
+	if !re_username.MatchString(newName) {
+		return fmt.Errorf("%q nick is not a valid name", newName)
+	}
+
+	newLower := strings.ToLower(newName)
+	oldLower := strings.ToLower(oldName)
+
+	var currentClient *Client
+	for _, client := range cr.clients {
+		if strings.ToLower(client.name) == newLower {
+			if strings.ToLower(client.name) != oldLower {
+				return fmt.Errorf("%q is already taken.", newName)
+			}
+		}
+
+		if strings.ToLower(client.name) == oldLower {
+			currentClient = client
+		}
+	}
+
+	if currentClient != nil {
+		currentClient.name = newName
+		fmt.Printf("%q -> %q\n", oldName, newName)
+
+		if forced {
+			cr.AddEventMsg(common.EvNameChangeForced, oldName+":"+newName, currentClient.color)
+			currentClient.IsNameForced = true
+		} else {
+			cr.AddEventMsg(common.EvNameChange, oldName+":"+newName, currentClient.color)
+		}
+		return nil
+	}
+
+	return fmt.Errorf("Client not found with name %q", oldName)
 }
