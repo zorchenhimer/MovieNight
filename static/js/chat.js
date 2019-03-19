@@ -98,9 +98,7 @@ function sendChat() {
 
 function updateSuggestionCss(m) {
     if ($("#suggestions").children().length > 0) {
-        div = $("#suggestions")[0]
-        $(div).css("bottom", `calc(${$("#chat").css("height")} - ${$("#messages").css("height")} - 10px)`)
-        $(div).css("right", `calc(${$("#chat").css("width")} - ${$(div).css("width")} + 5px)`)
+        $("#suggestions").css("bottom", $("#msg").outerHeight(true) - 1 + "px");
     }
 }
 
@@ -173,5 +171,7 @@ window.addEventListener("load", () => {
     setupWebSocket();
     startGo();
     setupEvents();
+
+    // Make sure name is focused on start
     $("#name").focus();
 });

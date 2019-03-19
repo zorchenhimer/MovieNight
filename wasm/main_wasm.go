@@ -55,12 +55,18 @@ func processMessageKey(this js.Value, v []js.Value) interface{} {
 	case keyTab, keyEnter:
 		msg := js.Get("msg")
 		val := msg.Get("value").String()
-		newval := val[:startIdx] + currentName
+		newval := val[:startIdx]
+
+		if i := strings.LastIndex(newval, "@"); i != -1 {
+			newval = newval[:i+1] + currentName
+		}
+
+		endVal := val[startIdx:]
 		if len(val) == startIdx || val[startIdx:][0] != ' ' {
 			// insert a space into val so selection indexing can be one line
-			val = val[:startIdx] + " " + val[startIdx:]
+			endVal = " " + endVal
 		}
-		msg.Set("value", newval+val[startIdx:])
+		msg.Set("value", newval+endVal)
 		msg.Set("selectionStart", len(newval)+1)
 		msg.Set("selectionEnd", len(newval)+1)
 
@@ -106,6 +112,7 @@ func processMessage(v []js.Value) {
 				}
 
 				if len(filteredNames) > 0 {
+					currentName = ""
 					break
 				}
 
