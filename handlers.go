@@ -63,6 +63,11 @@ func wsStaticFiles(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./static/"+goodPath)
 }
 
+func wsWasmFile(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-cache, must-revalidate")
+	http.ServeFile(w, r, "./static/main.wasm")
+}
+
 func wsImages(w http.ResponseWriter, r *http.Request) {
 	base := filepath.Base(r.URL.Path)
 	fmt.Println("[img] ", base)

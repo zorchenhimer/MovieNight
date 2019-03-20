@@ -31,7 +31,7 @@ func main() {
 	http.HandleFunc("/static/js/", wsStaticFiles)
 	http.HandleFunc("/static/css/", wsStaticFiles)
 	http.HandleFunc("/static/img/", wsImages)
-	http.HandleFunc("/static/main.wasm", wsStaticFiles)
+	http.HandleFunc("/static/main.wasm", wsWasmFile)
 	http.HandleFunc("/emotes/", wsEmotes)
 	http.HandleFunc("/favicon.ico", wsStaticFiles)
 	http.HandleFunc("/chat", handleIndexTemplate)
