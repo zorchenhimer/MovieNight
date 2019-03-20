@@ -3,6 +3,8 @@
     --var-border-radius: 5px;
     --var-message-color: #f4f4f4;
     --var-contrast-color: #1bf7ec;
+    --var-max-height: 98vh;
+    --var-max-width: 98vw;
 }
 
 html {
@@ -16,7 +18,7 @@ dt {
 }
 
 body {
-    height: 100vh;
+    height: var(--var-max-height);
     margin: 0px;
 }
 
@@ -39,8 +41,11 @@ span.svmsg {
 }
 
 .root {
-    width: 100vw;
-    height: 100vh;
+    max-width: var(--var-max-width);
+    max-height: var(--var-max-height);
+    height: var(--var-max-height);
+    width: var(--var-max-width);
+    margin: 0px 1vw;
 }
 
 .pretty-button {
@@ -106,8 +111,11 @@ span.svmsg {
 }
 
 #chatwindow {
+    display: grid;
+    grid-template-rows: auto 1fr;
     position: relative;
-    height: 100vh;
+    padding-top: 1vh;
+    max-height: calc(var(--var-max-height) - 1vh);
 }
 
 #hidden {
@@ -129,7 +137,6 @@ span.svmsg {
 #optionBox,
 #notifyBox {
     color: var(--var-contrast-color);
-    padding: 10px;
     font-weight: bold;
     font-size: 12px;
     text-align: center;

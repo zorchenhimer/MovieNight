@@ -104,8 +104,6 @@ function updateSuggestionCss(m) {
 
 function setNotifyBox(msg = "") {
     $("#notifyBox").html(msg);
-    $("#notifyBox").hide();
-    $("#notifyBox").show();
 }
 
 // Button Wrapper Functions
