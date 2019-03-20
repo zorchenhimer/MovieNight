@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -8,7 +9,8 @@ import (
 
 type chatConnection struct {
 	*websocket.Conn
-	mutex sync.Mutex
+	mutex        sync.Mutex
+	forwardedFor string
 }
 
 func (cc *chatConnection) ReadData(data interface{}) error {
@@ -23,4 +25,16 @@ func (cc *chatConnection) WriteData(data interface{}) error {
 	cc.mutex.Lock()
 
 	return cc.WriteJSON(data)
+}
+
+func (cc *chatConnection) Host() string {
+	if len(cc.forwardedFor) > 0 {
+		return cc.forwardedFor
+	}
+
+	host, _, err := net.SplitHostPort(cc.RemoteAddr().String())
+	if err != nil {
+		return cc.RemoteAddr().String()
+	}
+	return host
 }

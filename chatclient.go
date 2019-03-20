@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"html"
-	"net"
 	"strings"
 	"unicode"
 
@@ -150,11 +149,7 @@ func (cl *Client) Unmod() {
 }
 
 func (cl *Client) Host() string {
-	host, _, err := net.SplitHostPort(cl.conn.RemoteAddr().String())
-	if err != nil {
-		host = "err"
-	}
-	return host
+	return cl.conn.Host()
 }
 
 var dumbSpaces = []string{

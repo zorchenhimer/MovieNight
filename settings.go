@@ -107,6 +107,10 @@ func (s *Settings) Save() error {
 }
 
 func (s *Settings) AddBan(host string, names []string) error {
+	if host == "127.0.0.1" {
+		return fmt.Errorf("Cannot add a ban for localhost.")
+	}
+
 	b := BanInfo{
 		Names: names,
 		IP:    host,
