@@ -43,9 +43,10 @@
 
 {{ if .Chat }}
 <div id="chatwindow">
+    <div id="notifyBox"></div>
     <div id="chat" style="display: none;">
         <input id="hiddenColorPicker" type="color" hidden />
-        <div id="notifiyBox"></div>
+        <div id="optionBox">Please hover to view options</div>
         <div id="hidden">
             <div id="chatButtons">
                 <button class="button pretty-button" onclick="auth();">Auth</button>

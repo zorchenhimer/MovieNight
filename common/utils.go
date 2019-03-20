@@ -8,12 +8,16 @@ import (
 	"regexp"
 )
 
-var re_username *regexp.Regexp = regexp.MustCompile(`^[0-9a-zA-Z_-]+$`)
+var usernameRegex *regexp.Regexp = regexp.MustCompile(`^[0-9a-zA-Z_-]+$`)
 
+// IsValidName checks that name is within the correct ranges, follows the regex defined
+// and is not a valid color name
 func IsValidName(name string) bool {
-	return re_username.MatchString(name)
+	return 3 <= len(name) && len(name) <= 36 &&
+		usernameRegex.MatchString(name) && !IsValidColor(name)
 }
 
+// RandomColor returns a hex color code
 func RandomColor() string {
 	nums := []int32{}
 	for i := 0; i < 6; i++ {

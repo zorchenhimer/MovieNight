@@ -259,6 +259,20 @@ func showSendError(err error) {
 	}
 }
 
+func isValidColor(this js.Value, v []js.Value) interface{} {
+	if len(v) != 1 {
+		return false
+	}
+	return common.IsValidColor(v[0].String())
+}
+
+func isValidName(this js.Value, v []js.Value) interface{} {
+	if len(v) != 1 {
+		return false
+	}
+	return common.IsValidName(v[0].String())
+}
+
 func debugValues(v []js.Value) {
 	fmt.Printf("currentName %#v\n", currentName)
 	fmt.Printf("names %#v\n", names)
@@ -268,6 +282,8 @@ func debugValues(v []js.Value) {
 func main() {
 	js.Set("processMessageKey", js.FuncOf(processMessageKey))
 	js.Set("sendMessage", js.FuncOf(send))
+	js.Set("isValidColor", js.FuncOf(isValidColor))
+	js.Set("isValidName", js.FuncOf(isValidName))
 
 	js.Set("recieveMessage", js.CallbackOf(recieve))
 	js.Set("processMessage", js.CallbackOf(processMessage))

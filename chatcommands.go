@@ -3,13 +3,10 @@ package main
 import (
 	"fmt"
 	"html"
-	"regexp"
 	"strings"
 
 	"github.com/zorchenhimer/MovieNight/common"
 )
-
-var colorRegex *regexp.Regexp = regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
 
 type CommandControl struct {
 	user  map[string]Command
@@ -375,14 +372,13 @@ var cmdColor = Command{
 			color := ""
 			name := ""
 			for _, s := range args {
-				if strings.HasPrefix(s, "#") {
+				if common.IsValidColor(s) {
 					color = s
 				} else {
 					name = s
 				}
 			}
 			if color == "" {
-
 				fmt.Printf("[color:mod] %s missing color\n", cl.name)
 				return "Missing color"
 			}
@@ -406,7 +402,7 @@ var cmdColor = Command{
 		}
 
 		// Change the color of the user
-		if !colorRegex.MatchString(args[0]) {
+		if !common.IsValidColor(args[0]) {
 			return "To choose a specific color use the format <i>/color #c029ce</i>.  Hex values expected."
 		}
 

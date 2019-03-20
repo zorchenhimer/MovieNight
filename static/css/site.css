@@ -122,11 +122,12 @@ span.svmsg {
 }
 
 #hidden:hover,
-#notifiyBox:hover~#hidden {
+#optionBox:hover~#hidden {
     display: unset;
 }
 
-#notifiyBox {
+#optionBox,
+#notifyBox {
     color: var(--var-contrast-color);
     padding: 10px;
     font-weight: bold;

@@ -75,8 +75,8 @@ function closeChat() {
 
 function join() {
     let name = $("#name").val();
-    if (name.length < 3 || name.length > 36) {
-        setNotifyBox("Please input a name between 3 and 36 characters");
+    if (!isValidName(name)) {
+        setNotifyBox("Please input a valid name");
         return;
     }
     if (!sendMessage($("#name").val())) {
@@ -102,8 +102,10 @@ function updateSuggestionCss(m) {
     }
 }
 
-function setNotifyBox(msg = "Please hover to view options") {
-    $("#notifiyBox").html(msg);
+function setNotifyBox(msg = "") {
+    $("#notifyBox").html(msg);
+    $("#notifyBox").hide();
+    $("#notifyBox").show();
 }
 
 // Button Wrapper Functions
