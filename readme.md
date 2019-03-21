@@ -56,3 +56,16 @@ Usage of .\MovieNight.exe:
   -l string
         host:port of the MovieNight (default ":8089")
 ```
+
+## VsCode Setup
+
+For development of this project in VsCode, the wasm has to be handled specially. Since the architecture is `WASM` and the OS is `js` for go wasm files, the tools must have those environment args. This can be solved by adding a `.vscode` folder at `MovieNight\wasm\.vscode` and having the settings below. When doing development in the `MovieNight\wasm`, open the folder in a new vscode instance. This will allow autocomplete to work in the `*_wasm.go` files.
+
+```json
+{
+    "go.toolsEnvVars": {
+        "GOOS": "js",
+        "GOARCH": "wasm"
+    }
+}
+```
