@@ -132,16 +132,18 @@ func (cr *ChatRoom) Leave(name, color string) {
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock() //preventing simultaneous access to the `clients` map
 
-	client, err := cr.getClient(name)
+	client, suid, err := cr.getClient(name)
 	if err != nil {
-		fmt.Printf("[leave] Unable to get client for name %q\n", name)
+		fmt.Printf("[leave] Unable to get client suid %v\n", err)
 		return
 	}
+	host := client.Host()
+	name = client.name // grab the name from here for proper capitalization
 	client.conn.Close()
-	cr.delClient(name)
+	cr.delClient(suid)
 
 	cr.AddEventMsg(common.EvLeave, name, color)
-	fmt.Printf("[leave] %s %s\n", client.Host(), client.name)
+	fmt.Printf("[leave] %s %s\n", host, name)
 }
 
 // kicked from the chatroom
@@ -149,7 +151,7 @@ func (cr *ChatRoom) Kick(name string) string {
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock() //preventing simultaneous access to the `clients` map
 
-	client, err := cr.getClient(name)
+	client, suid, err := cr.getClient(name)
 	if err != nil {
 		return "Unable to get client for name " + name
 	}
@@ -165,7 +167,7 @@ func (cr *ChatRoom) Kick(name string) string {
 	color := client.color
 	host := client.Host()
 	client.conn.Close()
-	cr.delClient(name)
+	cr.delClient(suid)
 
 	cr.AddEventMsg(common.EvKick, name, color)
 	fmt.Printf("[kick] %s %s has been kicked\n", host, name)
@@ -176,7 +178,7 @@ func (cr *ChatRoom) Ban(name string) string {
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock()
 
-	client, err := cr.getClient(name)
+	client, suid, err := cr.getClient(name)
 	if err != nil {
 		fmt.Printf("[ban] Unable to get client for name %q\n", name)
 		return "Cannot find that name"
@@ -187,13 +189,13 @@ func (cr *ChatRoom) Ban(name string) string {
 	color := client.color
 
 	client.conn.Close()
-	cr.delClient(name)
+	cr.delClient(suid)
 
-	for name, c := range cr.clients {
+	for suid, c := range cr.clients {
 		if c.Host() == host {
-			names = append(names, name)
+			names = append(names, client.name)
 			client.conn.Close()
-			cr.delClient(name)
+			cr.delClient(suid)
 		}
 	}
 
@@ -290,7 +292,7 @@ func (cr *ChatRoom) Unmod(name string) error {
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock()
 
-	client, err := cr.getClient(name)
+	client, _, err := cr.getClient(name)
 	if err != nil {
 		return err
 	}
@@ -304,7 +306,7 @@ func (cr *ChatRoom) Mod(name string) error {
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock()
 
-	client, err := cr.getClient(name)
+	client, _, err := cr.getClient(name)
 	if err != nil {
 		return err
 	}
@@ -318,7 +320,7 @@ func (cr *ChatRoom) ForceColorChange(name, color string) error {
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock()
 
-	client, err := cr.getClient(name)
+	client, _, err := cr.getClient(name)
 	if err != nil {
 		return err
 	}
@@ -386,18 +388,18 @@ func (cr *ChatRoom) GetNames() []string {
 	return names
 }
 
-func (cr *ChatRoom) delClient(name string) {
-	delete(cr.clients, strings.ToLower(name))
+func (cr *ChatRoom) delClient(suid string) {
+	delete(cr.clients, strings.ToLower(suid))
 }
 
-func (cr *ChatRoom) getClient(name string) (*Client, error) {
-	for _, client := range cr.clients {
+func (cr *ChatRoom) getClient(name string) (*Client, string, error) {
+	for suid, client := range cr.clients {
 		if client.name == name {
-			return client, nil
+			return client, suid, nil
 		}
 	}
 
-	return nil, fmt.Errorf("client with that name not found")
+	return nil, "", fmt.Errorf("client with that name not found")
 }
 
 func (cr *ChatRoom) generateModPass() string {
