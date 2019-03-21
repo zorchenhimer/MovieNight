@@ -14,8 +14,6 @@ import (
 )
 
 const (
-	UsernameMaxLength  int    = 36
-	UsernameMinLength  int    = 3
 	ColorServerMessage string = "#ea6260"
 )
 
@@ -37,8 +35,8 @@ type ChatRoom struct {
 //initializing the chatroom
 func newChatRoom() (*ChatRoom, error) {
 	cr := &ChatRoom{
-		queue:    make(chan common.ChatData, 100),
-		modqueue: make(chan common.ChatData, 100),
+		queue:    make(chan common.ChatData, 1000),
+		modqueue: make(chan common.ChatData, 1000),
 		clients:  make(map[string]*Client),
 		tempConn: make(map[string]*chatConnection),
 	}
@@ -87,8 +85,7 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 		return nil, errors.New("connection is missing from temp connections")
 	}
 
-	if len(name) < UsernameMinLength || len(name) > UsernameMaxLength ||
-		!common.IsValidName(name) || common.IsValidColor(name) {
+	if !common.IsValidName(name) || common.IsValidColor(name) {
 		return nil, UserFormatError{Name: name}
 	}
 
