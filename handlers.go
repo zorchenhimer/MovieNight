@@ -96,7 +96,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	chatConn := &chatConnection{
-		Conn:         conn,
+		Conn: conn,
 		// If the server is behind a reverse proxy (eg, Nginx), look
 		// for this header to get the real IP address of the client.
 		forwardedFor: r.Header.Get("X-Forwarded-For"),
