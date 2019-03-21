@@ -14,18 +14,20 @@ online.
 ## Install
 
 To just download and run:
-```bash
-$ go get -u -v github.com/zorchenhimer/MovieNight
 
-$ MovieNight  -l :8089 -k longSecurityKey
+```bash
+go get -u -v github.com/zorchenhimer/MovieNight
+MovieNight  -l :8089 -k longSecurityKey
 ```
 
 ## Usage
 
 Now you can use OBS to push a stream to the server.  Set the stream URL to
+
 ```text
 rtmp://your.domain.host/live
 ```
+
 and enter the stream key.
 
 Now you can view the stream at
