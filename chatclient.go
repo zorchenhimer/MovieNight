@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"html"
+	"regexp"
 	"strings"
 	"unicode"
 
@@ -86,6 +87,11 @@ func (cl *Client) NewMsg(data common.ClientData) {
 }
 
 func (cl *Client) SendChatData(data common.ChatData) error {
+	// Colorize name on chat messages
+	if data.Type == common.DTChat {
+		data = replaceColorizedName(data, cl)
+	}
+
 	cd, err := data.ToJSON()
 	if err != nil {
 		return fmt.Errorf("could not create ChatDataJSON of type %d: %v", data.Type, err)
@@ -172,4 +178,17 @@ func removeDumbSpaces(msg string) string {
 		}
 	}
 	return newMsg
+}
+
+func replaceColorizedName(chatData common.ChatData, client *Client) common.ChatData {
+	data := chatData.Data.(common.DataMessage)
+
+	data.Message = regexp.MustCompile(fmt.Sprintf(`(%s|@%s)`, client.name, client.name)).
+		ReplaceAllString(
+			data.Message,
+			fmt.Sprintf(`<span style="color: %s">$1</span>`, client.color),
+		)
+
+	chatData.Data = data
+	return chatData
 }
