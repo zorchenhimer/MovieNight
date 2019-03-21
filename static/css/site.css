@@ -124,6 +124,7 @@ span.svmsg {
     position: relative;
     padding-top: 1vh;
     max-height: calc(var(--var-max-height) - 1vh);
+    min-width: 300px;
 }
 
 #hidden {
