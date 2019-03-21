@@ -85,15 +85,15 @@ func (cl *Client) NewMsg(data common.ClientData) {
 	}
 }
 
-func (cl *Client) SendChatData(newData common.NewChatDataFunc) error {
-	cd, err := newData()
+func (cl *Client) SendChatData(data common.ChatData) error {
+	cd, err := data.ToJSON()
 	if err != nil {
-		return fmt.Errorf("could not create chatdata of type %d: %v", cd.Type, err)
+		return fmt.Errorf("could not create ChatDataJSON of type %d: %v", data.Type, err)
 	}
 	return cl.Send(cd)
 }
 
-func (cl *Client) Send(data common.ChatData) error {
+func (cl *Client) Send(data common.ChatDataJSON) error {
 	err := cl.conn.WriteData(data)
 	if err != nil {
 		return fmt.Errorf("could not send message: %v", err)
@@ -102,10 +102,9 @@ func (cl *Client) Send(data common.ChatData) error {
 }
 
 func (cl *Client) SendServerMessage(s string) error {
-	err := cl.SendChatData(common.NewChatMessage("",
-		ColorServerMessage, s, common.CmdUser, common.MsgServer))
+	err := cl.SendChatData(common.NewChatMessage("", ColorServerMessage, s, common.CmdUser, common.MsgServer))
 	if err != nil {
-		return fmt.Errorf("could send server message to %s: %s; Message: %s\n", cl.name, err, s)
+		return fmt.Errorf("could send server message to %s: message - %#v: %v", cl.name, s, err)
 	}
 	return nil
 }

@@ -7,18 +7,37 @@ import (
 	"strings"
 )
 
-type NewChatDataFunc func() (ChatData, error)
-
 type DataInterface interface {
 	HTML() string
 }
 
 type ChatData struct {
 	Type DataType
+	Data DataInterface
+}
+
+func (c ChatData) ToJSON() (ChatDataJSON, error) {
+	rawData, err := json.Marshal(c.Data)
+	return ChatDataJSON{
+		Type: c.Type,
+		Data: rawData,
+	}, err
+}
+
+type ChatDataJSON struct {
+	Type DataType
 	Data json.RawMessage
 }
 
-func (c ChatData) GetData() (DataInterface, error) {
+func (c ChatDataJSON) ToData() (ChatData, error) {
+	data, err := c.GetData()
+	return ChatData{
+		Type: c.Type,
+		Data: data,
+	}, err
+}
+
+func (c ChatDataJSON) GetData() (DataInterface, error) {
 	var data DataInterface
 	var err error
 
@@ -50,14 +69,6 @@ func (c ChatData) GetData() (DataInterface, error) {
 	}
 
 	return data, err
-}
-
-func newChatData(dtype DataType, d DataInterface) (ChatData, error) {
-	rawData, err := json.Marshal(d)
-	return ChatData{
-		Type: dtype,
-		Data: rawData,
-	}, err
 }
 
 type ClientData struct {
@@ -110,15 +121,16 @@ func (dc DataMessage) HTML() string {
 	}
 }
 
-func NewChatMessage(name, color, msg string, lvl CommandLevel, msgtype MessageType) NewChatDataFunc {
-	return func() (ChatData, error) {
-		return newChatData(DTChat, DataMessage{
+func NewChatMessage(name, color, msg string, lvl CommandLevel, msgtype MessageType) ChatData {
+	return ChatData{
+		Type: DTChat,
+		Data: DataMessage{
 			From:    name,
 			Color:   color,
 			Message: msg,
 			Type:    msgtype,
 			Level:   lvl,
-		})
+		},
 	}
 }
 
@@ -136,12 +148,13 @@ func (de DataCommand) HTML() string {
 	}
 }
 
-func NewChatCommand(command CommandType, args []string) NewChatDataFunc {
-	return func() (ChatData, error) {
-		return newChatData(DTCommand, DataCommand{
+func NewChatCommand(command CommandType, args []string) ChatData {
+	return ChatData{
+		Type: DTCommand,
+		Data: DataCommand{
 			Command:   command,
 			Arguments: args,
-		})
+		},
 	}
 }
 
@@ -189,13 +202,14 @@ func (de DataEvent) HTML() string {
 	return ""
 }
 
-func NewChatEvent(event EventType, name, color string) NewChatDataFunc {
-	return func() (ChatData, error) {
-		return newChatData(DTEvent, DataEvent{
+func NewChatEvent(event EventType, name, color string) ChatData {
+	return ChatData{
+		Type: DTEvent,
+		Data: DataEvent{
 			Event: event,
 			User:  name,
 			Color: color,
-		})
+		},
 	}
 }
 
@@ -210,25 +224,18 @@ func (h HiddenMessage) HTML() string {
 	return ""
 }
 
-func NewChatHiddenMessage(clientType ClientDataType, data interface{}) NewChatDataFunc {
-	return func() (ChatData, error) {
-		return newChatData(DTHidden, HiddenMessage{
+func NewChatHiddenMessage(clientType ClientDataType, data interface{}) ChatData {
+	return ChatData{
+		Type: DTHidden,
+		Data: HiddenMessage{
 			Type: clientType,
 			Data: data,
-		})
+		},
 	}
 }
 
-func jsonifyChatData(data ChatData) (string, error) {
-	raw, err := json.Marshal(data)
-	if err != nil {
-		return "", err
-	}
-	return string(raw), nil
-}
-
-func DecodeData(rawjson string) (ChatData, error) {
-	var data ChatData
+func DecodeData(rawjson string) (ChatDataJSON, error) {
+	var data ChatDataJSON
 	err := json.Unmarshal([]byte(rawjson), &data)
 	return data, err
 }

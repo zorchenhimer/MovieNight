@@ -161,23 +161,21 @@ func recieve(v []js.Value) {
 		return
 	}
 
-	chat, err := common.DecodeData(v[0].String())
+	chatJSON, err := common.DecodeData(v[0].String())
 	if err != nil {
 		fmt.Printf("Error decoding data: %s\n", err)
 		js.Call("appendMessages", v)
 		return
 	}
 
-	data, err := chat.GetData()
+	chat, err := chatJSON.ToData()
 	if err != nil {
-		fmt.Printf("Error parsing DataInterface: %v\n", err)
-		js.Call("appendMessages", v)
-		return
+		fmt.Printf("Error converting ChatDataJSON to ChatData of type %d: %v", chatJSON.Type, err)
 	}
 
 	switch chat.Type {
 	case common.DTHidden:
-		h := data.(common.HiddenMessage)
+		h := chat.Data.(common.HiddenMessage)
 		switch h.Type {
 		case common.CdUsers:
 			names = nil
@@ -186,7 +184,7 @@ func recieve(v []js.Value) {
 			}
 		}
 	case common.DTEvent:
-		d := data.(common.DataEvent)
+		d := chat.Data.(common.DataEvent)
 		// A server message is the only event that doesn't deal with names.
 		if d.Event != common.EvServerMessage {
 			websocketSend("", common.CdUsers)
@@ -194,9 +192,9 @@ func recieve(v []js.Value) {
 		// on join or leave, update list of possible user names
 		fallthrough
 	case common.DTChat:
-		js.Call("appendMessages", data.HTML())
+		js.Call("appendMessages", chat.Data.HTML())
 	case common.DTCommand:
-		d := data.(common.DataCommand)
+		d := chat.Data.(common.DataCommand)
 
 		switch d.Command {
 		case common.CmdPlaying:
@@ -213,13 +211,13 @@ func recieve(v []js.Value) {
 			js.Call("initPlayer", nil)
 		case common.CmdPurgeChat:
 			js.Call("purgeChat", nil)
-			js.Call("appendMessages", data.HTML())
+			js.Call("appendMessages", d.HTML())
 		case common.CmdHelp:
 			url := "/help"
 			if d.Arguments != nil && len(d.Arguments) > 0 {
 				url = d.Arguments[0]
 			}
-			js.Call("appendMessages", data.HTML())
+			js.Call("appendMessages", d.HTML())
 			js.Get("window").Call("open", url, "_blank", "menubar=0,status=0,toolbar=0,width=300,height=600")
 		}
 	}

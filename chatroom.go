@@ -116,7 +116,7 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 	delete(cr.tempConn, uid)
 
 	fmt.Printf("[join] %s %s\n", host, name)
-	playingCommand, err := common.NewChatCommand(common.CmdPlaying, []string{cr.playing, cr.playingLink})()
+	playingCommand, err := common.NewChatCommand(common.CmdPlaying, []string{cr.playing, cr.playingLink}).ToJSON()
 	if err != nil {
 		fmt.Printf("Unable to encode playing command on join: %s\n", err)
 	} else {
@@ -232,57 +232,32 @@ func (cr *ChatRoom) AddMsg(from *Client, isAction, isServer bool, msg string) {
 		lvl = common.CmdAdmin
 	}
 
-	data, err := common.NewChatMessage(from.name, from.color, msg, lvl, t)()
-	if err != nil {
-		fmt.Printf("Error encoding chat message: %s", err)
-		return
-	}
-
 	select {
-	case cr.queue <- data:
+	case cr.queue <- common.NewChatMessage(from.name, from.color, msg, lvl, t):
 	default:
 		fmt.Println("Unable to queue chat message. Channel full.")
 	}
 }
 
 func (cr *ChatRoom) AddCmdMsg(command common.CommandType, args []string) {
-	data, err := common.NewChatCommand(command, args)()
-	if err != nil {
-		fmt.Printf("Error encoding command: %s", err)
-		return
-	}
-
 	select {
-	case cr.queue <- data:
+	case cr.queue <- common.NewChatCommand(command, args):
 	default:
 		fmt.Println("Unable to queue command message.  Channel full.")
 	}
 }
 
 func (cr *ChatRoom) AddModNotice(message string) {
-	data, err := common.NewChatMessage("", "", message, common.CmdUser, common.MsgNotice)()
-	if err != nil {
-		fmt.Printf("Error encoding notice: %v", err)
-		return
-	}
-
 	select {
-	case cr.modqueue <- data:
+	case cr.modqueue <- common.NewChatMessage("", "", message, common.CmdUser, common.MsgNotice):
 	default:
 		fmt.Println("Unable to queue notice.  Channel full.")
 	}
 }
 
 func (cr *ChatRoom) AddEventMsg(event common.EventType, name, color string) {
-	data, err := common.NewChatEvent(event, name, color)()
-
-	if err != nil {
-		fmt.Printf("Error encoding command: %s", err)
-		return
-	}
-
 	select {
-	case cr.queue <- data:
+	case cr.queue <- common.NewChatEvent(event, name, color):
 	default:
 		fmt.Println("Unable to queue event message.  Channel full.")
 	}
@@ -336,22 +311,38 @@ func (cr *ChatRoom) UserCount() int {
 
 //broadcasting all the messages in the queue in one block
 func (cr *ChatRoom) BroadCast() {
+	send := func(data common.ChatData, client *Client) {
+		err := client.SendChatData(data)
+		if err != nil {
+			fmt.Printf("Error sending data to client: %v\n", err)
+		}
+	}
+
 	for {
 		select {
 		case msg := <-cr.queue:
 			cr.clientsMtx.Lock()
 			for _, client := range cr.clients {
-				client.Send(msg)
+				send(msg, client)
 			}
 			for _, conn := range cr.tempConn {
-				conn.WriteJSON(msg)
+				data, err := msg.ToJSON()
+				if err != nil {
+					fmt.Printf("Error converting ChatData to ChatDataJSON: %v\n", err)
+					// Break out early because if one conversion fails, they all will fail
+					break
+				}
+				err = conn.WriteData(data)
+				if err != nil {
+					fmt.Printf("Error writing data to connection: %v\n", err)
+				}
 			}
 			cr.clientsMtx.Unlock()
 		case msg := <-cr.modqueue:
 			cr.clientsMtx.Lock()
 			for _, client := range cr.clients {
 				if client.IsMod || client.IsAdmin {
-					client.Send(msg)
+					send(msg, client)
 				}
 			}
 			cr.clientsMtx.Unlock()
