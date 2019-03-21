@@ -16,8 +16,8 @@ online.
 To just download and run:
 
 ```bash
-go get -u -v github.com/zorchenhimer/MovieNight
-MovieNight  -l :8089 -k longSecurityKey
+$ go get -u -v github.com/zorchenhimer/MovieNight
+$ MovieNight  -l :8089 -k longSecurityKey
 ```
 
 ## Usage
