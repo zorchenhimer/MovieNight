@@ -184,10 +184,7 @@ func replaceColorizedName(chatData common.ChatData, client *Client) common.ChatD
 	data := chatData.Data.(common.DataMessage)
 
 	data.Message = regexp.MustCompile(fmt.Sprintf(`(%s|@%s)`, client.name, client.name)).
-		ReplaceAllString(
-			data.Message,
-			fmt.Sprintf(`<span style="color: %s">$1</span>`, client.color),
-		)
+		ReplaceAllString(data.Message, `<span class="mention">$1</span>`)
 
 	chatData.Data = data
 	return chatData

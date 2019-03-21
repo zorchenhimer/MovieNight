@@ -3,12 +3,13 @@
     --var-border-radius: 5px;
     --var-message-color: #f4f4f4;
     --var-contrast-color: #1bf7ec;
+    --var-background-color: #0F0F11;
     --var-max-height: 98vh;
     --var-max-width: 98vw;
 }
 
 html {
-    background: #0F0F11;
+    background: var(--var-background-color);
     font-family: "Hack";
     font-size: 14px;
 }
@@ -97,6 +98,13 @@ span.svmsg {
     color: #595959;
     font-size: 75%;
     text-align: center;
+}
+
+.mention {
+    background: #1cf67ed9;
+    color: var(--var-background-color);
+    padding: 1px 2px;
+    border-radius: 4px;
 }
 
 .command {
@@ -203,7 +211,7 @@ span.svmsg {
 }
 
 #suggestions {
-    background: hsl(240, 6%, 25%);
+    background: #3b3b43;
     position: absolute;
     min-width: 10em;
     border-radius: 5px 5px 0px 5px;
@@ -229,5 +237,5 @@ span.svmsg {
 }
 
 #helpbody {
-    color: #B1B1B1;
+    color: #b1b1b1;
 }
