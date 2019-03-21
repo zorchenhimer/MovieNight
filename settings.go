@@ -15,14 +15,18 @@ var settings *Settings
 var settingsMtx sync.Mutex
 
 type Settings struct {
-	filename        string
-	cmdLineKey      string // stream key from the command line
+	// Non-Saved settings
+	filename   string
+	cmdLineKey string // stream key from the command line
+
+	// Saved settings
+	StreamStats     bool
 	MaxMessageCount int
 	TitleLength     int // maximum length of the title that can be set with the /playing
 	AdminPassword   string
-	Bans            []BanInfo
 	StreamKey       string
 	ListenAddress   string
+	Bans            []BanInfo
 }
 
 type BanInfo struct {

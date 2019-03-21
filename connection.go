@@ -16,14 +16,14 @@ type chatConnection struct {
 func (cc *chatConnection) ReadData(data interface{}) error {
 	defer cc.mutex.Unlock()
 	cc.mutex.Lock()
-
+	stats.msgInInc()
 	return cc.ReadJSON(data)
 }
 
 func (cc *chatConnection) WriteData(data interface{}) error {
 	defer cc.mutex.Unlock()
 	cc.mutex.Lock()
-
+	stats.msgOutInc()
 	return cc.WriteJSON(data)
 }
 
