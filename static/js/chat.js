@@ -46,7 +46,8 @@ function appendMessages(msg) {
         msgs.first().remove();
     }
 
-    $("#messages").append(msg).scrollTop(9e6);
+    $("#messages").append(msg);
+    $("#messages").children().last()[0].scrollIntoView({ block: "end", behavior: "smooth" });
 }
 
 function purgeChat() {
