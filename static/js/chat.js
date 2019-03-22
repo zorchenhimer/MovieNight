@@ -109,14 +109,21 @@ function setNotifyBox(msg = "") {
 
 // Button Wrapper Functions
 function auth() {
-    let pass = prompt("pass please")
+    let pass = prompt("Enter pass");
     if (pass != "") {
         sendMessage("/auth " + pass);
     }
 }
 
+function nick() {
+    let nick = prompt("Enter new name");
+    if (nick != "") {
+        sendMessage("/nick " + nick);
+    }
+}
+
 function help() {
-    sendMessage("/help")
+    sendMessage("/help");
 }
 
 // Get the websocket setup in a function so it can be recalled

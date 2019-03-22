@@ -37,9 +37,12 @@ var (
 )
 
 var ChatCommands = []ChatCommandNames{
-	CNMe, CNHelp, CNCount, CNColor, CNWhoAmI, CNAuth, CNUsers,
+	// User
+	CNMe, CNHelp, CNCount, CNColor, CNWhoAmI, CNAuth, CNUsers, CNNick,
+	// Mod
 	CNSv, CNPlaying, CNUnmod, CNKick, CNBan, CNUnban, CNPurge,
-	CNMod, CNReloadPlayer, CNReloadEmotes, CNModpass, CNNick,
+	// Admin
+	CNMod, CNReloadPlayer, CNReloadEmotes, CNModpass,
 }
 
 func GetFullChatCommand(c string) string {

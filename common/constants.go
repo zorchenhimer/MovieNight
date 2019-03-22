@@ -2,15 +2,17 @@ package common
 
 type ClientDataType int
 
+// Data types for communicating with the client
 const (
 	CdMessage ClientDataType = iota // a normal message from the client meant to be broadcast
 	CdUsers                         // get a list of users
 	CdPing                          // ping the server to keep the connection alive
+	CdHelp                          // tells server to send help data again for buttons
 )
 
 type DataType int
 
-// Data Types
+// Data types for command messages
 const (
 	DTInvalid DataType = iota
 	DTChat             // chat message
