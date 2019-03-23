@@ -182,6 +182,10 @@ func (cr *ChatRoom) Ban(name string) string {
 		return "Cannot find that name"
 	}
 
+	if client.IsAdmin {
+		return "You cannot ban an admin Jebaited"
+	}
+
 	names := []string{}
 	host := client.Host()
 	color := client.color
