@@ -16,7 +16,7 @@ func ParseEmotesArray(words []string) []string {
 		found := false
 		for key, val := range Emotes {
 			if key == word {
-				newWords = append(newWords, fmt.Sprintf("<img src=\"/emotes/%s\" title=\"%s\" />", val, key))
+				newWords = append(newWords, fmt.Sprintf(`<img src="/emotes/%s" height="28px" title="%s" />`, val, key))
 				found = true
 			}
 		}
