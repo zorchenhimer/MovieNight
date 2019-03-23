@@ -51,6 +51,8 @@ func main() {
 
 	fmt.Println("Stream key: ", settings.GetStreamKey())
 	fmt.Println("Admin password: ", settings.AdminPassword)
+	fmt.Println("RoomAccess: ", settings.RoomAccess)
+	fmt.Println("RoomAccessPin: ", settings.RoomAccessPin)
 	fmt.Println("Listen and serve ", addr)
 
 	go startServer()
@@ -82,6 +84,7 @@ func startServer() {
 	http.HandleFunc("/chat", handleIndexTemplate)
 	http.HandleFunc("/video", handleIndexTemplate)
 	http.HandleFunc("/help", handleHelpTemplate)
+	http.HandleFunc("/pin", handlePin)
 
 	http.HandleFunc("/", handleDefault)
 

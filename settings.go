@@ -6,13 +6,17 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/big"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gorilla/sessions"
 )
 
 var settings *Settings
 var settingsMtx sync.Mutex
+var sstore *sessions.CookieStore
 
 type Settings struct {
 	// Non-Saved settings
@@ -24,10 +28,21 @@ type Settings struct {
 	MaxMessageCount int
 	TitleLength     int // maximum length of the title that can be set with the /playing
 	AdminPassword   string
+	Bans            []BanInfo
 	StreamKey       string
 	ListenAddress   string
-	Bans            []BanInfo
+	SessionKey      string // key for session data
+	RoomAccess      AccessMode
+	RoomAccessPin   string // auto generate this,
 }
+
+type AccessMode string
+
+const (
+	AccessOpen    AccessMode = "open"
+	AccessPin     AccessMode = "pin"
+	AccessRequest AccessMode = "request"
+)
 
 type BanInfo struct {
 	IP    string
@@ -47,6 +62,36 @@ func init() {
 
 	if settings.TitleLength <= 0 {
 		settings.TitleLength = 50
+	}
+
+	// Is this a good way to do this? Probably not...
+	if len(settings.SessionKey) == 0 {
+		out := ""
+		large := big.NewInt(int64(1 << 60))
+		large = large.Add(large, large)
+		for len(out) < 50 {
+			num, err := rand.Int(rand.Reader, large)
+			if err != nil {
+				panic("Error generating session key: " + err.Error())
+			}
+			out = fmt.Sprintf("%s%X", out, num)
+		}
+		settings.SessionKey = out
+	}
+
+	if len(settings.RoomAccess) == 0 {
+		settings.RoomAccess = AccessOpen
+	}
+
+	if settings.RoomAccess != AccessOpen && len(settings.RoomAccessPin) == 0 {
+		settings.RoomAccessPin = "1234"
+	}
+
+	sstore = sessions.NewCookieStore([]byte(settings.SessionKey))
+	sstore.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   60 * 60 * 24, // one day
+		SameSite: http.SameSiteStrictMode,
 	}
 
 	// Save admin password to file
@@ -173,4 +218,13 @@ func (s *Settings) GetStreamKey() string {
 		return s.cmdLineKey
 	}
 	return s.StreamKey
+}
+
+func (s *Settings) generateNewPin() (string, error) {
+	num, err := rand.Int(rand.Reader, big.NewInt(int64(9999)))
+	if err != nil {
+		return "", err
+	}
+	settings.RoomAccessPin = fmt.Sprintf("%04d", num)
+	return settings.RoomAccessPin, nil
 }
