@@ -54,12 +54,12 @@ func main() {
 	fmt.Println("Listen and serve ", addr)
 
 	go startServer()
-	go startRmptServer()
+	go startRmtpServer()
 
 	<-exit
 }
 
-func startRmptServer() {
+func startRmtpServer() {
 	server := &rtmp.Server{
 		HandlePlay:    handlePlay,
 		HandlePublish: handlePublish,

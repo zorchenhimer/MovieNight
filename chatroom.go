@@ -48,7 +48,7 @@ func newChatRoom() (*ChatRoom, error) {
 	fmt.Printf("Loaded %d emotes\n", num)
 
 	//the "heartbeat" for broadcasting messages
-	go cr.BroadCast()
+	go cr.Broadcast()
 	return cr, nil
 }
 
@@ -307,7 +307,7 @@ func (cr *ChatRoom) UserCount() int {
 }
 
 //broadcasting all the messages in the queue in one block
-func (cr *ChatRoom) BroadCast() {
+func (cr *ChatRoom) Broadcast() {
 	send := func(data common.ChatData, client *Client) {
 		err := client.SendChatData(data)
 		if err != nil {
