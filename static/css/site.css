@@ -111,6 +111,25 @@ span.svmsg {
     color: #B1B1B1;
 }
 
+.access-grant {
+    font-weight: normal;
+    color: greenyellow;
+}
+
+.access-ignore {
+    font-weight: normal;
+    color: red;
+}
+
+.access-name {
+    color: #f7b11b;
+}
+
+.access-title {
+    color: #e5e0e5;
+    font-weight: bold;
+}
+
 #videoElement {
     position: relative;
     top: 50%;
@@ -149,6 +168,10 @@ span.svmsg {
     font-weight: bold;
     font-size: 12px;
     text-align: center;
+}
+
+#accessRequest div {
+    margin-bottom: 5px;
 }
 
 #playing {
