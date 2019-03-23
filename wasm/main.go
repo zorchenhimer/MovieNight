@@ -224,6 +224,10 @@ func recieve(v []js.Value) {
 }
 
 func websocketSend(msg string, dataType common.ClientDataType) error {
+	if strings.TrimSpace(msg) == "" {
+		return nil
+	}
+
 	data, err := json.Marshal(common.ClientData{
 		Type:    dataType,
 		Message: msg,
