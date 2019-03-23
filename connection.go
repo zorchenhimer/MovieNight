@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"sync"
 
@@ -26,7 +27,11 @@ func (cc *chatConnection) WriteData(data interface{}) error {
 	defer cc.mutex.Unlock()
 
 	stats.msgOutInc()
-	return cc.WriteJSON(data)
+	err := cc.WriteJSON(data)
+	if err != nil {
+		return fmt.Errorf("Error writing data to %s: %v", cc.Host(), err)
+	}
+	return nil
 }
 
 func (cc *chatConnection) Host() string {
