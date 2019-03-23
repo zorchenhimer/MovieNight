@@ -226,5 +226,8 @@ func (s *Settings) generateNewPin() (string, error) {
 		return "", err
 	}
 	settings.RoomAccessPin = fmt.Sprintf("%04d", num)
+	if err = s.Save(); err != nil {
+		return "", err
+	}
 	return settings.RoomAccessPin, nil
 }

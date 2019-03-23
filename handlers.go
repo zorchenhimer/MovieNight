@@ -157,9 +157,8 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 func checkRoomAccess(w http.ResponseWriter, r *http.Request) bool {
 	session, err := sstore.Get(r, "moviesession")
 	if err != nil {
+		// Don't return as server error here, just make a new session.
 		fmt.Printf("Unable to get session for client %s: %v\n", r.RemoteAddr, err)
-		http.Error(w, "Unable to get session data", http.StatusInternalServerError)
-		return false
 	}
 
 	if settings.RoomAccess == AccessPin {

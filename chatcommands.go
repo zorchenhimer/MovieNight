@@ -335,6 +335,7 @@ var commands = &CommandControl{
 				switch AccessMode(strings.ToLower(args[0])) {
 				case AccessOpen:
 					settings.RoomAccess = AccessOpen
+					fmt.Println("[access] Room set to open")
 					return "Room access set to open"
 
 				case AccessPin:
@@ -351,10 +352,12 @@ var commands = &CommandControl{
 						}
 					}
 					settings.RoomAccess = AccessPin
+					fmt.Println("[access] Room set to pin: " + settings.RoomAccessPin)
 					return "Room access set to Pin: " + settings.RoomAccessPin
 
 				case AccessRequest:
 					settings.RoomAccess = AccessRequest
+					fmt.Println("[access] Room set to request")
 					return "Room access set to request. WARNING: this isn't implemented yet."
 
 				default:
