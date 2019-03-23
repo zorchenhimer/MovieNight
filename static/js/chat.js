@@ -4,6 +4,9 @@ function setPlaying(title, link) {
     if (title !== "") {
         $('#playing').text(title);
         document.title = "Movie Night | " + title;
+    } else {
+        $('#playing').text("");
+        document.title = "Movie Night";
     }
 
     $('#playing').removeAttr('href');

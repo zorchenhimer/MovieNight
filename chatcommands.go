@@ -139,7 +139,7 @@ var commands = &CommandControl{
 				// Clear/hide title if sent with no arguments.
 				if len(args) == 0 {
 					cl.belongsTo.ClearPlaying()
-					return ""
+					return "Title cleared"
 				}
 				link := ""
 				title := ""
