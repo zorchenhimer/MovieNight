@@ -26,7 +26,9 @@ var commands = &CommandControl{
 		common.CNMe.String(): Command{
 			HelpText: "Display an action message.",
 			Function: func(client *Client, args []string) string {
-				client.Me(strings.Join(args, " "))
+				if len(args) != 0 {
+					client.Me(strings.Join(args, " "))
+				}
 				return ""
 			},
 		},
@@ -139,7 +141,7 @@ var commands = &CommandControl{
 				// Clear/hide title if sent with no arguments.
 				if len(args) == 0 {
 					cl.belongsTo.ClearPlaying()
-					return ""
+					return "Title cleared"
 				}
 				link := ""
 				title := ""

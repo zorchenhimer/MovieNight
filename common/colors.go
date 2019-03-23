@@ -3,50 +3,72 @@ package common
 import (
 	"regexp"
 	"strings"
+
+	"github.com/lucasb-eyer/go-colorful"
 )
 
+// the values in colors must be lowercase so it matches with the color input
+// this saves from having to call strings.ToLower(color) every time to check
 var colors = []string{
-	"AliceBlue", "AntiqueWhite", "Aqua", "Aquamarine", "Azure",
-	"Beige", "Bisque", "Black", "BlanchedAlmond", "Blue",
-	"BlueViolet", "Brown", "BurlyWood", "CadetBlue", "Chartreuse",
-	"Chocolate", "Coral", "CornflowerBlue", "Cornsilk", "Crimson",
-	"Cyan", "DarkBlue", "DarkCyan", "DarkGoldenRod", "DarkGray",
-	"DarkGrey", "DarkGreen", "DarkKhaki", "DarkMagenta", "DarkOliveGreen",
-	"DarkOrange", "DarkOrchid", "DarkRed", "DarkSalmon", "DarkSeaGreen",
-	"DarkSlateBlue", "DarkSlateGray", "DarkSlateGrey", "DarkTurquoise", "DarkViolet",
-	"DeepPink", "DeepSkyBlue", "DimGray", "DimGrey", "DodgerBlue",
-	"FireBrick", "FloralWhite", "ForestGreen", "Fuchsia", "Gainsboro",
-	"GhostWhite", "Gold", "GoldenRod", "Gray", "Grey",
-	"Green", "GreenYellow", "HoneyDew", "HotPink", "IndianRed",
-	"Indigo", "Ivory", "Khaki", "Lavender", "LavenderBlush",
-	"LawnGreen", "LemonChiffon", "LightBlue", "LightCoral", "LightCyan",
-	"LightGoldenRodYellow", "LightGray", "LightGrey", "LightGreen", "LightPink",
-	"LightSalmon", "LightSeaGreen", "LightSkyBlue", "LightSlateGray", "LightSlateGrey",
-	"LightSteelBlue", "LightYellow", "Lime", "LimeGreen", "Linen",
-	"Magenta", "Maroon", "MediumAquaMarine", "MediumBlue", "MediumOrchid",
-	"MediumPurple", "MediumSeaGreen", "MediumSlateBlue", "MediumSpringGreen", "MediumTurquoise",
-	"MediumVioletRed", "MidnightBlue", "MintCream", "MistyRose", "Moccasin",
-	"NavajoWhite", "Navy", "OldLace", "Olive", "OliveDrab",
-	"Orange", "OrangeRed", "Orchid", "PaleGoldenRod", "PaleGreen",
-	"PaleTurquoise", "PaleVioletRed", "PapayaWhip", "PeachPuff", "Peru",
-	"Pink", "Plum", "PowderBlue", "Purple", "RebeccaPurple",
-	"Red", "RosyBrown", "RoyalBlue", "SaddleBrown", "Salmon",
-	"SandyBrown", "SeaGreen", "SeaShell", "Sienna", "Silver",
-	"SkyBlue", "SlateBlue", "SlateGray", "SlateGrey", "Snow",
-	"SpringGreen", "SteelBlue", "Tan", "Teal", "Thistle",
-	"Tomato", "Turquoise", "Violet", "Wheat", "White",
-	"WhiteSmoke", "Yellow", "YellowGreen",
+	"aliceblue", "antiquewhite", "aqua", "aquamarine", "azure",
+	"beige", "bisque", "black", "blanchedalmond", "blue",
+	"blueviolet", "brown", "burlywood", "cadetblue", "chartreuse",
+	"chocolate", "coral", "cornflowerblue", "cornsilk", "crimson",
+	"cyan", "darkblue", "darkcyan", "darkgoldenrod", "darkgray",
+	"darkgrey", "darkgreen", "darkkhaki", "darkmagenta", "darkolivegreen",
+	"darkorange", "darkorchid", "darkred", "darksalmon", "darkseagreen",
+	"darkslateblue", "darkslategray", "darkslategrey", "darkturquoise", "darkviolet",
+	"deeppink", "deepskyblue", "dimgray", "dimgrey", "dodgerblue",
+	"firebrick", "floralwhite", "forestgreen", "fuchsia", "gainsboro",
+	"ghostwhite", "gold", "goldenrod", "gray", "grey",
+	"green", "greenyellow", "honeydew", "hotpink", "indianred",
+	"indigo", "ivory", "khaki", "lavender", "lavenderblush",
+	"lawngreen", "lemonchiffon", "lightblue", "lightcoral", "lightcyan",
+	"lightgoldenrodyellow", "lightgray", "lightgrey", "lightgreen", "lightpink",
+	"lightsalmon", "lightseagreen", "lightskyblue", "lightslategray", "lightslategrey",
+	"lightsteelblue", "lightyellow", "lime", "limegreen", "linen",
+	"magenta", "maroon", "mediumaquamarine", "mediumblue", "mediumorchid",
+	"mediumpurple", "mediumseagreen", "mediumslateblue", "mediumspringgreen", "mediumturquoise",
+	"mediumvioletred", "midnightblue", "mintcream", "mistyrose", "moccasin",
+	"navajowhite", "navy", "oldlace", "olive", "olivedrab",
+	"orange", "orangered", "orchid", "palegoldenrod", "palegreen",
+	"paleturquoise", "palevioletred", "papayawhip", "peachpuff", "peru",
+	"pink", "plum", "powderblue", "purple", "rebeccapurple",
+	"red", "rosybrown", "royalblue", "saddlebrown", "salmon",
+	"sandybrown", "seagreen", "seashell", "sienna", "silver",
+	"skyblue", "slateblue", "slategray", "slategrey", "snow",
+	"springgreen", "steelblue", "tan", "teal", "thistle",
+	"tomato", "turquoise", "violet", "wheat", "white",
+	"whitesmoke", "yellow", "yellowgreen",
 }
 
 // IsValidColor takes a string s and compares it against a list of css color names.
 // It also accepts hex codes in the form of #000 (RGB), to #00000000 (RRGGBBAA), with A
 // being the alpha value
 func IsValidColor(s string) bool {
+	s = strings.ToLower(s)
 	for _, c := range colors {
-		if strings.ToLower(c) == strings.ToLower(s) {
+		if s == c {
 			return true
 		}
 	}
 
-	return regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`).MatchString(s)
+	if regexp.MustCompile(`^#([0-9A-Fa-f]{3}){1,2}$`).MatchString(s) {
+		c, err := colorful.Hex(s)
+		if err != nil {
+			return false
+		}
+		total := c.R + c.G + c.B
+		return total > 0.7 && c.B/total < 0.7
+	}
+	return false
+}
+
+// RandomColor returns a hex color code
+func RandomColor() string {
+	var color colorful.Color
+	for !IsValidColor(color.Hex()) {
+		color = colorful.FastHappyColor()
+	}
+	return color.Hex()
 }

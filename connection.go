@@ -10,24 +10,30 @@ import (
 
 type chatConnection struct {
 	*websocket.Conn
-	mutex        sync.Mutex
+	mutex        sync.RWMutex
 	forwardedFor string
+	clientName   string
 }
 
 func (cc *chatConnection) ReadData(data interface{}) error {
-	defer cc.mutex.Unlock()
-	cc.mutex.Lock()
+	cc.mutex.RLock()
+	defer cc.mutex.RUnlock()
+
 	stats.msgInInc()
 	return cc.ReadJSON(data)
 }
 
 func (cc *chatConnection) WriteData(data interface{}) error {
-	defer cc.mutex.Unlock()
 	cc.mutex.Lock()
+	defer cc.mutex.Unlock()
+
 	stats.msgOutInc()
 	err := cc.WriteJSON(data)
 	if err != nil {
-		return fmt.Errorf("Error writing data to %s: %v", cc.Host(), err)
+		if operr, ok := err.(*net.OpError); ok {
+			fmt.Println("OpError: " + operr.Err.Error())
+		}
+		return fmt.Errorf("Error writing data to %s %s: %v", cc.clientName, cc.Host(), err)
 	}
 	return nil
 }

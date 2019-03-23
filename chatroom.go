@@ -48,7 +48,7 @@ func newChatRoom() (*ChatRoom, error) {
 	fmt.Printf("Loaded %d emotes\n", num)
 
 	//the "heartbeat" for broadcasting messages
-	go cr.BroadCast()
+	go cr.Broadcast()
 	return cr, nil
 }
 
@@ -96,6 +96,7 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 		}
 	}
 
+	conn.clientName = name
 	client := &Client{
 		name:      name,
 		conn:      conn,
@@ -123,8 +124,8 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 	return client, nil
 }
 
-// TODO: fix this up a bit.  kick and leave are the same, incorrect, error: "That name was already used!"
-//leaving the chatroom
+// TODO: fix this up a bit.  kick and leave are the same, incorrect, error: "That
+// name was already used!" leaving the chatroom
 func (cr *ChatRoom) Leave(name, color string) {
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock() //preventing simultaneous access to the `clients` map
@@ -307,7 +308,7 @@ func (cr *ChatRoom) UserCount() int {
 }
 
 //broadcasting all the messages in the queue in one block
-func (cr *ChatRoom) BroadCast() {
+func (cr *ChatRoom) Broadcast() {
 	send := func(data common.ChatData, client *Client) {
 		err := client.SendChatData(data)
 		if err != nil {
@@ -320,20 +321,24 @@ func (cr *ChatRoom) BroadCast() {
 		case msg := <-cr.queue:
 			cr.clientsMtx.Lock()
 			for _, client := range cr.clients {
-				send(msg, client)
+				go send(msg, client)
 			}
-			for _, conn := range cr.tempConn {
-				data, err := msg.ToJSON()
-				if err != nil {
-					fmt.Printf("Error converting ChatData to ChatDataJSON: %v\n", err)
-					// Break out early because if one conversion fails, they all will fail
-					break
-				}
-				err = conn.WriteData(data)
-				if err != nil {
-					fmt.Printf("Error writing data to connection: %v\n", err)
+
+			data, err := msg.ToJSON()
+			if err != nil {
+				fmt.Printf("Error converting ChatData to ChatDataJSON: %v\n", err)
+			} else {
+				for uuid, conn := range cr.tempConn {
+					go func(c *chatConnection, suid string) {
+						err = c.WriteData(data)
+						if err != nil {
+							fmt.Printf("Error writing data to connection: %v\n", err)
+							delete(cr.tempConn, suid)
+						}
+					}(conn, uuid)
 				}
 			}
+
 			cr.clientsMtx.Unlock()
 		case msg := <-cr.modqueue:
 			cr.clientsMtx.Lock()
