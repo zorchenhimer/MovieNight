@@ -89,7 +89,11 @@ function join() {
 }
 
 function websocketSend(data) {
-    ws.send(data);
+    if (ws.readyState == ws.OPEN) {
+        ws.send(data);
+    } else {
+        console.log("did not send data because websocket is not open", data);
+    }
 }
 
 function sendChat() {
@@ -126,13 +130,34 @@ function help() {
     sendMessage("/help");
 }
 
+reconnectCount = 0
 // Get the websocket setup in a function so it can be recalled
 function setupWebSocket() {
     ws = new WebSocket(getWsUri());
     ws.onmessage = (m) => recieveMessage(m.data);
-    ws.onopen = (e) => console.log("Websocket Open:", e);
-    ws.onclose = () => closeChat();
-    ws.onerror = (e) => console.log("Websocket Error:", e);
+    ws.onopen = () => console.log("Websocket Open");
+    ws.onclose = () => {
+        closeChat();
+        reconnectCount++
+        setNotifyBox("Something went wrong with the connection. Trying to reconnect " + reconnectCount + ".");
+        if (reconnectCount <= 5) {
+            setTimeout(() => {
+                setupWebSocket();
+                setTimeout(() => {
+                    if (ws.readyState == ws.OPEN) {
+                        join();
+                        reconnectCount = 0;
+                    }
+                }, 2000);
+            }, 2000);
+        } else {
+            setNotifyBox("Tried to reconnect " + reconnectCount + " times. Please refresh page or contact admin.")
+        }
+    }
+    ws.onerror = (e) => {
+        console.log("Websocket Error:", e);
+        e.target.close();
+    }
 }
 
 function setupEvents() {
