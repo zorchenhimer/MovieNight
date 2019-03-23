@@ -12,6 +12,7 @@ type chatConnection struct {
 	*websocket.Conn
 	mutex        sync.RWMutex
 	forwardedFor string
+	clientName   string
 }
 
 func (cc *chatConnection) ReadData(data interface{}) error {
@@ -29,7 +30,10 @@ func (cc *chatConnection) WriteData(data interface{}) error {
 	stats.msgOutInc()
 	err := cc.WriteJSON(data)
 	if err != nil {
-		return fmt.Errorf("Error writing data to %s: %v", cc.Host(), err)
+		if operr, ok := err.(*net.OpError); ok {
+			fmt.Println("OpError: " + operr.Err.Error())
+		}
+		return fmt.Errorf("Error writing data to %s %s: %v", cc.clientName, cc.Host(), err)
 	}
 	return nil
 }

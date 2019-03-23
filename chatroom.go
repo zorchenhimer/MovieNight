@@ -96,6 +96,7 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 		}
 	}
 
+	conn.clientName = name
 	client := &Client{
 		name:      name,
 		conn:      conn,
