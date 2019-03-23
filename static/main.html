@@ -45,19 +45,41 @@
 <div id="chatwindow">
     <div id="notifyBox"></div>
     <div id="chat" style="display: none;">
-        <input id="hiddenColorPicker" type="color" hidden />
         <div id="optionBox">Please hover to view options</div>
         <div id="hidden">
             <div id="chatButtons">
-                <button class="button pretty-button" onclick="auth();">Auth</button>
-                <button class="button pretty-button" onclick="help();">Help</button>
-                <button class="button pretty-button" onclick="$('#hiddenColorPicker').trigger('click');">Color</button>
-                <button class="button pretty-button" onclick="nick();">Nick</button>
+                <input type="button" class="button pretty-button" onclick="auth();" value="Auth" />
+                <input type="button" class="button pretty-button" onclick="help();" value="Help" />
+                <input type="button" class="button pretty-button" onclick="showColors(true);" value="Color" />
+                <input type="button" class="button pretty-button" onclick="nick();" value="Nick" />
                 {{if .Video}}
-                <button class="button pretty-button" onclick="initPlayer();">Reload Player</button>
+                <input type="button" class="button pretty-button" onclick="initPlayer();" value="Reload Player" />
                 {{end}}
             </div>
             <hr />
+            <div id="hiddencolor" class="hiddendiv">
+                <div class="range-div" style="background-image: linear-gradient(to right, transparent, red);">
+                    <input id="colorRed" type="range" min="0" max="255" value="0" oninput="updateColor();" />
+                    <span id="colorRedLabel"></span>
+                </div>
+                <div class="range-div" style="background-image: linear-gradient(to right, transparent, green);">
+                    <input id="colorGreen" type="range" min="0" max="255" value="0" oninput="updateColor();" />
+                    <span id="colorGreenLabel"></span>
+                </div>
+                <div class="range-div" style="background-image: linear-gradient(to right, transparent, blue);">
+                    <input id="colorBlue" type="range" min="0" max="255" value="0" oninput="updateColor();" />
+                    <span id="colorBlueLabel"></span>
+                </div>
+                <div id="colorName" class="range-div" style="font-weight: bold;">
+                    NAME
+                </div>
+                <div id="colorWarning" class="range-div contrast">
+                </div>
+                <dvi class="range-div">
+                    <input id="colorSubmit" type="button" class="button pretty-button" value="Select"
+                        onclick="changeColor();" />
+                </dvi>
+            </div>
         </div>
         <a id="playing" target="_blank"></a>
         <div id="messages" class="scrollbar"></div>
@@ -65,7 +87,7 @@
             <div id="suggestions"></div>
             <textarea id="msg"></textarea>
         </div>
-        <button id="send" class="button" onclick="sendChat();">Send</button>
+        <input id="send" type="button" class="button" onclick="sendChat();" value="Send" />
         <div>
             <!-- This is an empty div so there can be an empty space below the send button -->
         </div>
@@ -73,8 +95,8 @@
     <div id="joinbox">
         <div style="color: #e5e0e5; text-align: center;">Please enter your name<br />to join the chat</div>
         <div>
-            <input id="name" maxlength="36">
-            <button id="join" class="button pretty-button" onclick="join();">Join</button>
+            <input id="name" type="text" maxlength="36">
+            <input id="join" type="button" class="button pretty-button" onclick="join();" value="Join" />
         </div>
     </div>
 </div>

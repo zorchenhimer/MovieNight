@@ -133,7 +133,43 @@ function help() {
     sendMessage("/help");
 }
 
-reconnectCount = 0
+function showColors(show) {
+    $("#hiddencolor").css("display", show ? "block" : "");
+}
+
+function colorAsHex() {
+    let r = parseInt($("#colorRed").val()).toString(16).padStart(2, "0");
+    let g = parseInt($("#colorGreen").val()).toString(16).padStart(2, "0");
+    let b = parseInt($("#colorBlue").val()).toString(16).padStart(2, "0");
+    return `#${r}${g}${b}`
+}
+
+function updateColor() {
+    let r = $("#colorRed").val();
+    let g = $("#colorGreen").val();
+    let b = $("#colorBlue").val();
+
+    $("#colorRedLabel").text(r.padStart(3, "0"));
+    $("#colorGreenLabel").text(g.padStart(3, "0"));
+    $("#colorBlueLabel").text(b.padStart(3, "0"));
+
+    $("#colorName").css("color", `rgb(${r}, ${g}, ${b})`);
+
+    if (isValidColor(colorAsHex())) {
+        $("#colorWarning").text("");
+    } else {
+        $("#colorWarning").text("Unreadable Color");
+    }
+}
+
+function changeColor() {
+    if (isValidColor(colorAsHex())) {
+        sendMessage("/color " + colorAsHex());
+        showColors(false);
+    }
+}
+
+
 // Get the websocket setup in a function so it can be recalled
 function setupWebSocket() {
     ws = new WebSocket(getWsUri());
@@ -141,21 +177,8 @@ function setupWebSocket() {
     ws.onopen = () => console.log("Websocket Open");
     ws.onclose = () => {
         closeChat();
-        reconnectCount++
-        setNotifyBox("Something went wrong with the connection. Trying to reconnect " + reconnectCount + ".");
-        if (reconnectCount <= 5) {
-            setTimeout(() => {
-                setupWebSocket();
-                setTimeout(() => {
-                    if (ws.readyState == ws.OPEN) {
-                        join();
-                        reconnectCount = 0;
-                    }
-                }, 2000);
-            }, 2000);
-        } else {
-            setNotifyBox("Tried to reconnect " + reconnectCount + " times. Please refresh page or contact admin.")
-        }
+        setNotifyBox("The connection to the server has closed. Please refresh page to connect again.");
+        $("#joinbox").css("display", "none");
     }
     ws.onerror = (e) => {
         console.log("Websocket Error:", e);
@@ -187,10 +210,6 @@ function setupEvents() {
         input: () => processMessage(),
     });
 
-    $("#hiddenColorPicker").on({
-        change: () => sendMessage("/color " + $("#hiddenColorPicker").val()),
-    });
-
     $("#send").on({
         click: () => $("#msg").focus(),
     });
@@ -200,6 +219,12 @@ function setupEvents() {
     ).observe($("#suggestions")[0], { childList: true });
 }
 
+function defaultValues() {
+    $("#colorRed").val(0).trigger("input");
+    $("#colorGreen").val(0).trigger("input");
+    $("#colorBlue").val(0).trigger("input");
+}
+
 window.addEventListener("onresize", updateSuggestionCss);
 
 window.addEventListener("load", () => {
@@ -207,7 +232,42 @@ window.addEventListener("load", () => {
     setupWebSocket();
     startGo();
     setupEvents();
+    defaultValues();
 
     // Make sure name is focused on start
     $("#name").focus();
 });
+
+function pleaseremovethis() {
+    colors = ["aliceblue", "antiquewhite", "aqua", "aquamarine", "azure",
+        "beige", "bisque", "black", "blanchedalmond", "blue",
+        "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse",
+        "chocolate", "coral", "cornflowerblue", "cornsilk", "crimson",
+        "cyan", "darkblue", "darkcyan", "darkgoldenrod", "darkgray",
+        "darkgrey", "darkgreen", "darkkhaki", "darkmagenta", "darkolivegreen",
+        "darkorange", "darkorchid", "darkred", "darksalmon", "darkseagreen",
+        "darkslateblue", "darkslategray", "darkslategrey", "darkturquoise", "darkviolet",
+        "deeppink", "deepskyblue", "dimgray", "dimgrey", "dodgerblue",
+        "firebrick", "floralwhite", "forestgreen", "fuchsia", "gainsboro",
+        "ghostwhite", "gold", "goldenrod", "gray", "grey",
+        "green", "greenyellow", "honeydew", "hotpink", "indianred",
+        "indigo", "ivory", "khaki", "lavender", "lavenderblush",
+        "lawngreen", "lemonchiffon", "lightblue", "lightcoral", "lightcyan",
+        "lightgoldenrodyellow", "lightgray", "lightgrey", "lightgreen", "lightpink",
+        "lightsalmon", "lightseagreen", "lightskyblue", "lightslategray", "lightslategrey",
+        "lightsteelblue", "lightyellow", "lime", "limegreen", "linen",
+        "magenta", "maroon", "mediumaquamarine", "mediumblue", "mediumorchid",
+        "mediumpurple", "mediumseagreen", "mediumslateblue", "mediumspringgreen", "mediumturquoise",
+        "mediumvioletred", "midnightblue", "mintcream", "mistyrose", "moccasin",
+        "navajowhite", "navy", "oldlace", "olive", "olivedrab",
+        "orange", "orangered", "orchid", "palegoldenrod", "palegreen",
+        "paleturquoise", "palevioletred", "papayawhip", "peachpuff", "peru",
+        "pink", "plum", "powderblue", "purple", "rebeccapurple",
+        "red", "rosybrown", "royalblue", "saddlebrown", "salmon",
+        "sandybrown", "seagreen", "seashell", "sienna", "silver",
+        "skyblue", "slateblue", "slategray", "slategrey", "snow",
+        "springgreen", "steelblue", "tan", "teal", "thistle",
+        "tomato", "turquoise", "violet", "wheat", "white",
+        "whitesmoke", "yellow", "yellowgreen",]
+
+}

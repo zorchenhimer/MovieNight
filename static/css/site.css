@@ -4,6 +4,7 @@
     --var-message-color: #f4f4f4;
     --var-contrast-color: #1bf7ec;
     --var-background-color: #0F0F11;
+    --var-popout-color: #393940;
     --var-max-height: 98vh;
     --var-max-width: 98vw;
 }
@@ -111,6 +112,32 @@ span.svmsg {
     color: #B1B1B1;
 }
 
+.contrast {
+    color: var(--var-contrast-color);
+}
+
+.range-div {
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+    padding: 5px;
+}
+
+.range-div>input[type=button] {
+    flex: 2;
+}
+
+.hiddendiv {
+    display: none;
+    color: var(--var-message-color);
+    background: var(--var-popout-color);
+    padding: 2em;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
 #videoElement {
     position: relative;
     top: 50%;
@@ -135,7 +162,7 @@ span.svmsg {
     right: 0px;
     margin: 0px 5px;
     padding: 3px;
-    background: #393940;
+    background: var(--var-popout-color);
 }
 
 #hidden:hover,
@@ -239,4 +266,8 @@ span.svmsg {
 
 #helpbody {
     color: #b1b1b1;
+}
+
+#colorSubmit:disabled {
+    display: none;
 }
