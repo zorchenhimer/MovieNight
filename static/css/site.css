@@ -24,6 +24,10 @@ body {
     margin: 0px;
 }
 
+span.timestamp {
+    color: #232328;
+}
+
 span.name {
     font-weight: bold;
 }

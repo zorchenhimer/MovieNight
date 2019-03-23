@@ -82,31 +82,32 @@ func (c ClientData) HTML() string {
 }
 
 type DataMessage struct {
-	From    string
-	Color   string
-	Message string
-	Level   CommandLevel
-	Type    MessageType
+	From      string
+	Color     string
+	Message   string
+	Level     CommandLevel
+	Type      MessageType
+	TimeStamp time
 }
 
 // TODO: Read this HTML from a template somewhere
 func (dc DataMessage) HTML() string {
 	switch dc.Type {
 	case MsgAction:
-		return `<div style="color:` + dc.Color + `"><span class="name">` + dc.From +
+		return `<span class="timestamp">[` + dc.TimeStamp.Format("15:04:05") + `]</span><div style="color:` + dc.Color + `"><span class="name">` + dc.From +
 			`</span> <span class="cmdme">` + dc.Message + `</span></div>`
 
 	case MsgServer:
-		return `<div class="announcement">` + dc.Message + `</div>`
+		return `<span class="timestamp">[` + dc.TimeStamp.Format("15:04:05") + `]</span><div class="announcement">` + dc.Message + `</div>`
 
 	case MsgError:
-		return `<div class="error">` + dc.Message + `</div>`
+		return `<span class="timestamp">[` + dc.TimeStamp.Format("15:04:05") + `]</span><div class="error">` + dc.Message + `</div>`
 
 	case MsgNotice:
-		return `<div class="notice">` + dc.Message + `</div>`
+		return `<span class="timestamp">[` + dc.TimeStamp.Format("15:04:05") + `]</span><div class="notice">` + dc.Message + `</div>`
 
 	case MsgCommandResponse:
-		return `<div class="command">` + dc.Message + `</div>`
+		return `<span class="timestamp">[` + dc.TimeStamp.Format("15:04:05") + `]</span><div class="command">` + dc.Message + `</div>`
 
 	default:
 		badge := ""
@@ -116,7 +117,7 @@ func (dc DataMessage) HTML() string {
 		case CmdAdmin:
 			badge = `<img src="/static/img/admin.png" class="badge" />`
 		}
-		return `<div>` + badge + `<span class="name" style="color:` + dc.Color + `">` + dc.From +
+		return `<span class="timestamp">[` + dc.TimeStamp.Format("15:04:05") + `]</span><div>` + badge + `<span class="name" style="color:` + dc.Color + `">` + dc.From +
 			`</span><b>:</b> <span class="msg">` + dc.Message + `</span></div>`
 	}
 }
@@ -125,11 +126,12 @@ func NewChatMessage(name, color, msg string, lvl CommandLevel, msgtype MessageTy
 	return ChatData{
 		Type: DTChat,
 		Data: DataMessage{
-			From:    name,
-			Color:   color,
-			Message: msg,
-			Type:    msgtype,
-			Level:   lvl,
+			From:      name,
+			Color:     color,
+			Message:   msg,
+			Type:      msgtype,
+			Level:     lvl,
+			TimeStamp:  Now(),
 		},
 	}
 }
@@ -137,6 +139,7 @@ func NewChatMessage(name, color, msg string, lvl CommandLevel, msgtype MessageTy
 type DataCommand struct {
 	Command   CommandType
 	Arguments []string
+	TimeStamp time
 }
 
 func (de DataCommand) HTML() string {
@@ -154,6 +157,7 @@ func NewChatCommand(command CommandType, args []string) ChatData {
 		Data: DataCommand{
 			Command:   command,
 			Arguments: args,
+			TimeStamp:  Now(),
 		},
 	}
 }
@@ -167,35 +171,35 @@ type DataEvent struct {
 func (de DataEvent) HTML() string {
 	switch de.Event {
 	case EvKick:
-		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
+		return `<span class="timestamp">[` + de.TimeStamp.Format("15:04:05") + `]</span><div class="event"><span class="name" style="color:` + de.Color + `">` +
 			de.User + `</span> has been kicked.</div>`
 	case EvLeave:
-		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
+		return `<span class="timestamp">[` + de.TimeStamp.Format("15:04:05") + `]</span><div class="event"><span class="name" style="color:` + de.Color + `">` +
 			de.User + `</span> has left the chat.</div>`
 	case EvBan:
-		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
+		return `<span class="timestamp">[` + de.TimeStamp.Format("15:04:05") + `]</span><div class="event"><span class="name" style="color:` + de.Color + `">` +
 			de.User + `</span> has been banned.</div>`
 	case EvJoin:
-		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
+		return `<span class="timestamp">[` + de.TimeStamp.Format("15:04:05") + `]</span><div class="event"><span class="name" style="color:` + de.Color + `">` +
 			de.User + `</span> has joined the chat.</div>`
 	case EvNameChange:
 		names := strings.Split(de.User, ":")
 		if len(names) != 2 {
-			return `<div class="event">Somebody changed their name, but IDK who ` +
+			return `<span class="timestamp">[` + de.TimeStamp.Format("15:04:05") + `]</span><div class="event">Somebody changed their name, but IDK who ` +
 				ParseEmotes("Jebaited") + `.</div>`
 		}
 
-		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
+		return `<span class="timestamp">[` + de.TimeStamp.Format("15:04:05") + `]</span><div class="event"><span class="name" style="color:` + de.Color + `">` +
 			names[0] + `</span> has changed their name to <span class="name" style="color:` +
 			de.Color + `">` + names[1] + `</span>.</div>`
 	case EvNameChangeForced:
 		names := strings.Split(de.User, ":")
 		if len(names) != 2 {
-			return `<div class="event">An admin changed somebody's name, but IDK who ` +
+			return `<span class="timestamp">[` + de.TimeStamp.Format("15:04:05") + `]</span><div class="event">An admin changed somebody's name, but IDK who ` +
 				ParseEmotes("Jebaited") + `.</div>`
 		}
 
-		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
+		return `<span class="timestamp">[` + de.TimeStamp.Format("15:04:05") + `]</span><div class="event"><span class="name" style="color:` + de.Color + `">` +
 			names[0] + `</span> has had their name changed to <span class="name" style="color:` +
 			de.Color + `">` + names[1] + `</span> by an admin.</div>`
 	}
