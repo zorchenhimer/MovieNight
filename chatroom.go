@@ -124,8 +124,8 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 	return client, nil
 }
 
-// TODO: fix this up a bit.  kick and leave are the same, incorrect, error: "That name was already used!"
-//leaving the chatroom
+// TODO: fix this up a bit.  kick and leave are the same, incorrect, error: "That
+// name was already used!" leaving the chatroom
 func (cr *ChatRoom) Leave(name, color string) {
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock() //preventing simultaneous access to the `clients` map
@@ -328,13 +328,14 @@ func (cr *ChatRoom) Broadcast() {
 			if err != nil {
 				fmt.Printf("Error converting ChatData to ChatDataJSON: %v\n", err)
 			} else {
-				for _, conn := range cr.tempConn {
-					go func(c *chatConnection) {
+				for uuid, conn := range cr.tempConn {
+					go func(c *chatConnection, suid string) {
 						err = c.WriteData(data)
 						if err != nil {
 							fmt.Printf("Error writing data to connection: %v\n", err)
+							delete(cr.tempConn, suid)
 						}
-					}(conn)
+					}(conn, uuid)
 				}
 			}
 
