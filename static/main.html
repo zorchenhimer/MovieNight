@@ -1,47 +1,47 @@
 {{define "header"}}
-{{ if .Chat }}
+{{if .Chat}}
 <script type="application/javascript" src="/static/js/wasm_exec.js"></script>
 <script type="application/javascript" src="/static/js/chat.js"></script>
 <script>
-    maxMessageCount = {{ .MessageHistoryCount }}
+    maxMessageCount = {{.MessageHistoryCount }}
 </script>
 <style>
     .root {
         display: grid;
     }
 </style>
-{{ end }}
+{{end}}
 
-{{ if .Video }}
+{{if .Video}}
 <script type="application/javascript" src="/static/js/flv.min.js"></script>
 <script type="application/javascript" src="/static/js/video.js"></script>
-{{ if not .Chat }}
+{{if not .Chat}}
 <style>
     #videoElement {
         height: 99vh;
     }
 </style>
-{{ end }}
-{{ end }}
+{{end}}
+{{end}}
 
-{{ if and .Video .Chat }}
+{{if and .Video .Chat}}
 <style>
     .root {
         grid-template-columns: 5fr 1fr;
     }
 </style>
-{{ end }}
+{{end}}
 {{end}}
 
 {{define "body"}}
-{{ if .Video }}
+{{if .Video}}
 <video id="videoElement" controls autoplay x5-video-player-type="h5" x5-video-player-fullscreen="true" playsinline
     webkit-playsinline>
     Your browser is too old and doesn't support HTML5 video.
 </video>
-{{ end }}
+{{end}}
 
-{{ if .Chat }}
+{{if .Chat}}
 <div id="chatwindow">
     <div id="notifyBox"></div>
     <div id="chat" style="display: none;">
@@ -53,9 +53,9 @@
                 <button class="button pretty-button" onclick="help();">Help</button>
                 <button class="button pretty-button" onclick="$('#hiddenColorPicker').trigger('click');">Color</button>
                 <button class="button pretty-button" onclick="nick();">Nick</button>
-                {{ if .Video }}
+                {{if .Video}}
                 <button class="button pretty-button" onclick="initPlayer();">Reload Player</button>
-                {{ end }}
+                {{end}}
             </div>
             <hr />
         </div>
@@ -78,5 +78,5 @@
         </div>
     </div>
 </div>
-{{ end }}
+{{end}}
 {{end}}
