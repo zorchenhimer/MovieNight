@@ -320,20 +320,23 @@ func (cr *ChatRoom) Broadcast() {
 		case msg := <-cr.queue:
 			cr.clientsMtx.Lock()
 			for _, client := range cr.clients {
-				send(msg, client)
+				go send(msg, client)
 			}
-			for _, conn := range cr.tempConn {
-				data, err := msg.ToJSON()
-				if err != nil {
-					fmt.Printf("Error converting ChatData to ChatDataJSON: %v\n", err)
-					// Break out early because if one conversion fails, they all will fail
-					break
-				}
-				err = conn.WriteData(data)
-				if err != nil {
-					fmt.Printf("Error writing data to connection: %v\n", err)
+
+			data, err := msg.ToJSON()
+			if err != nil {
+				fmt.Printf("Error converting ChatData to ChatDataJSON: %v\n", err)
+			} else {
+				for _, conn := range cr.tempConn {
+					go func(c *chatConnection) {
+						err = c.WriteData(data)
+						if err != nil {
+							fmt.Printf("Error writing data to connection: %v\n", err)
+						}
+					}(conn)
 				}
 			}
+
 			cr.clientsMtx.Unlock()
 		case msg := <-cr.modqueue:
 			cr.clientsMtx.Lock()

@@ -9,20 +9,22 @@ import (
 
 type chatConnection struct {
 	*websocket.Conn
-	mutex        sync.Mutex
+	mutex        sync.RWMutex
 	forwardedFor string
 }
 
 func (cc *chatConnection) ReadData(data interface{}) error {
-	defer cc.mutex.Unlock()
-	cc.mutex.Lock()
+	cc.mutex.RLock()
+	defer cc.mutex.RUnlock()
+
 	stats.msgInInc()
 	return cc.ReadJSON(data)
 }
 
 func (cc *chatConnection) WriteData(data interface{}) error {
-	defer cc.mutex.Unlock()
 	cc.mutex.Lock()
+	defer cc.mutex.Unlock()
+
 	stats.msgOutInc()
 	return cc.WriteJSON(data)
 }
