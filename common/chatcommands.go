@@ -34,6 +34,7 @@ var (
 	CNReloadPlayer ChatCommandNames = []string{"reloadplayer"}
 	CNReloadEmotes ChatCommandNames = []string{"reloademotes"}
 	CNModpass      ChatCommandNames = []string{"modpass"}
+	CNIP           ChatCommandNames = []string{"iplist"}
 )
 
 var ChatCommands = []ChatCommandNames{
@@ -42,7 +43,7 @@ var ChatCommands = []ChatCommandNames{
 	// Mod
 	CNSv, CNPlaying, CNUnmod, CNKick, CNBan, CNUnban, CNPurge,
 	// Admin
-	CNMod, CNReloadPlayer, CNReloadEmotes, CNModpass,
+	CNMod, CNReloadPlayer, CNReloadEmotes, CNModpass, CNIP,
 }
 
 func GetFullChatCommand(c string) string {

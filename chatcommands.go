@@ -293,6 +293,24 @@ var commands = &CommandControl{
 				return "Single use password: " + password
 			},
 		},
+
+		common.CNIP.String(): Command{
+			HelpText: "list users and IP in the server console",
+			Function: func(cl *Client, args []string) string {
+				cl.belongsTo.clientsMtx.Lock()
+				fmt.Println("Clients:")
+				for uuid, client := range cl.belongsTo.clients {
+					fmt.Printf("  [%s] %s %s\n", uuid, client.name, client.conn.Host())
+				}
+
+				fmt.Println("TmpConn:")
+				for uuid, conn := range cl.belongsTo.tempConn {
+					fmt.Printf("  [%s] %s\n", uuid, conn.Host())
+				}
+				cl.belongsTo.clientsMtx.Unlock()
+				return "see console for output"
+			},
+		},
 	},
 }
 
