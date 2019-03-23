@@ -42,6 +42,8 @@ func (cc *chatConnection) WriteData(data interface{}) error {
 		default:
 			return fmt.Errorf("Error writing data to %s: %v", cc.Host(), err)
 		}
+	}
+
 	return nil
 }
 

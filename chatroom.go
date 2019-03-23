@@ -74,7 +74,7 @@ func (cr *ChatRoom) JoinTemp(conn *chatConnection) (string, error) {
 	return suid, nil
 }
 
-//registering a new client
+// registering a new client
 //returns pointer to a Client, or Nil, if the name is already taken
 func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 	defer cr.clientsMtx.Unlock()
@@ -96,7 +96,6 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 		}
 	}
 
-	conn.clientName = name
 	client := &Client{
 		name:      name,
 		conn:      conn,
@@ -307,7 +306,7 @@ func (cr *ChatRoom) UserCount() int {
 	return len(cr.clients)
 }
 
-//broadcasting all the messages in the queue in one block
+// Broadcasting all the messages in the queue in one block
 func (cr *ChatRoom) Broadcast() {
 	send := func(data common.ChatData, client *Client) {
 		err := client.SendChatData(data)
@@ -320,7 +319,7 @@ func (cr *ChatRoom) Broadcast() {
 		select {
 		case msg := <-cr.queue:
 			cr.clientsMtx.Lock()
-			for clientID, client := range cr.clients {
+			for _, client := range cr.clients {
 				go send(msg, client)
 			}
 
@@ -328,23 +327,20 @@ func (cr *ChatRoom) Broadcast() {
 			if err != nil {
 				fmt.Printf("Error converting ChatData to ChatDataJSON: %v\n", err)
 			} else {
-				for _, conn := range cr.tempConn {
-					go func(c *chatConnection) {
+				for uuid, conn := range cr.tempConn {
+					go func(c *chatConnection, uuid string) {
 						err := c.WriteData(data)
 						if err != nil {
 							if err.(ErrConnectionClosed) {
-								c.mutex.Lock()
-								defer c.mutex.Unlock()
-
-								delete(cr.clients, clientID)
-								fmt.Printf("Client %s has been removed from map", clientID)
-
+								// handle the mutex lock here
+								delete(cr.tempConn, strings.ToLower(suid))
+.								fmt.Printf("Client %s has been removed from map", uuid)
 								return
 							}
 
 							fmt.Printf("Error writing data to connection: %v\n", err)
 						}
-					}(conn)
+					}(conn, uuid)
 				}
 			}
 
