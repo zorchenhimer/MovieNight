@@ -224,7 +224,7 @@ func recieve(v []js.Value) {
 }
 
 func websocketSend(msg string, dataType common.ClientDataType) error {
-	if strings.TrimSpace(msg) == "" {
+	if strings.TrimSpace(msg) == "" && dataType == common.CdMessage {
 		return nil
 	}
 
