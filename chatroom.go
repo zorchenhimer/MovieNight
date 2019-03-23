@@ -320,7 +320,7 @@ func (cr *ChatRoom) Broadcast() {
 		select {
 		case msg := <-cr.queue:
 			cr.clientsMtx.Lock()
-			for _, client := range cr.clients {
+			for clientID, client := range cr.clients {
 				go send(msg, client)
 			}
 
@@ -330,8 +330,18 @@ func (cr *ChatRoom) Broadcast() {
 			} else {
 				for _, conn := range cr.tempConn {
 					go func(c *chatConnection) {
-						err = c.WriteData(data)
+						err := c.WriteData(data)
 						if err != nil {
+							if err.(ErrConnectionClosed) {
+								c.mutex.Lock()
+								defer c.mutex.Unlock()
+
+								delete(cr.clients, clientID)
+								fmt.Printf("Client %s has been removed from map", clientID)
+
+								return
+							}
+
 							fmt.Printf("Error writing data to connection: %v\n", err)
 						}
 					}(conn)

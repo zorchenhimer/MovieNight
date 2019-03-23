@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"sync"
@@ -8,11 +9,14 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+var (
+	ErrConnectionClosed = errors.New("Connection has been closed")
+)
+
 type chatConnection struct {
 	*websocket.Conn
 	mutex        sync.RWMutex
 	forwardedFor string
-	clientName   string
 }
 
 func (cc *chatConnection) ReadData(data interface{}) error {
@@ -30,11 +34,14 @@ func (cc *chatConnection) WriteData(data interface{}) error {
 	stats.msgOutInc()
 	err := cc.WriteJSON(data)
 	if err != nil {
-		if operr, ok := err.(*net.OpError); ok {
-			fmt.Println("OpError: " + operr.Err.Error())
+		switch t := err.(type) {
+		case *net.OpError:
+			// only handle the close connection.
+			// net.OpError.Op provides more information
+			return ErrConnectionClosed
+		default:
+			return fmt.Errorf("Error writing data to %s: %v", cc.Host(), err)
 		}
-		return fmt.Errorf("Error writing data to %s %s: %v", cc.clientName, cc.Host(), err)
-	}
 	return nil
 }
 
