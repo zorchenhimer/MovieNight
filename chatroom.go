@@ -328,6 +328,11 @@ func (cr *ChatRoom) Broadcast() {
 				go send(msg, client)
 			}
 
+			// Only send Chat and Event stuff to temp clients
+			if msg.Type != common.DTChat && msg.Type != common.DTEvent {
+				break
+			}
+
 			data, err := msg.ToJSON()
 			if err != nil {
 				fmt.Printf("Error converting ChatData to ChatDataJSON: %v\n", err)
