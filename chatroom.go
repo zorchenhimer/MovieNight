@@ -85,7 +85,7 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 		return nil, errors.New("connection is missing from temp connections")
 	}
 
-	if !common.IsValidName(name) || common.IsValidColor(name) {
+	if !common.IsValidName(name) {
 		return nil, UserFormatError{Name: name}
 	}
 

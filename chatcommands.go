@@ -94,16 +94,18 @@ var commands = &CommandControl{
 					return "Missing name to change to."
 				}
 
-				newName := args[0]
+				newName := strings.TrimLeft(args[0], "@")
 				oldName := cl.name
 				forced := false
+
+				// Two arguments to force a name change on another user: `/nick OldName NewName`
 				if len(args) == 2 {
 					if !cl.IsAdmin {
 						return "Only admins can do that PeepoSus"
 					}
 
-					oldName = args[0]
-					newName = args[1]
+					oldName = strings.TrimLeft(args[0], "@")
+					newName = strings.TrimLeft(args[1], "@")
 					forced = true
 				}
 
@@ -182,18 +184,19 @@ var commands = &CommandControl{
 					return "You can only unmod yourself, not others."
 				}
 
-				if len(args) == 0 || (len(args) == 1 && args[0] == cl.name) {
+				if len(args) == 0 || (len(args) == 1 && strings.TrimLeft(args[0], "@") == cl.name) {
 					cl.Unmod()
 					cl.belongsTo.AddModNotice(cl.name + " has unmodded themselves")
 					return "You have unmodded yourself."
 				}
+				name := strings.TrimLeft(args[0], "@")
 
-				if err := cl.belongsTo.Unmod(args[0]); err != nil {
+				if err := cl.belongsTo.Unmod(name); err != nil {
 					return err.Error()
 				}
 
-				cl.belongsTo.AddModNotice(cl.name + " has unmodded " + args[0])
-				return fmt.Sprintf(`%s has been unmodded.`, args[0])
+				cl.belongsTo.AddModNotice(cl.name + " has unmodded " + name)
+				return ""
 			},
 		},
 
@@ -203,7 +206,7 @@ var commands = &CommandControl{
 				if len(args) == 0 {
 					return "Missing name to kick."
 				}
-				return cl.belongsTo.Kick(args[0])
+				return cl.belongsTo.Kick(strings.TrimLeft(args[0], "@"))
 			},
 		},
 
@@ -213,8 +216,10 @@ var commands = &CommandControl{
 				if len(args) == 0 {
 					return "missing name to ban."
 				}
-				fmt.Printf("[ban] Attempting to ban %s\n", strings.Join(args, ""))
-				return cl.belongsTo.Ban(args[0])
+
+				name := strings.TrimLeft(args[0], "@")
+				fmt.Printf("[ban] Attempting to ban %s\n", name)
+				return cl.belongsTo.Ban(name)
 			},
 		},
 
@@ -224,13 +229,14 @@ var commands = &CommandControl{
 				if len(args) == 0 {
 					return "missing name to unban."
 				}
-				fmt.Printf("[ban] Attempting to unban %s\n", strings.Join(args, ""))
+				name := strings.TrimLeft(args[0], "@")
+				fmt.Printf("[ban] Attempting to unban %s\n", name)
 
-				err := settings.RemoveBan(args[0])
+				err := settings.RemoveBan(name)
 				if err != nil {
 					return err.Error()
 				}
-				cl.belongsTo.AddModNotice(cl.name + " has unbanned " + args[0])
+				cl.belongsTo.AddModNotice(cl.name + " has unbanned " + name)
 				return ""
 			},
 		},
@@ -252,11 +258,13 @@ var commands = &CommandControl{
 				if len(args) == 0 {
 					return "Missing user to mod."
 				}
-				if err := cl.belongsTo.Mod(args[0]); err != nil {
+
+				name := strings.TrimLeft(args[0], "@")
+				if err := cl.belongsTo.Mod(name); err != nil {
 					return err.Error()
 				}
-				cl.belongsTo.AddModNotice(cl.name + " has modded " + args[0])
-				return fmt.Sprintf(`%s has been modded.`, args[0])
+				cl.belongsTo.AddModNotice(cl.name + " has modded " + name)
+				return ""
 			},
 		},
 
@@ -387,20 +395,69 @@ func getHelp(lvl common.CommandLevel) map[string]string {
 var cmdColor = Command{
 	HelpText: "Change user color.",
 	Function: func(cl *Client, args []string) string {
+		if len(args) > 2 {
+			return "Too many arguments!"
+		}
+
 		// If the caller is priviledged enough, they can change the color of another user
-		if len(args) == 2 && (cl.IsMod || cl.IsAdmin) {
-			color := ""
-			name := ""
-			for _, s := range args {
-				if common.IsValidColor(s) {
-					color = s
-				} else {
-					name = s
-				}
+		if len(args) == 2 {
+			if !(cl.IsMod || cl.IsAdmin) {
+				return "You cannot change someone else's color. PeepoSus"
 			}
+
+			name, color := "", ""
+
+			if strings.ToLower(args[0]) == strings.ToLower(args[1]) ||
+				(common.IsValidColor(args[0]) && common.IsValidColor(args[1])) {
+				return "Name and color are ambiguous. Prefix the name with '@' or color with '#'"
+			}
+
+			// Check for explicit name
+			if strings.HasPrefix(args[0], "@") {
+				name = strings.TrimLeft(args[0], "@")
+				color = args[1]
+				fmt.Println("Found explicit name: ", name)
+			} else if strings.HasPrefix(args[1], "@") {
+				name = strings.TrimLeft(args[1], "@")
+				color = args[0]
+				fmt.Println("Found explicit name: ", name)
+
+				// Check for explicit color
+			} else if strings.HasPrefix(args[0], "#") {
+				name = strings.TrimPrefix(args[1], "@") // this shouldn't be needed, but just in case.
+				color = args[0]
+				fmt.Println("Found explicit color: ", color)
+			} else if strings.HasPrefix(args[1], "#") {
+				name = strings.TrimPrefix(args[0], "@") // this shouldn't be needed, but just in case.
+				color = args[1]
+				fmt.Println("Found explicit color: ", color)
+
+				// Guess
+			} else if common.IsValidColor(args[0]) {
+				name = strings.TrimPrefix(args[1], "@")
+				color = args[0]
+				fmt.Println("Guessed name: ", name, " and color: ", color)
+			} else if common.IsValidColor(args[1]) {
+				name = strings.TrimPrefix(args[0], "@")
+				color = args[1]
+				fmt.Println("Guessed name: ", name, " and color: ", color)
+			}
+
+			if name == "" {
+				return "Cannot determine name.  Prefix name with @."
+			}
+			if color == "" {
+				return "Cannot determine color.  Prefix name with @."
+			}
+
 			if color == "" {
 				fmt.Printf("[color:mod] %s missing color\n", cl.name)
 				return "Missing color"
+			}
+
+			if name == "" {
+				fmt.Printf("[color:mod] %s missing name\n", cl.name)
+				return "Missing name"
 			}
 
 			if err := cl.belongsTo.ForceColorChange(name, color); err != nil {
