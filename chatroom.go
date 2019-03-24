@@ -45,7 +45,7 @@ func newChatRoom() (*ChatRoom, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error loading emotes: %s", err)
 	}
-	fmt.Printf("Loaded %d emotes\n", num)
+	common.LogInfof("Loaded %d emotes\n", num)
 
 	//the "heartbeat" for broadcasting messages
 	go cr.Broadcast()
@@ -113,10 +113,10 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 	cr.clients[uid] = client
 	delete(cr.tempConn, uid)
 
-	fmt.Printf("[join] %s %s\n", host, name)
+	common.LogChatf("[join] %s %s\n", host, name)
 	playingCommand, err := common.NewChatCommand(common.CmdPlaying, []string{cr.playing, cr.playingLink}).ToJSON()
 	if err != nil {
-		fmt.Printf("Unable to encode playing command on join: %s\n", err)
+		common.LogErrorf("Unable to encode playing command on join: %s\n", err)
 	} else {
 		client.Send(playingCommand)
 	}
@@ -132,7 +132,7 @@ func (cr *ChatRoom) Leave(name, color string) {
 
 	client, suid, err := cr.getClient(name)
 	if err != nil {
-		fmt.Printf("[leave] Unable to get client suid %v\n", err)
+		common.LogErrorf("[leave] Unable to get client suid %v\n", err)
 		return
 	}
 	host := client.Host()
@@ -141,7 +141,7 @@ func (cr *ChatRoom) Leave(name, color string) {
 	cr.delClient(suid)
 
 	cr.AddEventMsg(common.EvLeave, name, color)
-	fmt.Printf("[leave] %s %s\n", host, name)
+	common.LogChatf("[leave] %s %s\n", host, name)
 }
 
 // kicked from the chatroom
@@ -168,7 +168,7 @@ func (cr *ChatRoom) Kick(name string) string {
 	cr.delClient(suid)
 
 	cr.AddEventMsg(common.EvKick, name, color)
-	fmt.Printf("[kick] %s %s has been kicked\n", host, name)
+	common.LogInfof("[kick] %s %s has been kicked\n", host, name)
 	return ""
 }
 
@@ -178,7 +178,7 @@ func (cr *ChatRoom) Ban(name string) string {
 
 	client, suid, err := cr.getClient(name)
 	if err != nil {
-		fmt.Printf("[ban] Unable to get client for name %q\n", name)
+		common.LogErrorf("[ban] Unable to get client for name %q\n", name)
 		return "Cannot find that name"
 	}
 
@@ -206,7 +206,7 @@ func (cr *ChatRoom) Ban(name string) string {
 
 	err = settings.AddBan(host, names)
 	if err != nil {
-		fmt.Printf("[BAN] Error banning %q: %s\n", name, err)
+		common.LogErrorf("[BAN] Error banning %q: %s\n", name, err)
 		cr.AddEventMsg(common.EvKick, name, color)
 	} else {
 		cr.AddEventMsg(common.EvBan, name, color)
@@ -229,7 +229,7 @@ func (cr *ChatRoom) AddMsg(from *Client, isAction, isServer bool, msg string) {
 	select {
 	case cr.queue <- common.NewChatMessage(from.name, from.color, msg, from.CmdLevel, t):
 	default:
-		fmt.Println("Unable to queue chat message. Channel full.")
+		common.LogErrorln("Unable to queue chat message. Channel full.")
 	}
 }
 
@@ -237,7 +237,7 @@ func (cr *ChatRoom) AddCmdMsg(command common.CommandType, args []string) {
 	select {
 	case cr.queue <- common.NewChatCommand(command, args):
 	default:
-		fmt.Println("Unable to queue command message.  Channel full.")
+		common.LogErrorln("Unable to queue command message.  Channel full.")
 	}
 }
 
@@ -245,7 +245,7 @@ func (cr *ChatRoom) AddModNotice(message string) {
 	select {
 	case cr.modqueue <- common.NewChatMessage("", "", message, common.CmdlUser, common.MsgNotice):
 	default:
-		fmt.Println("Unable to queue notice.  Channel full.")
+		common.LogErrorln("Unable to queue notice.  Channel full.")
 	}
 }
 
@@ -253,7 +253,7 @@ func (cr *ChatRoom) AddEventMsg(event common.EventType, name, color string) {
 	select {
 	case cr.queue <- common.NewChatEvent(event, name, color):
 	default:
-		fmt.Println("Unable to queue event message.  Channel full.")
+		common.LogErrorln("Unable to queue event message.  Channel full.")
 	}
 }
 
@@ -310,7 +310,7 @@ func (cr *ChatRoom) Broadcast() {
 	send := func(data common.ChatData, client *Client) {
 		err := client.SendChatData(data)
 		if err != nil {
-			fmt.Printf("Error sending data to client: %v\n", err)
+			common.LogErrorf("Error sending data to client: %v\n", err)
 		}
 	}
 
@@ -333,7 +333,7 @@ func (cr *ChatRoom) Broadcast() {
 
 			data, err := msg.ToJSON()
 			if err != nil {
-				fmt.Printf("Error converting ChatData to ChatDataJSON: %v\n", err)
+				common.LogErrorf("Error converting ChatData to ChatDataJSON: %v\n", err)
 				cr.clientsMtx.Unlock()
 				break
 			}
@@ -342,7 +342,7 @@ func (cr *ChatRoom) Broadcast() {
 				go func(c *chatConnection, suid string) {
 					err = c.WriteData(data)
 					if err != nil {
-						fmt.Printf("Error writing data to connection: %v\n", err)
+							common.LogErrorf("Error writing data to connection: %v\n", err)
 						delete(cr.tempConn, suid)
 					}
 				}(conn, uuid)
@@ -484,7 +484,7 @@ func (cr *ChatRoom) changeName(oldName, newName string, forced bool) error {
 
 	if currentClient != nil {
 		currentClient.name = newName
-		fmt.Printf("%q -> %q\n", oldName, newName)
+		common.LogDebugf("%q -> %q\n", oldName, newName)
 
 		if forced {
 			cr.AddEventMsg(common.EvNameChangeForced, oldName+":"+newName, currentClient.color)

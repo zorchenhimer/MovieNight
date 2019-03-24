@@ -61,19 +61,19 @@ var commands = &CommandControl{
 				if settings.AdminPassword == pw {
 					cl.CmdLevel = common.CmdlAdmin
 					cl.belongsTo.AddModNotice(cl.name + " used the admin password")
-					fmt.Printf("[auth] %s used the admin password\n", cl.name)
+					common.LogInfof("[auth] %s used the admin password\n", cl.name)
 					return "Admin rights granted."
 				}
 
 				if cl.belongsTo.redeemModPass(pw) {
 					cl.CmdLevel = common.CmdlMod
 					cl.belongsTo.AddModNotice(cl.name + " used a mod password")
-					fmt.Printf("[auth] %s used a mod password\n", cl.name)
+					common.LogInfof("[auth] %s used a mod password\n", cl.name)
 					return "Moderator privileges granted."
 				}
 
 				cl.belongsTo.AddModNotice(cl.name + " attempted to auth without success")
-				fmt.Printf("[auth] %s gave an invalid password\n", cl.name)
+				common.LogInfof("[auth] %s gave an invalid password\n", cl.name)
 				return "Invalid password."
 			},
 		},
@@ -217,7 +217,7 @@ var commands = &CommandControl{
 				}
 
 				name := strings.TrimLeft(args[0], "@")
-				fmt.Printf("[ban] Attempting to ban %s\n", name)
+				common.LogInfof("[ban] Attempting to ban %s\n", name)
 				return cl.belongsTo.Ban(name)
 			},
 		},
@@ -229,7 +229,7 @@ var commands = &CommandControl{
 					return "missing name to unban."
 				}
 				name := strings.TrimLeft(args[0], "@")
-				fmt.Printf("[ban] Attempting to unban %s\n", name)
+				common.LogInfof("[ban] Attempting to unban %s\n", name)
 
 				err := settings.RemoveBan(name)
 				if err != nil {
@@ -243,7 +243,7 @@ var commands = &CommandControl{
 		common.CNPurge.String(): Command{
 			HelpText: "Purge the chat.",
 			Function: func(cl *Client, args []string) string {
-				fmt.Println("[purge] clearing chat")
+				common.LogInfoln("[purge] clearing chat")
 				cl.belongsTo.AddCmdMsg(common.CmdPurgeChat, nil)
 				return ""
 			},
@@ -282,12 +282,12 @@ var commands = &CommandControl{
 				cl.SendServerMessage("Reloading emotes")
 				num, err := common.LoadEmotes()
 				if err != nil {
-					fmt.Printf("Unbale to reload emotes: %s\n", err)
+					common.LogErrorf("Unbale to reload emotes: %s\n", err)
 					return fmt.Sprintf("ERROR: %s", err)
 				}
 
 				cl.belongsTo.AddModNotice(cl.name + " has reloaded emotes")
-				fmt.Printf("Loaded %d emotes\n", num)
+				common.LogInfof("Loaded %d emotes\n", num)
 				return fmt.Sprintf("Emotes loaded: %d", num)
 			},
 		},
@@ -302,17 +302,17 @@ var commands = &CommandControl{
 		},
 
 		common.CNIP.String(): Command{
-			HelpText: "list users and IP in the server console",
+			HelpText: "List users and IP in the server console.  Requires logging level to be set to info or above.",
 			Function: func(cl *Client, args []string) string {
 				cl.belongsTo.clientsMtx.Lock()
-				fmt.Println("Clients:")
+				common.LogInfoln("Clients:")
 				for uuid, client := range cl.belongsTo.clients {
-					fmt.Printf("  [%s] %s %s\n", uuid, client.name, client.conn.Host())
+					common.LogInfof("  [%s] %s %s\n", uuid, client.name, client.conn.Host())
 				}
 
-				fmt.Println("TmpConn:")
+				common.LogInfoln("TmpConn:")
 				for uuid, conn := range cl.belongsTo.tempConn {
-					fmt.Printf("  [%s] %s\n", uuid, conn.Host())
+					common.LogInfof("  [%s] %s\n", uuid, conn.Host())
 				}
 				cl.belongsTo.clientsMtx.Unlock()
 				return "see console for output"
@@ -327,33 +327,33 @@ func (cc *CommandControl) RunCommand(command string, args []string, sender *Clie
 
 	// Look for user command
 	if userCmd, ok := cc.user[cmd]; ok {
-		fmt.Printf("[user] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
+		common.LogInfof("[user] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
 		return userCmd.Function(sender, args)
 	}
 
 	// Look for mod command
 	if modCmd, ok := cc.mod[cmd]; ok {
 		if sender.CmdLevel >= common.CmdlMod {
-			fmt.Printf("[mod] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
+			common.LogInfof("[mod] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
 			return modCmd.Function(sender, args)
 		}
 
-		fmt.Printf("[mod REJECTED] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
+		common.LogInfof("[mod REJECTED] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
 		return "You are not a mod Jebaited"
 	}
 
 	// Look for admin command
 	if adminCmd, ok := cc.admin[cmd]; ok {
 		if sender.CmdLevel == common.CmdlAdmin {
-			fmt.Printf("[admin] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
+			common.LogInfof("[admin] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
 			return adminCmd.Function(sender, args)
 		}
-		fmt.Printf("[admin REJECTED] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
+		common.LogInfof("[admin REJECTED] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
 		return "You are not the admin Jebaited"
 	}
 
 	// Command not found
-	fmt.Printf("[cmd] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
+	common.LogInfof("[cmd] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
 	return "Invalid command."
 }
 
@@ -416,31 +416,31 @@ var cmdColor = Command{
 			if strings.HasPrefix(args[0], "@") {
 				name = strings.TrimLeft(args[0], "@")
 				color = args[1]
-				fmt.Println("Found explicit name: ", name)
+				common.LogDebugln("[color:mod] Found explicit name: ", name)
 			} else if strings.HasPrefix(args[1], "@") {
 				name = strings.TrimLeft(args[1], "@")
 				color = args[0]
-				fmt.Println("Found explicit name: ", name)
+				common.LogDebugln("[color:mod] Found explicit name: ", name)
 
 				// Check for explicit color
 			} else if strings.HasPrefix(args[0], "#") {
 				name = strings.TrimPrefix(args[1], "@") // this shouldn't be needed, but just in case.
 				color = args[0]
-				fmt.Println("Found explicit color: ", color)
+				common.LogDebugln("[color:mod] Found explicit color: ", color)
 			} else if strings.HasPrefix(args[1], "#") {
 				name = strings.TrimPrefix(args[0], "@") // this shouldn't be needed, but just in case.
 				color = args[1]
-				fmt.Println("Found explicit color: ", color)
+				common.LogDebugln("[color:mod] Found explicit color: ", color)
 
 				// Guess
 			} else if common.IsValidColor(args[0]) {
 				name = strings.TrimPrefix(args[1], "@")
 				color = args[0]
-				fmt.Println("Guessed name: ", name, " and color: ", color)
+				common.LogDebugln("[color:mod] Guessed name: ", name, " and color: ", color)
 			} else if common.IsValidColor(args[1]) {
 				name = strings.TrimPrefix(args[0], "@")
 				color = args[1]
-				fmt.Println("Guessed name: ", name, " and color: ", color)
+				common.LogDebugln("[color:mod] Guessed name: ", name, " and color: ", color)
 			}
 
 			if name == "" {
@@ -451,12 +451,12 @@ var cmdColor = Command{
 			}
 
 			if color == "" {
-				fmt.Printf("[color:mod] %s missing color\n", cl.name)
+				common.LogInfof("[color:mod] %s missing color\n", cl.name)
 				return "Missing color"
 			}
 
 			if name == "" {
-				fmt.Printf("[color:mod] %s missing name\n", cl.name)
+				common.LogInfof("[color:mod] %s missing name\n", cl.name)
 				return "Missing name"
 			}
 
@@ -469,7 +469,7 @@ var cmdColor = Command{
 		// Don't allow an unprivilaged user to change their color if
 		// it was changed by a mod
 		if cl.IsColorForced {
-			fmt.Printf("[color] %s tried to change a forced color\n", cl.name)
+			common.LogInfof("[color] %s tried to change a forced color\n", cl.name)
 			return "You are not allowed to change your color."
 		}
 
@@ -484,7 +484,7 @@ var cmdColor = Command{
 		}
 
 		cl.color = args[0]
-		fmt.Printf("[color] %s new color: %s\n", cl.name, cl.color)
+		common.LogInfof("[color] %s new color: %s\n", cl.name, cl.color)
 		return "Color changed successfully."
 	},
 }

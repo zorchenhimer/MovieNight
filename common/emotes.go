@@ -47,14 +47,15 @@ func LoadEmotes() (int, error) {
 	globbed_files := []string(emotePNGs)
 	globbed_files = append(globbed_files, emoteGIFs...)
 
-	fmt.Println("Loading emotes...")
+	LogInfoln("Loading emotes...")
+	emInfo := []string{}
 	for _, file := range globbed_files {
 		file = filepath.Base(file)
 		key := file[0 : len(file)-4]
 		newEmotes[key] = file
-		fmt.Printf("%s ", key)
+		emInfo = append(emInfo, key)
 	}
 	Emotes = newEmotes
-	fmt.Println("")
+	LogInfoln(strings.Join(emInfo, " "))
 	return len(Emotes), nil
 }

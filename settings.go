@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/zorchenhimer/MovieNight/common"
 )
 
 var settings *Settings
@@ -27,6 +29,8 @@ type Settings struct {
 	StreamKey       string
 	ListenAddress   string
 	Bans            []BanInfo
+	LogLevel        common.LogLevel
+	LogFile         string
 }
 
 type BanInfo struct {
@@ -45,8 +49,8 @@ func init() {
 		panic("Missing stream key is settings.json")
 	}
 
-	if settings.TitleLength <= 0 {
-		settings.TitleLength = 50
+	if err = common.SetupLogging(settings.LogLevel, settings.LogFile); err != nil {
+		panic("Unable to setup logger: " + err.Error())
 	}
 
 	// Save admin password to file
@@ -79,7 +83,13 @@ func LoadSettings(filename string) (*Settings, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to generate admin password: %s", err)
 	}
+
+	// Don't use LogInfof() here.  Log isn't setup yet when LoadSettings() is called from init().
 	fmt.Printf("Settings reloaded.  New admin password: %s\n", s.AdminPassword)
+
+	if s.TitleLength <= 0 {
+		s.TitleLength = 50
+	}
 
 	return s, nil
 }
@@ -122,7 +132,7 @@ func (s *Settings) AddBan(host string, names []string) error {
 	}
 	settings.Bans = append(settings.Bans, b)
 
-	fmt.Printf("[BAN] %q (%s) has been banned.\n", strings.Join(names, ", "), host)
+	common.LogInfof("[BAN] %q (%s) has been banned.\n", strings.Join(names, ", "), host)
 
 	return settings.Save()
 }
@@ -136,7 +146,7 @@ func (s *Settings) RemoveBan(name string) error {
 	for _, b := range s.Bans {
 		for _, n := range b.Names {
 			if n == name {
-				fmt.Printf("[ban] Removed ban for %s [%s]\n", b.IP, n)
+				common.LogInfof("[ban] Removed ban for %s [%s]\n", b.IP, n)
 			} else {
 				newBans = append(newBans, b)
 			}

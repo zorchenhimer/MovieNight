@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/zorchenhimer/MovieNight/common"
 )
 
 type chatConnection struct {
@@ -31,7 +32,7 @@ func (cc *chatConnection) WriteData(data interface{}) error {
 	err := cc.WriteJSON(data)
 	if err != nil {
 		if operr, ok := err.(*net.OpError); ok {
-			fmt.Println("OpError: " + operr.Err.Error())
+			common.LogDebugln("OpError: " + operr.Err.Error())
 		}
 		return fmt.Errorf("Error writing data to %s %s: %v", cc.clientName, cc.Host(), err)
 	}

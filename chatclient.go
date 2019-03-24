@@ -24,13 +24,13 @@ type Client struct {
 func (cl *Client) NewMsg(data common.ClientData) {
 	switch data.Type {
 	case common.CdAuth:
-		fmt.Printf("[chat|hidden] <%s> get auth level\n", cl.name)
+		LogChatf("[chat|hidden] <%s> get auth level\n", cl.name)
 		err := cl.SendChatData(common.NewChatHiddenMessage(data.Type, cl.CmdLevel))
 		if err != nil {
-			fmt.Printf("Error sending auth level to client: %v\n", err)
+			LogErrorf("Error sending auth level to client: %v\n", err)
 		}
 	case common.CdUsers:
-		fmt.Printf("[chat|hidden] <%s> get list of users\n", cl.name)
+		common.LogChatf("[chat|hidden] <%s> get list of users\n", cl.name)
 
 		names := chat.GetNames()
 		idx := -1
@@ -42,7 +42,7 @@ func (cl *Client) NewMsg(data common.ClientData) {
 
 		err := cl.SendChatData(common.NewChatHiddenMessage(data.Type, append(names[:idx], names[idx+1:]...)))
 		if err != nil {
-			fmt.Printf("Error sending users to client: %v\n", err)
+			common.LogErrorf("Error sending chat data: %v\n", err)
 		}
 	case common.CdMessage:
 		msg := html.EscapeString(data.Message)
@@ -68,7 +68,7 @@ func (cl *Client) NewMsg(data common.ClientData) {
 					common.CmdlUser,
 					common.MsgCommandResponse))
 				if err != nil {
-					fmt.Printf("Error command results %v\n", err)
+					common.LogErrorf("Error command results %v\n", err)
 				}
 				return
 			}
@@ -79,7 +79,7 @@ func (cl *Client) NewMsg(data common.ClientData) {
 				msg = msg[0:400]
 			}
 
-			fmt.Printf("[chat] <%s> %q\n", cl.name, msg)
+			common.LogChatf("[chat] <%s> %q\n", cl.name, msg)
 
 			// Enable links for mods and admins
 			if cl.CmdLevel >= common.CmdlMod {

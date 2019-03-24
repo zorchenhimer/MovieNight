@@ -2,13 +2,13 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 
 	"github.com/nareix/joy4/format"
 	"github.com/nareix/joy4/format/rtmp"
+	"github.com/zorchenhimer/MovieNight/common"
 )
 
 var (
@@ -35,7 +35,7 @@ func main() {
 	// Load emotes before starting server.
 	var err error
 	if chat, err = newChatRoom(); err != nil {
-		fmt.Println(err)
+		common.LogErrorln(err)
 		os.Exit(1)
 	}
 
@@ -43,15 +43,17 @@ func main() {
 		addr = settings.ListenAddress
 	}
 
+	common.LogDevln("This should break things")
+
 	// A stream key was passed on the command line.  Use it, but don't save
 	// it over the stream key in the settings.json file.
 	if sKey != "" {
 		settings.SetTempKey(sKey)
 	}
 
-	fmt.Println("Stream key: ", settings.GetStreamKey())
-	fmt.Println("Admin password: ", settings.AdminPassword)
-	fmt.Println("Listen and serve ", addr)
+	common.LogInfoln("Stream key: ", settings.GetStreamKey())
+	common.LogInfoln("Admin password: ", settings.AdminPassword)
+	common.LogInfoln("Listen and serve ", addr)
 
 	go startServer()
 	go startRmtpServer()
@@ -66,7 +68,8 @@ func startRmtpServer() {
 	}
 	err := server.ListenAndServe()
 	if err != nil {
-		fmt.Printf("Error trying to start server: %v\n", err)
+		// If the server cannot start, don't pretend we can continue.
+		panic("Error trying to start rtmp server: " + err.Error())
 	}
 }
 
@@ -87,7 +90,8 @@ func startServer() {
 
 	err := http.ListenAndServe(addr, nil)
 	if err != nil {
-		fmt.Printf("Error trying to start rmtp server: %v\n", err)
+		// If the server cannot start, don't pretend we can continue.
+		panic("Error trying to start chat/http server: " + err.Error())
 	}
 }
 
@@ -95,7 +99,7 @@ func handleInterrupt(exit chan bool) {
 	ch := make(chan os.Signal)
 	signal.Notify(ch, os.Interrupt)
 	<-ch
-	fmt.Println("Closing server")
+	common.LogInfoln("Closing server")
 	if settings.StreamStats {
 		stats.Print()
 	}
