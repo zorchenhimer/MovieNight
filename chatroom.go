@@ -330,6 +330,10 @@ func (cr *ChatRoom) Broadcast() {
 
 			// Only send Chat and Event stuff to temp clients
 			if msg.Type != common.DTChat && msg.Type != common.DTEvent {
+				// Put this here instead of having two lock/unlock blocks.  We want
+				// to avoid a case where a client is removed from the temp users
+				// and added to the clients between the two blocks.
+				cr.clientsMtx.Unlock()
 				break
 			}
 
@@ -347,7 +351,6 @@ func (cr *ChatRoom) Broadcast() {
 					}(conn, uuid)
 				}
 			}
-
 			cr.clientsMtx.Unlock()
 		case msg := <-cr.modqueue:
 			cr.clientsMtx.Lock()
