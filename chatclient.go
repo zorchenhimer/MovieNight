@@ -15,8 +15,7 @@ type Client struct {
 	conn          *chatConnection
 	belongsTo     *ChatRoom
 	color         string
-	IsMod         bool
-	IsAdmin       bool
+	CmdLevel      common.CommandLevel
 	IsColorForced bool
 	IsNameForced  bool
 }
@@ -24,6 +23,12 @@ type Client struct {
 //Client has a new message to broadcast
 func (cl *Client) NewMsg(data common.ClientData) {
 	switch data.Type {
+	case common.CdAuth:
+		fmt.Printf("[chat|hidden] <%s> get auth level\n", cl.name)
+		err := cl.SendChatData(common.NewChatHiddenMessage(data.Type, cl.CmdLevel))
+		if err != nil {
+			fmt.Printf("Error sending auth level to client: %v\n", err)
+		}
 	case common.CdUsers:
 		fmt.Printf("[chat|hidden] <%s> get list of users\n", cl.name)
 
@@ -37,7 +42,7 @@ func (cl *Client) NewMsg(data common.ClientData) {
 
 		err := cl.SendChatData(common.NewChatHiddenMessage(data.Type, append(names[:idx], names[idx+1:]...)))
 		if err != nil {
-			fmt.Printf("Error sending chat data: %v\n", err)
+			fmt.Printf("Error sending users to client: %v\n", err)
 		}
 	case common.CdMessage:
 		msg := html.EscapeString(data.Message)
@@ -60,7 +65,7 @@ func (cl *Client) NewMsg(data common.ClientData) {
 			if response != "" {
 				err := cl.SendChatData(common.NewChatMessage("", "",
 					common.ParseEmotes(response),
-					common.CmdUser,
+					common.CmdlUser,
 					common.MsgCommandResponse))
 				if err != nil {
 					fmt.Printf("Error command results %v\n", err)
@@ -77,7 +82,7 @@ func (cl *Client) NewMsg(data common.ClientData) {
 			fmt.Printf("[chat] <%s> %q\n", cl.name, msg)
 
 			// Enable links for mods and admins
-			if cl.IsMod || cl.IsAdmin {
+			if cl.CmdLevel >= common.CmdlMod {
 				msg = formatLinks(msg)
 			}
 
@@ -108,7 +113,7 @@ func (cl *Client) Send(data common.ChatDataJSON) error {
 }
 
 func (cl *Client) SendServerMessage(s string) error {
-	err := cl.SendChatData(common.NewChatMessage("", ColorServerMessage, s, common.CmdUser, common.MsgServer))
+	err := cl.SendChatData(common.NewChatMessage("", ColorServerMessage, s, common.CmdlUser, common.MsgServer))
 	if err != nil {
 		return fmt.Errorf("could send server message to %s: message - %#v: %v", cl.name, s, err)
 	}
@@ -146,11 +151,13 @@ func (cl *Client) Me(msg string) {
 }
 
 func (cl *Client) Mod() {
-	cl.IsMod = true
+	if cl.CmdLevel < common.CmdlMod {
+		cl.CmdLevel = common.CmdlMod
+	}
 }
 
 func (cl *Client) Unmod() {
-	cl.IsMod = false
+	cl.CmdLevel = common.CmdlUser
 }
 
 func (cl *Client) Host() string {

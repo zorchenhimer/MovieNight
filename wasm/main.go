@@ -19,6 +19,7 @@ const (
 
 var (
 	currentName   string
+	auth          common.CommandLevel
 	names         []string
 	filteredNames []string
 )
@@ -182,6 +183,8 @@ func recieve(v []js.Value) {
 			for _, i := range h.Data.([]interface{}) {
 				names = append(names, i.(string))
 			}
+		case common.CdAuth:
+			auth = h.Data.(common.CommandLevel)
 		}
 	case common.DTEvent:
 		d := chat.Data.(common.DataEvent)
@@ -277,6 +280,7 @@ func isValidName(this js.Value, v []js.Value) interface{} {
 
 func debugValues(v []js.Value) {
 	fmt.Printf("currentName %#v\n", currentName)
+	fmt.Printf("auth %#v\n", auth)
 	fmt.Printf("names %#v\n", names)
 	fmt.Printf("filteredNames %#v\n", filteredNames)
 }

@@ -154,11 +154,11 @@ func (cr *ChatRoom) Kick(name string) string {
 		return "Unable to get client for name " + name
 	}
 
-	if client.IsMod {
+	if client.CmdLevel == common.CmdlMod {
 		return "You cannot kick another mod."
 	}
 
-	if client.IsAdmin {
+	if client.CmdLevel == common.CmdlAdmin {
 		return "Jebaited No."
 	}
 
@@ -182,7 +182,7 @@ func (cr *ChatRoom) Ban(name string) string {
 		return "Cannot find that name"
 	}
 
-	if client.IsAdmin {
+	if client.CmdLevel == common.CmdlAdmin {
 		return "You cannot ban an admin Jebaited"
 	}
 
@@ -226,16 +226,8 @@ func (cr *ChatRoom) AddMsg(from *Client, isAction, isServer bool, msg string) {
 		t = common.MsgServer
 	}
 
-	lvl := common.CmdUser
-	if from.IsMod {
-		lvl = common.CmdMod
-	}
-	if from.IsAdmin {
-		lvl = common.CmdAdmin
-	}
-
 	select {
-	case cr.queue <- common.NewChatMessage(from.name, from.color, msg, lvl, t):
+	case cr.queue <- common.NewChatMessage(from.name, from.color, msg, from.CmdLevel, t):
 	default:
 		fmt.Println("Unable to queue chat message. Channel full.")
 	}
@@ -251,7 +243,7 @@ func (cr *ChatRoom) AddCmdMsg(command common.CommandType, args []string) {
 
 func (cr *ChatRoom) AddModNotice(message string) {
 	select {
-	case cr.modqueue <- common.NewChatMessage("", "", message, common.CmdUser, common.MsgNotice):
+	case cr.modqueue <- common.NewChatMessage("", "", message, common.CmdlUser, common.MsgNotice):
 	default:
 		fmt.Println("Unable to queue notice.  Channel full.")
 	}
@@ -288,8 +280,10 @@ func (cr *ChatRoom) Mod(name string) error {
 		return err
 	}
 
-	client.IsMod = true
-	client.SendServerMessage(`You have been modded.`)
+	if client.CmdLevel < common.CmdlMod {
+		client.CmdLevel = common.CmdlMod
+		client.SendServerMessage(`You have been modded.`)
+	}
 	return nil
 }
 
@@ -357,7 +351,7 @@ func (cr *ChatRoom) Broadcast() {
 		case msg := <-cr.modqueue:
 			cr.clientsMtx.Lock()
 			for _, client := range cr.clients {
-				if client.IsMod || client.IsAdmin {
+				if client.CmdLevel >= common.CmdlMod {
 					send(msg, client)
 				}
 			}

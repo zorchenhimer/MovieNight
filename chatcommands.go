@@ -52,22 +52,21 @@ var commands = &CommandControl{
 		common.CNAuth.String(): Command{
 			HelpText: "Authenticate to admin",
 			Function: func(cl *Client, args []string) string {
-				if cl.IsAdmin {
+				if cl.CmdLevel == common.CmdlAdmin {
 					return "You are already authenticated."
 				}
 
 				pw := html.UnescapeString(strings.Join(args, " "))
 
 				if settings.AdminPassword == pw {
-					cl.IsMod = true
-					cl.IsAdmin = true
+					cl.CmdLevel = common.CmdlAdmin
 					cl.belongsTo.AddModNotice(cl.name + " used the admin password")
 					fmt.Printf("[auth] %s used the admin password\n", cl.name)
 					return "Admin rights granted."
 				}
 
 				if cl.belongsTo.redeemModPass(pw) {
-					cl.IsMod = true
+					cl.CmdLevel = common.CmdlMod
 					cl.belongsTo.AddModNotice(cl.name + " used a mod password")
 					fmt.Printf("[auth] %s used a mod password\n", cl.name)
 					return "Moderator privileges granted."
@@ -100,7 +99,7 @@ var commands = &CommandControl{
 
 				// Two arguments to force a name change on another user: `/nick OldName NewName`
 				if len(args) == 2 {
-					if !cl.IsAdmin {
+					if cl.CmdLevel != common.CmdlAdmin {
 						return "Only admins can do that PeepoSus"
 					}
 
@@ -109,7 +108,7 @@ var commands = &CommandControl{
 					forced = true
 				}
 
-				if len(args) == 1 && cl.IsNameForced && !cl.IsAdmin {
+				if len(args) == 1 && cl.IsNameForced && cl.CmdLevel != common.CmdlAdmin {
 					return "You cannot change your name once it has been changed by an admin."
 				}
 
@@ -180,7 +179,7 @@ var commands = &CommandControl{
 		common.CNUnmod.String(): Command{
 			HelpText: "Revoke a user's moderator privilages.  Moderators can only unmod themselves.",
 			Function: func(cl *Client, args []string) string {
-				if len(args) > 0 && !cl.IsAdmin && cl.name != args[0] {
+				if len(args) > 0 && cl.CmdLevel != common.CmdlAdmin && cl.name != args[0] {
 					return "You can only unmod yourself, not others."
 				}
 
@@ -334,7 +333,7 @@ func (cc *CommandControl) RunCommand(command string, args []string, sender *Clie
 
 	// Look for mod command
 	if modCmd, ok := cc.mod[cmd]; ok {
-		if sender.IsMod || sender.IsAdmin {
+		if sender.CmdLevel >= common.CmdlMod {
 			fmt.Printf("[mod] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
 			return modCmd.Function(sender, args)
 		}
@@ -345,7 +344,7 @@ func (cc *CommandControl) RunCommand(command string, args []string, sender *Clie
 
 	// Look for admin command
 	if adminCmd, ok := cc.admin[cmd]; ok {
-		if sender.IsAdmin {
+		if sender.CmdLevel == common.CmdlAdmin {
 			fmt.Printf("[admin] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
 			return adminCmd.Function(sender, args)
 		}
@@ -360,12 +359,13 @@ func (cc *CommandControl) RunCommand(command string, args []string, sender *Clie
 
 func cmdHelp(cl *Client, args []string) string {
 	url := "/help"
-	if cl.IsMod {
-		url = "/help?mod=1"
+
+	if cl.CmdLevel >= common.CmdlMod {
+		url += "?mod=1"
 	}
 
-	if cl.IsAdmin {
-		url = "/help?mod=1&admin=1"
+	if cl.CmdLevel == common.CmdlAdmin {
+		url += "&admin=1"
 	}
 
 	cl.SendChatData(common.NewChatCommand(common.CmdHelp, []string{url}))
@@ -375,11 +375,11 @@ func cmdHelp(cl *Client, args []string) string {
 func getHelp(lvl common.CommandLevel) map[string]string {
 	var cmdList map[string]Command
 	switch lvl {
-	case common.CmdUser:
+	case common.CmdlUser:
 		cmdList = commands.user
-	case common.CmdMod:
+	case common.CmdlMod:
 		cmdList = commands.mod
-	case common.CmdAdmin:
+	case common.CmdlAdmin:
 		cmdList = commands.admin
 	}
 
@@ -401,7 +401,7 @@ var cmdColor = Command{
 
 		// If the caller is priviledged enough, they can change the color of another user
 		if len(args) == 2 {
-			if !(cl.IsMod || cl.IsAdmin) {
+			if cl.CmdLevel == common.CmdlUser {
 				return "You cannot change someone else's color. PeepoSus"
 			}
 
@@ -492,6 +492,9 @@ var cmdColor = Command{
 var cmdWhoAmI = Command{
 	HelpText: "Shows debug user info",
 	Function: func(cl *Client, args []string) string {
-		return fmt.Sprintf("Name: %s IsMod: %t IsAdmin: %t", cl.name, cl.IsMod, cl.IsAdmin)
+		return fmt.Sprintf("Name: %s IsMod: %t IsAdmin: %t",
+			cl.name,
+			cl.CmdLevel >= common.CmdlMod,
+			cl.CmdLevel == common.CmdlAdmin)
 	},
 }

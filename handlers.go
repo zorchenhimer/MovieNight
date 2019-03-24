@@ -169,15 +169,15 @@ func handleHelpTemplate(w http.ResponseWriter, r *http.Request) {
 
 	data := Data{
 		Title:    "Help",
-		Commands: getHelp(common.CmdUser),
+		Commands: getHelp(common.CmdlUser),
 	}
 
 	if len(r.URL.Query().Get("mod")) > 0 {
-		data.ModCommands = getHelp(common.CmdMod)
+		data.ModCommands = getHelp(common.CmdlMod)
 	}
 
 	if len(r.URL.Query().Get("admin")) > 0 {
-		data.AdminCommands = getHelp(common.CmdAdmin)
+		data.AdminCommands = getHelp(common.CmdlAdmin)
 	}
 
 	err = t.Execute(w, data)
