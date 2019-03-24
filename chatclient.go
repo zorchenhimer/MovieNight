@@ -24,10 +24,10 @@ type Client struct {
 func (cl *Client) NewMsg(data common.ClientData) {
 	switch data.Type {
 	case common.CdAuth:
-		LogChatf("[chat|hidden] <%s> get auth level\n", cl.name)
+		common.LogChatf("[chat|hidden] <%s> get auth level\n", cl.name)
 		err := cl.SendChatData(common.NewChatHiddenMessage(data.Type, cl.CmdLevel))
 		if err != nil {
-			LogErrorf("Error sending auth level to client: %v\n", err)
+			common.LogErrorf("Error sending auth level to client: %v\n", err)
 		}
 	case common.CdUsers:
 		common.LogChatf("[chat|hidden] <%s> get list of users\n", cl.name)

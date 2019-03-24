@@ -43,8 +43,6 @@ func main() {
 		addr = settings.ListenAddress
 	}
 
-	common.LogDevln("This should break things")
-
 	// A stream key was passed on the command line.  Use it, but don't save
 	// it over the stream key in the settings.json file.
 	if sKey != "" {
