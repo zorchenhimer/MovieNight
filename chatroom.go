@@ -340,16 +340,18 @@ func (cr *ChatRoom) Broadcast() {
 			data, err := msg.ToJSON()
 			if err != nil {
 				fmt.Printf("Error converting ChatData to ChatDataJSON: %v\n", err)
-			} else {
-				for uuid, conn := range cr.tempConn {
-					go func(c *chatConnection, suid string) {
-						err = c.WriteData(data)
-						if err != nil {
-							fmt.Printf("Error writing data to connection: %v\n", err)
-							delete(cr.tempConn, suid)
-						}
-					}(conn, uuid)
-				}
+				cr.clientsMtx.Unlock()
+				break
+			}
+
+			for uuid, conn := range cr.tempConn {
+				go func(c *chatConnection, suid string) {
+					err = c.WriteData(data)
+					if err != nil {
+						fmt.Printf("Error writing data to connection: %v\n", err)
+						delete(cr.tempConn, suid)
+					}
+				}(conn, uuid)
 			}
 			cr.clientsMtx.Unlock()
 		case msg := <-cr.modqueue:
