@@ -39,26 +39,6 @@ type BanInfo struct {
 	When  time.Time
 }
 
-func init() {
-	var err error
-	settings, err = LoadSettings("settings.json")
-	if err != nil {
-		panic("Unable to load settings: " + err.Error())
-	}
-	if len(settings.StreamKey) == 0 {
-		panic("Missing stream key is settings.json")
-	}
-
-	if err = settings.SetupLogging(); err != nil {
-		panic("Unable to setup logger: " + err.Error())
-	}
-
-	// Save admin password to file
-	if err = settings.Save(); err != nil {
-		panic("Unable to save settings: " + err.Error())
-	}
-}
-
 func LoadSettings(filename string) (*Settings, error) {
 	raw, err := ioutil.ReadFile(filename)
 	if err != nil {

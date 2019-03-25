@@ -14,20 +14,37 @@ import (
 var (
 	addr  string
 	sKey  string
-	stats streamStats
+	stats = newStreamStats()
 )
 
-func init() {
-	format.RegisterAll()
+func setupSettings() {
+	var err error
+	settings, err = LoadSettings("settings.json")
+	if err != nil {
+		panic("Unable to load settings: " + err.Error())
+	}
+	if len(settings.StreamKey) == 0 {
+		panic("Missing stream key is settings.json")
+	}
 
-	flag.StringVar(&addr, "l", ":8089", "host:port of the MovieNight")
-	flag.StringVar(&sKey, "k", "", "Stream key, to protect your stream")
+	if err = settings.SetupLogging(); err != nil {
+		panic("Unable to setup logger: " + err.Error())
+	}
 
-	stats = newStreamStats()
+	// Save admin password to file
+	if err = settings.Save(); err != nil {
+		panic("Unable to save settings: " + err.Error())
+	}
 }
 
 func main() {
+	flag.StringVar(&addr, "l", ":8089", "host:port of the MovieNight")
+	flag.StringVar(&sKey, "k", "", "Stream key, to protect your stream")
 	flag.Parse()
+
+	format.RegisterAll()
+
+	setupSettings()
 
 	exit := make(chan bool)
 	go handleInterrupt(exit)
