@@ -342,7 +342,7 @@ func (cr *ChatRoom) Broadcast() {
 				go func(c *chatConnection, suid string) {
 					err = c.WriteData(data)
 					if err != nil {
-							common.LogErrorf("Error writing data to connection: %v\n", err)
+						common.LogErrorf("Error writing data to connection: %v\n", err)
 						delete(cr.tempConn, suid)
 					}
 				}(conn, uuid)
