@@ -7,11 +7,7 @@ import (
 	"os"
 )
 
-var logDev *log.Logger
-
-func init() {
-	logDev = log.New(os.Stdout, "[DEV]", log.LstdFlags)
-}
+var logDev *log.Logger = log.New(os.Stdout, "[DEV]", log.LstdFlags)
 
 func LogDevf(format string, v ...interface{}) {
 	logDev.Printf(format, v...)
