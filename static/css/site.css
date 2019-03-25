@@ -116,6 +116,22 @@ span.svmsg {
     color: var(--var-contrast-color);
 }
 
+.spoiler {
+    border-radius: 3px;
+    padding: 0px 3px;
+}
+
+.spoiler *,
+.spoiler {
+    background: var(--var-popout-color);
+    color: var(--var-popout-color);
+}
+
+.spoiler-active {
+    background: var(--var-background-color);
+    color: aqua;
+}
+
 .range-div {
     margin-bottom: 5px;
     display: flex;

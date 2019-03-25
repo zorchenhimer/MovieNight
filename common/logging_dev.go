@@ -2,18 +2,21 @@
 
 package common
 
-func LogDevf(format string, v ...interface{}) {
-	if logError == nil {
-		panic("Logging not setup!")
-	}
+import (
+	"log"
+	"os"
+)
 
-	logError.Printf(format, v...)
+var logDev *log.Logger
+
+func init() {
+	logDev = log.New(os.Stdout, "[DEV]", log.LstdFlags)
+}
+
+func LogDevf(format string, v ...interface{}) {
+	logDev.Printf(format, v...)
 }
 
 func LogDevln(v ...interface{}) {
-	if logError == nil {
-		panic("Logging not setup!")
-	}
-
-	logError.Println(v...)
+	logDev.Println(v...)
 }

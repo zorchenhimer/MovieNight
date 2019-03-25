@@ -10,6 +10,12 @@ import (
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
+var (
+	regexSpoiler = regexp.MustCompile(`\|\|(.*?)\|\|`)
+	spoilerStart = `<span class="spoiler" onclick='$(this).removeClass("spoiler").addClass("spoiler-active")'>`
+	spoilerEnd   = `</span>`
+)
+
 type Client struct {
 	name          string // Display name
 	conn          *chatConnection
@@ -18,6 +24,7 @@ type Client struct {
 	CmdLevel      common.CommandLevel
 	IsColorForced bool
 	IsNameForced  bool
+	regexName     *regexp.Regexp
 }
 
 //Client has a new message to broadcast
@@ -48,6 +55,10 @@ func (cl *Client) NewMsg(data common.ClientData) {
 		msg := html.EscapeString(data.Message)
 		msg = removeDumbSpaces(msg)
 		msg = strings.Trim(msg, " ")
+
+		// Add the spoiler tag outside of the command vs message statement
+		// because the /me command outputs to the messages
+		msg = addSpoilerTags(msg)
 
 		// Don't send zero-length messages
 		if len(msg) == 0 {
@@ -94,7 +105,11 @@ func (cl *Client) NewMsg(data common.ClientData) {
 func (cl *Client) SendChatData(data common.ChatData) error {
 	// Colorize name on chat messages
 	if data.Type == common.DTChat {
-		data = replaceColorizedName(data, cl)
+		var err error
+		data = cl.replaceColorizedName(data)
+		if err != nil {
+			return fmt.Errorf("could not colorize name: %v", err)
+		}
 	}
 
 	cd, err := data.ToJSON()
@@ -164,6 +179,24 @@ func (cl *Client) Host() string {
 	return cl.conn.Host()
 }
 
+func (cl *Client) setName(s string) error {
+	regex, err := regexp.Compile(fmt.Sprintf("(%s|@%s)", s, s))
+	if err != nil {
+		return fmt.Errorf("could not compile regex: %v", err)
+	}
+
+	cl.name = s
+	cl.regexName = regex
+	return nil
+}
+
+func (cl *Client) replaceColorizedName(chatData common.ChatData) common.ChatData {
+	data := chatData.Data.(common.DataMessage)
+	data.Message = cl.regexName.ReplaceAllString(data.Message, `<span class="mention">$1</span>`)
+	chatData.Data = data
+	return chatData
+}
+
 var dumbSpaces = []string{
 	"\n",
 	"\t",
@@ -187,12 +220,6 @@ func removeDumbSpaces(msg string) string {
 	return newMsg
 }
 
-func replaceColorizedName(chatData common.ChatData, client *Client) common.ChatData {
-	data := chatData.Data.(common.DataMessage)
-
-	data.Message = regexp.MustCompile(fmt.Sprintf(`(%s|@%s)`, client.name, client.name)).
-		ReplaceAllString(data.Message, `<span class="mention">$1</span>`)
-
-	chatData.Data = data
-	return chatData
+func addSpoilerTags(msg string) string {
+	return regexSpoiler.ReplaceAllString(msg, fmt.Sprintf(`%s$1%s`, spoilerStart, spoilerEnd))
 }

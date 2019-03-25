@@ -98,10 +98,14 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 
 	conn.clientName = name
 	client := &Client{
-		name:      name,
 		conn:      conn,
 		belongsTo: cr,
 		color:     common.RandomColor(),
+	}
+
+	err := client.setName(name)
+	if err != nil {
+		return nil, fmt.Errorf("could not set client name to %#v: %v", name, err)
 	}
 
 	host := client.Host()
@@ -483,7 +487,10 @@ func (cr *ChatRoom) changeName(oldName, newName string, forced bool) error {
 	}
 
 	if currentClient != nil {
-		currentClient.name = newName
+		err := currentClient.setName(newName)
+		if err != nil {
+			return fmt.Errorf("could not set client name to %#v: %v", newName, err)
+		}
 		common.LogDebugf("%q -> %q\n", oldName, newName)
 
 		if forced {

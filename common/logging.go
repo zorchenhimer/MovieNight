@@ -23,7 +23,6 @@ const (
 	logPrefixChat  string = "[CHAT] "
 	logPrefixInfo  string = "[INFO] "
 	logPrefixDebug string = "[DEBUG] "
-	logPrefixDev   string = "[DEV] "
 )
 
 var (
@@ -31,17 +30,7 @@ var (
 	logChat  *log.Logger
 	logInfo  *log.Logger
 	logDebug *log.Logger
-	logDev   *log.Logger
 )
-
-//func ParseLogLevel(input string) LogLevel {
-//	switch LogLevel(input) {
-//	case LLError, LLChat, LLInfo, LLDebug:
-//		return LogLevel(input)
-//	default:
-//		return LLError
-//	}
-//}
 
 func SetupLogging(level LogLevel, file string) error {
 	switch level {

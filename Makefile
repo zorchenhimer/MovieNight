@@ -1,8 +1,8 @@
 TAGS=
 
-.PHONY: fmt vet get clean dev setdev
+.PHONY: fmt vet get clean dev setdev test
 
-all: fmt vet MovieNight MovieNight.exe static/main.wasm
+all: fmt vet test MovieNight MovieNight.exe static/main.wasm
 
 setdev:
 	$(eval export TAGS=-tags "dev")
@@ -32,3 +32,6 @@ get:
 vet:
 	go vet $(TAGS) ./...
 	GOOS=js GOARCH=wasm go vet $(TAGS) ./...
+
+test:
+	go test $(TAGS) ./...

@@ -49,7 +49,7 @@ func init() {
 		panic("Missing stream key is settings.json")
 	}
 
-	if err = common.SetupLogging(settings.LogLevel, settings.LogFile); err != nil {
+	if err = settings.SetupLogging(); err != nil {
 		panic("Unable to setup logger: " + err.Error())
 	}
 
@@ -183,4 +183,8 @@ func (s *Settings) GetStreamKey() string {
 		return s.cmdLineKey
 	}
 	return s.StreamKey
+}
+
+func (s *Settings) SetupLogging() error {
+	return common.SetupLogging(s.LogLevel, s.LogFile)
 }
