@@ -30,6 +30,8 @@ type ChatRoom struct {
 
 	modPasswords    []string // single-use mod passwords
 	modPasswordsMtx sync.Mutex
+
+	isShutdown bool
 }
 
 //initializing the chatroom
@@ -53,6 +55,10 @@ func newChatRoom() (*ChatRoom, error) {
 }
 
 func (cr *ChatRoom) JoinTemp(conn *chatConnection) (string, error) {
+	if cr.isShutdown {
+		return "", fmt.Errorf("Server is shutting down")
+	}
+
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock()
 
@@ -77,6 +83,10 @@ func (cr *ChatRoom) JoinTemp(conn *chatConnection) (string, error) {
 //registering a new client
 //returns pointer to a Client, or Nil, if the name is already taken
 func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
+	if cr.isShutdown {
+		return nil, fmt.Errorf("Server is shutting down")
+	}
+
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock()
 
@@ -503,4 +513,24 @@ func (cr *ChatRoom) changeName(oldName, newName string, forced bool) error {
 	}
 
 	return fmt.Errorf("Client not found with name %q", oldName)
+}
+
+func (cr *ChatRoom) Shutdown() {
+	cr.isShutdown = true
+	common.LogInfoln("ChatRoom is shutting down.")
+
+	cr.clientsMtx.Lock()
+	defer cr.clientsMtx.Unlock()
+
+	for uuid, client := range cr.clients {
+		common.LogDebugf("Closing connection for %s", uuid)
+		client.conn.Close()
+	}
+
+	for uuid, conn := range cr.tempConn {
+		common.LogDebugf("Closing connection for temp %s", uuid)
+		conn.Close()
+	}
+
+	common.LogInfoln("ChatRoom Shutdown() finished")
 }
