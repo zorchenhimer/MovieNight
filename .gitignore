@@ -32,3 +32,6 @@ settings.json
 
 # Autobuilt wasm files
 static/main.wasm
+
+# tags for vim
+tags
