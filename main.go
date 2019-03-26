@@ -1,33 +1,89 @@
 package main
 
 import (
+	"crypto/rand"
 	"flag"
 	"fmt"
+	"math/big"
 	"net/http"
 	"os"
 	"os/signal"
 
+	"github.com/gorilla/sessions"
 	"github.com/nareix/joy4/format"
 	"github.com/nareix/joy4/format/rtmp"
+	"github.com/zorchenhimer/MovieNight/common"
 )
 
 var (
 	addr  string
 	sKey  string
-	stats streamStats
+	stats = newStreamStats()
 )
 
-func init() {
-	format.RegisterAll()
+func setupSettings() error {
+	var err error
+	settings, err = LoadSettings("settings.json")
+	if err != nil {
+		return fmt.Errorf("Unable to load settings: %s", err)
+	}
+	if len(settings.StreamKey) == 0 {
+		return fmt.Errorf("Missing stream key is settings.json")
+	}
 
-	flag.StringVar(&addr, "l", ":8089", "host:port of the MovieNight")
-	flag.StringVar(&sKey, "k", "", "Stream key, to protect your stream")
+	if err = settings.SetupLogging(); err != nil {
+		return fmt.Errorf("Unable to setup logger: %s", err)
+	}
 
-	stats = newStreamStats()
+	// Is this a good way to do this? Probably not...
+	if len(settings.SessionKey) == 0 {
+		out := ""
+		large := big.NewInt(int64(1 << 60))
+		large = large.Add(large, large)
+		for len(out) < 50 {
+			num, err := rand.Int(rand.Reader, large)
+			if err != nil {
+				panic("Error generating session key: " + err.Error())
+			}
+			out = fmt.Sprintf("%s%X", out, num)
+		}
+		settings.SessionKey = out
+	}
+
+	if len(settings.RoomAccess) == 0 {
+		settings.RoomAccess = AccessOpen
+	}
+
+	if settings.RoomAccess != AccessOpen && len(settings.RoomAccessPin) == 0 {
+		settings.RoomAccessPin = "1234"
+	}
+
+	sstore = sessions.NewCookieStore([]byte(settings.SessionKey))
+	sstore.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   60 * 60 * 24, // one day
+		SameSite: http.SameSiteStrictMode,
+	}
+
+	// Save admin password to file
+	if err = settings.Save(); err != nil {
+		return fmt.Errorf("Unable to save settings: %s", err)
+	}
+
+	return nil
 }
 
 func main() {
+	flag.StringVar(&addr, "l", ":8089", "host:port of the MovieNight")
+	flag.StringVar(&sKey, "k", "", "Stream key, to protect your stream")
 	flag.Parse()
+
+	format.RegisterAll()
+
+	if err := setupSettings(); err != nil {
+		fmt.Printf("Error loading settings: %v\n", err)
+		os.Exit(1)
+	}
 
 	exit := make(chan bool)
 	go handleInterrupt(exit)
@@ -35,7 +91,7 @@ func main() {
 	// Load emotes before starting server.
 	var err error
 	if chat, err = newChatRoom(); err != nil {
-		fmt.Println(err)
+		common.LogErrorln(err)
 		os.Exit(1)
 	}
 
@@ -49,11 +105,11 @@ func main() {
 		settings.SetTempKey(sKey)
 	}
 
-	fmt.Println("Stream key: ", settings.GetStreamKey())
-	fmt.Println("Admin password: ", settings.AdminPassword)
+	common.LogInfoln("Stream key: ", settings.GetStreamKey())
+	common.LogInfoln("Admin password: ", settings.AdminPassword)
+	common.LogInfoln("Listen and serve ", addr)
 	fmt.Println("RoomAccess: ", settings.RoomAccess)
 	fmt.Println("RoomAccessPin: ", settings.RoomAccessPin)
-	fmt.Println("Listen and serve ", addr)
 
 	go startServer()
 	go startRmtpServer()
@@ -68,7 +124,8 @@ func startRmtpServer() {
 	}
 	err := server.ListenAndServe()
 	if err != nil {
-		fmt.Printf("Error trying to start server: %v\n", err)
+		// If the server cannot start, don't pretend we can continue.
+		panic("Error trying to start rtmp server: " + err.Error())
 	}
 }
 
@@ -90,7 +147,8 @@ func startServer() {
 
 	err := http.ListenAndServe(addr, nil)
 	if err != nil {
-		fmt.Printf("Error trying to start rmtp server: %v\n", err)
+		// If the server cannot start, don't pretend we can continue.
+		panic("Error trying to start chat/http server: " + err.Error())
 	}
 }
 
@@ -98,7 +156,7 @@ func handleInterrupt(exit chan bool) {
 	ch := make(chan os.Signal)
 	signal.Notify(ch, os.Interrupt)
 	<-ch
-	fmt.Println("Closing server")
+	common.LogInfoln("Closing server")
 	if settings.StreamStats {
 		stats.Print()
 	}

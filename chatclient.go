@@ -10,22 +10,34 @@ import (
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
+var (
+	regexSpoiler = regexp.MustCompile(`\|\|(.*?)\|\|`)
+	spoilerStart = `<span class="spoiler" onclick='$(this).removeClass("spoiler").addClass("spoiler-active")'>`
+	spoilerEnd   = `</span>`
+)
+
 type Client struct {
 	name          string // Display name
 	conn          *chatConnection
 	belongsTo     *ChatRoom
 	color         string
-	IsMod         bool
-	IsAdmin       bool
+	CmdLevel      common.CommandLevel
 	IsColorForced bool
 	IsNameForced  bool
+	regexName     *regexp.Regexp
 }
 
 //Client has a new message to broadcast
 func (cl *Client) NewMsg(data common.ClientData) {
 	switch data.Type {
+	case common.CdAuth:
+		common.LogChatf("[chat|hidden] <%s> get auth level\n", cl.name)
+		err := cl.SendChatData(common.NewChatHiddenMessage(data.Type, cl.CmdLevel))
+		if err != nil {
+			common.LogErrorf("Error sending auth level to client: %v\n", err)
+		}
 	case common.CdUsers:
-		fmt.Printf("[chat|hidden] <%s> get list of users\n", cl.name)
+		common.LogChatf("[chat|hidden] <%s> get list of users\n", cl.name)
 
 		names := chat.GetNames()
 		idx := -1
@@ -37,12 +49,16 @@ func (cl *Client) NewMsg(data common.ClientData) {
 
 		err := cl.SendChatData(common.NewChatHiddenMessage(data.Type, append(names[:idx], names[idx+1:]...)))
 		if err != nil {
-			fmt.Printf("Error sending chat data: %v\n", err)
+			common.LogErrorf("Error sending chat data: %v\n", err)
 		}
 	case common.CdMessage:
 		msg := html.EscapeString(data.Message)
 		msg = removeDumbSpaces(msg)
 		msg = strings.Trim(msg, " ")
+
+		// Add the spoiler tag outside of the command vs message statement
+		// because the /me command outputs to the messages
+		msg = addSpoilerTags(msg)
 
 		// Don't send zero-length messages
 		if len(msg) == 0 {
@@ -60,10 +76,10 @@ func (cl *Client) NewMsg(data common.ClientData) {
 			if response != "" {
 				err := cl.SendChatData(common.NewChatMessage("", "",
 					common.ParseEmotes(response),
-					common.CmdUser,
+					common.CmdlUser,
 					common.MsgCommandResponse))
 				if err != nil {
-					fmt.Printf("Error command results %v\n", err)
+					common.LogErrorf("Error command results %v\n", err)
 				}
 				return
 			}
@@ -74,10 +90,10 @@ func (cl *Client) NewMsg(data common.ClientData) {
 				msg = msg[0:400]
 			}
 
-			fmt.Printf("[chat] <%s> %q\n", cl.name, msg)
+			common.LogChatf("[chat] <%s> %q\n", cl.name, msg)
 
 			// Enable links for mods and admins
-			if cl.IsMod || cl.IsAdmin {
+			if cl.CmdLevel >= common.CmdlMod {
 				msg = formatLinks(msg)
 			}
 
@@ -89,7 +105,11 @@ func (cl *Client) NewMsg(data common.ClientData) {
 func (cl *Client) SendChatData(data common.ChatData) error {
 	// Colorize name on chat messages
 	if data.Type == common.DTChat {
-		data = replaceColorizedName(data, cl)
+		var err error
+		data = cl.replaceColorizedName(data)
+		if err != nil {
+			return fmt.Errorf("could not colorize name: %v", err)
+		}
 	}
 
 	cd, err := data.ToJSON()
@@ -108,7 +128,7 @@ func (cl *Client) Send(data common.ChatDataJSON) error {
 }
 
 func (cl *Client) SendServerMessage(s string) error {
-	err := cl.SendChatData(common.NewChatMessage("", ColorServerMessage, s, common.CmdUser, common.MsgServer))
+	err := cl.SendChatData(common.NewChatMessage("", ColorServerMessage, s, common.CmdlUser, common.MsgServer))
 	if err != nil {
 		return fmt.Errorf("could send server message to %s: message - %#v: %v", cl.name, s, err)
 	}
@@ -146,15 +166,35 @@ func (cl *Client) Me(msg string) {
 }
 
 func (cl *Client) Mod() {
-	cl.IsMod = true
+	if cl.CmdLevel < common.CmdlMod {
+		cl.CmdLevel = common.CmdlMod
+	}
 }
 
 func (cl *Client) Unmod() {
-	cl.IsMod = false
+	cl.CmdLevel = common.CmdlUser
 }
 
 func (cl *Client) Host() string {
 	return cl.conn.Host()
+}
+
+func (cl *Client) setName(s string) error {
+	regex, err := regexp.Compile(fmt.Sprintf("(%s|@%s)", s, s))
+	if err != nil {
+		return fmt.Errorf("could not compile regex: %v", err)
+	}
+
+	cl.name = s
+	cl.regexName = regex
+	return nil
+}
+
+func (cl *Client) replaceColorizedName(chatData common.ChatData) common.ChatData {
+	data := chatData.Data.(common.DataMessage)
+	data.Message = cl.regexName.ReplaceAllString(data.Message, `<span class="mention">$1</span>`)
+	chatData.Data = data
+	return chatData
 }
 
 var dumbSpaces = []string{
@@ -180,12 +220,6 @@ func removeDumbSpaces(msg string) string {
 	return newMsg
 }
 
-func replaceColorizedName(chatData common.ChatData, client *Client) common.ChatData {
-	data := chatData.Data.(common.DataMessage)
-
-	data.Message = regexp.MustCompile(fmt.Sprintf(`(%s|@%s)`, client.name, client.name)).
-		ReplaceAllString(data.Message, `<span class="mention">$1</span>`)
-
-	chatData.Data = data
-	return chatData
+func addSpoilerTags(msg string) string {
+	return regexSpoiler.ReplaceAllString(msg, fmt.Sprintf(`%s$1%s`, spoilerStart, spoilerEnd))
 }

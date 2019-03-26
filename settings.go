@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/big"
-	"net/http"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/gorilla/sessions"
+	"github.com/zorchenhimer/MovieNight/common"
 )
 
 var settings *Settings
@@ -28,10 +28,12 @@ type Settings struct {
 	MaxMessageCount int
 	TitleLength     int // maximum length of the title that can be set with the /playing
 	AdminPassword   string
-	Bans            []BanInfo
 	StreamKey       string
 	ListenAddress   string
 	SessionKey      string // key for session data
+	Bans            []BanInfo
+	LogLevel        common.LogLevel
+	LogFile         string
 	RoomAccess      AccessMode
 	RoomAccessPin   string // auto generate this,
 }
@@ -48,56 +50,6 @@ type BanInfo struct {
 	IP    string
 	Names []string
 	When  time.Time
-}
-
-func init() {
-	var err error
-	settings, err = LoadSettings("settings.json")
-	if err != nil {
-		panic("Unable to load settings: " + err.Error())
-	}
-	if len(settings.StreamKey) == 0 {
-		panic("Missing stream key is settings.json")
-	}
-
-	if settings.TitleLength <= 0 {
-		settings.TitleLength = 50
-	}
-
-	// Is this a good way to do this? Probably not...
-	if len(settings.SessionKey) == 0 {
-		out := ""
-		large := big.NewInt(int64(1 << 60))
-		large = large.Add(large, large)
-		for len(out) < 50 {
-			num, err := rand.Int(rand.Reader, large)
-			if err != nil {
-				panic("Error generating session key: " + err.Error())
-			}
-			out = fmt.Sprintf("%s%X", out, num)
-		}
-		settings.SessionKey = out
-	}
-
-	if len(settings.RoomAccess) == 0 {
-		settings.RoomAccess = AccessOpen
-	}
-
-	if settings.RoomAccess != AccessOpen && len(settings.RoomAccessPin) == 0 {
-		settings.RoomAccessPin = "1234"
-	}
-
-	sstore = sessions.NewCookieStore([]byte(settings.SessionKey))
-	sstore.Options = &sessions.Options{
-		Path:     "/",
-		MaxAge:   60 * 60 * 24, // one day
-		SameSite: http.SameSiteStrictMode,
-	}
-
-	// Save admin password to file
-	if err = settings.Save(); err != nil {
-		panic("Unable to save settings: " + err.Error())
-	}
 }
 
 func LoadSettings(filename string) (*Settings, error) {
@@ -124,7 +76,13 @@ func LoadSettings(filename string) (*Settings, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to generate admin password: %s", err)
 	}
+
+	// Don't use LogInfof() here.  Log isn't setup yet when LoadSettings() is called from init().
 	fmt.Printf("Settings reloaded.  New admin password: %s\n", s.AdminPassword)
+
+	if s.TitleLength <= 0 {
+		s.TitleLength = 50
+	}
 
 	return s, nil
 }
@@ -167,7 +125,7 @@ func (s *Settings) AddBan(host string, names []string) error {
 	}
 	settings.Bans = append(settings.Bans, b)
 
-	fmt.Printf("[BAN] %q (%s) has been banned.\n", strings.Join(names, ", "), host)
+	common.LogInfof("[BAN] %q (%s) has been banned.\n", strings.Join(names, ", "), host)
 
 	return settings.Save()
 }
@@ -181,7 +139,7 @@ func (s *Settings) RemoveBan(name string) error {
 	for _, b := range s.Bans {
 		for _, n := range b.Names {
 			if n == name {
-				fmt.Printf("[ban] Removed ban for %s [%s]\n", b.IP, n)
+				common.LogInfof("[ban] Removed ban for %s [%s]\n", b.IP, n)
 			} else {
 				newBans = append(newBans, b)
 			}
@@ -218,6 +176,10 @@ func (s *Settings) GetStreamKey() string {
 		return s.cmdLineKey
 	}
 	return s.StreamKey
+}
+
+func (s *Settings) SetupLogging() error {
+	return common.SetupLogging(s.LogLevel, s.LogFile)
 }
 
 func (s *Settings) generateNewPin() (string, error) {

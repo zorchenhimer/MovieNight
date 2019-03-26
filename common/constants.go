@@ -7,7 +7,7 @@ const (
 	CdMessage ClientDataType = iota // a normal message from the client meant to be broadcast
 	CdUsers                         // get a list of users
 	CdPing                          // ping the server to keep the connection alive
-	CdHelp                          // tells server to send help data again for buttons
+	CdAuth                          // get the auth levels of the user
 )
 
 type DataType int
@@ -36,9 +36,9 @@ type CommandLevel int
 
 // Command access levels
 const (
-	CmdUser CommandLevel = iota
-	CmdMod
-	CmdAdmin
+	CmdlUser CommandLevel = iota
+	CmdlMod
+	CmdlAdmin
 )
 
 type EventType int

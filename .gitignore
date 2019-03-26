@@ -12,6 +12,9 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# Log files
+*.log
+
 # GoCode debug file
 debug
 
@@ -29,3 +32,6 @@ settings.json
 
 # Autobuilt wasm files
 static/main.wasm
+
+# tags for vim
+tags

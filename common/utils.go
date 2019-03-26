@@ -12,5 +12,5 @@ var usernameRegex *regexp.Regexp = regexp.MustCompile(`^[0-9a-zA-Z_-]+$`)
 // and is not a valid color name
 func IsValidName(name string) bool {
 	return 3 <= len(name) && len(name) <= 36 &&
-		usernameRegex.MatchString(name) && !IsValidColor(name)
+		usernameRegex.MatchString(name)
 }

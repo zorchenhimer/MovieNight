@@ -58,7 +58,7 @@ func wsStaticFiles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	goodPath := r.URL.Path[8:len(r.URL.Path)]
-	fmt.Printf("[static] serving %q from folder ./static/\n", goodPath)
+	common.LogDebugf("[static] serving %q from folder ./static/\n", goodPath)
 
 	http.ServeFile(w, r, "./static/"+goodPath)
 }
@@ -70,7 +70,7 @@ func wsWasmFile(w http.ResponseWriter, r *http.Request) {
 
 func wsImages(w http.ResponseWriter, r *http.Request) {
 	base := filepath.Base(r.URL.Path)
-	fmt.Println("[img] ", base)
+	common.LogDebugln("[img] ", base)
 	http.ServeFile(w, r, "./static/img/"+base)
 }
 
@@ -91,7 +91,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Println("Error upgrading to websocket:", err)
+		common.LogErrorln("Error upgrading to websocket:", err)
 		return
 	}
 
@@ -107,7 +107,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 
 		uid, err := chat.JoinTemp(chatConn)
 		if err != nil {
-			fmt.Printf("[handler] could not do a temp join, %v\n", err)
+			common.LogErrorf("[handler] could not do a temp join, %v\n", err)
 			conn.Close()
 		}
 
@@ -117,7 +117,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 			var data common.ClientData
 			err := chatConn.ReadData(&data)
 			if err != nil {
-				fmt.Printf("[handler] Client closed connection: %s\n", conn.RemoteAddr().String())
+				common.LogInfof("[handler] Client closed connection: %s\n", conn.RemoteAddr().String())
 				conn.Close()
 				return
 			}
@@ -126,14 +126,14 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				switch err.(type) {
 				case UserFormatError, UserTakenError:
-					fmt.Printf("[handler|%s] %v\n", errorName(err), err)
+					common.LogInfof("[handler|%s] %v\n", errorName(err), err)
 				case BannedUserError:
-					fmt.Printf("[handler|%s] %v\n", errorName(err), err)
+					common.LogInfof("[handler|%s] %v\n", errorName(err), err)
 					// close connection since banned users shouldn't be connecting
 					conn.Close()
 				default:
 					// for now all errors not caught need to be warned
-					fmt.Printf("[handler|uncaught] %v\n", err)
+					common.LogErrorf("[handler|uncaught] %v\n", err)
 					conn.Close()
 				}
 			}
@@ -243,7 +243,7 @@ func handlePinTemplate(w http.ResponseWriter, r *http.Request, errorMessage stri
 func handleHelpTemplate(w http.ResponseWriter, r *http.Request) {
 	t, err := template.ParseFiles("./static/base.html", "./static/help.html")
 	if err != nil {
-		fmt.Printf("Error parsing template file, %v\n", err)
+		common.LogErrorf("Error parsing template file, %v\n", err)
 		return
 	}
 
@@ -256,20 +256,20 @@ func handleHelpTemplate(w http.ResponseWriter, r *http.Request) {
 
 	data := Data{
 		Title:    "Help",
-		Commands: getHelp(common.CmdUser),
+		Commands: getHelp(common.CmdlUser),
 	}
 
 	if len(r.URL.Query().Get("mod")) > 0 {
-		data.ModCommands = getHelp(common.CmdMod)
+		data.ModCommands = getHelp(common.CmdlMod)
 	}
 
 	if len(r.URL.Query().Get("admin")) > 0 {
-		data.AdminCommands = getHelp(common.CmdAdmin)
+		data.AdminCommands = getHelp(common.CmdlAdmin)
 	}
 
 	err = t.Execute(w, data)
 	if err != nil {
-		fmt.Printf("Error executing file, %v", err)
+		common.LogErrorf("Error executing file, %v", err)
 	}
 }
 
@@ -306,7 +306,7 @@ func handleIndexTemplate(w http.ResponseWriter, r *http.Request) {
 
 	t, err := template.ParseFiles("./static/base.html", "./static/main.html")
 	if err != nil {
-		fmt.Printf("Error parsing template file, %v\n", err)
+		common.LogErrorf("Error parsing template file, %v\n", err)
 		return
 	}
 
@@ -337,7 +337,7 @@ func handleIndexTemplate(w http.ResponseWriter, r *http.Request) {
 
 	err = t.Execute(w, data)
 	if err != nil {
-		fmt.Printf("Error executing file, %v", err)
+		common.LogErrorf("Error executing file, %v", err)
 	}
 }
 
@@ -345,22 +345,22 @@ func handlePublish(conn *rtmp.Conn) {
 	streams, _ := conn.Streams()
 
 	l.Lock()
-	fmt.Println("request string->", conn.URL.RequestURI())
+	common.LogDebugln("request string->", conn.URL.RequestURI())
 	urlParts := strings.Split(strings.Trim(conn.URL.RequestURI(), "/"), "/")
-	fmt.Println("urlParts->", urlParts)
+	common.LogDebugln("urlParts->", urlParts)
 
 	if len(urlParts) > 2 {
-		fmt.Println("Extra garbage after stream key")
+		common.LogErrorln("Extra garbage after stream key")
 		return
 	}
 
 	if len(urlParts) != 2 {
-		fmt.Println("Missing stream key")
+		common.LogErrorln("Missing stream key")
 		return
 	}
 
 	if urlParts[1] != settings.GetStreamKey() {
-		fmt.Println("Due to key not match, denied stream")
+		common.LogErrorln("Stream key is incorrect.  Denying stream.")
 		return //If key not match, deny stream
 	}
 
@@ -376,13 +376,13 @@ func handlePublish(conn *rtmp.Conn) {
 	}
 	l.Unlock()
 	if ch == nil {
-		fmt.Println("Unable to start stream, channel is nil.")
+		common.LogErrorln("Unable to start stream, channel is nil.")
 		return
 	}
 
-	fmt.Println("Stream started")
+	common.LogInfoln("Stream started")
 	avutil.CopyPackets(ch.que, conn)
-	fmt.Println("Stream finished")
+	common.LogInfoln("Stream finished")
 
 	l.Lock()
 	delete(channels, streamPath)
@@ -420,7 +420,8 @@ func handleDefault(w http.ResponseWriter, r *http.Request) {
 		avutil.CopyFile(muxer, cursor)
 	} else {
 		if r.URL.Path != "/" {
-			fmt.Println("[http 404] ", r.URL.Path)
+			// not really an error for the server, but for the client.
+			common.LogInfoln("[http 404] ", r.URL.Path)
 			http.NotFound(w, r)
 		} else {
 			handleIndexTemplate(w, r)

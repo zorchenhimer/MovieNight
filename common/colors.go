@@ -42,6 +42,10 @@ var colors = []string{
 	"whitesmoke", "yellow", "yellowgreen",
 }
 
+var (
+	regexColor = regexp.MustCompile(`^#([0-9A-Fa-f]{3}){1,2}$`)
+)
+
 // IsValidColor takes a string s and compares it against a list of css color names.
 // It also accepts hex codes in the form of #000 (RGB), to #00000000 (RRGGBBAA), with A
 // being the alpha value
@@ -53,7 +57,7 @@ func IsValidColor(s string) bool {
 		}
 	}
 
-	if regexp.MustCompile(`^#([0-9A-Fa-f]{3}){1,2}$`).MatchString(s) {
+	if regexColor.MatchString(s) {
 		c, err := colorful.Hex(s)
 		if err != nil {
 			return false
