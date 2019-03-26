@@ -17,24 +17,26 @@ var (
 	stats = newStreamStats()
 )
 
-func setupSettings() {
+func setupSettings() error {
 	var err error
 	settings, err = LoadSettings("settings.json")
 	if err != nil {
-		panic("Unable to load settings: " + err.Error())
+		return fmt.Errorf("Unable to load settings: %s", err)
 	}
 	if len(settings.StreamKey) == 0 {
-		panic("Missing stream key is settings.json")
+		return fmt.Errorf("Missing stream key is settings.json")
 	}
 
 	if err = settings.SetupLogging(); err != nil {
-		panic("Unable to setup logger: " + err.Error())
+		return fmt.Errorf("Unable to setup logger: %s", err)
 	}
 
 	// Save admin password to file
 	if err = settings.Save(); err != nil {
-		panic("Unable to save settings: " + err.Error())
+		return fmt.Errorf("Unable to save settings: %s", err)
 	}
+
+	return nil
 }
 
 func main() {
@@ -44,7 +46,10 @@ func main() {
 
 	format.RegisterAll()
 
-	setupSettings()
+	if err := setupSettings(); err != nil {
+		fmt.Printf("Error loading settings: %v\n", err)
+		os.Exit(1)
+	}
 
 	exit := make(chan bool)
 	go handleInterrupt(exit)
