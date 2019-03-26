@@ -11,7 +11,8 @@ var Emotes map[string]string
 func ParseEmotesArray(words []string) []string {
 	newWords := []string{}
 	for _, word := range words {
-		word = strings.Trim(word, "[]")
+		// make :emote: and [emote] valid for replacement.
+		word = strings.Trim(word, ":[]")
 
 		found := false
 		for key, val := range Emotes {
