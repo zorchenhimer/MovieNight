@@ -180,7 +180,8 @@ func (cl *Client) Host() string {
 }
 
 func (cl *Client) setName(s string) error {
-	regex, err := regexp.Compile(fmt.Sprintf("(%s|@%s)", s, s))
+	// Case-insensitive search.  Match whole words only (`\b` is word boundary).
+	regex, err := regexp.Compile(fmt.Sprintf(`(?i)\b(%s|@%s)\b`, s, s))
 	if err != nil {
 		return fmt.Errorf("could not compile regex: %v", err)
 	}
