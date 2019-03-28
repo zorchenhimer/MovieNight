@@ -124,7 +124,7 @@ function auth() {
 
 function nick() {
     let nick = prompt("Enter new name");
-    if (nick != "") {
+    if (nick != "" && nick !== null) {
         sendMessage("/nick " + nick);
     }
 }
