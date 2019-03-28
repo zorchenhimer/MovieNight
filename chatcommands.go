@@ -45,9 +45,112 @@ var commands = &CommandControl{
 			},
 		},
 
-		common.CNColor.String(): cmdColor,
+		common.CNColor.String(): Command{
+			HelpText: "Change user color.",
+			Function: func(cl *Client, args []string) string {
+				if len(args) > 2 {
+					return "Too many arguments!"
+				}
 
-		common.CNWhoAmI.String(): cmdWhoAmI,
+				// If the caller is priviledged enough, they can change the color of another user
+				if len(args) == 2 {
+					if cl.CmdLevel == common.CmdlUser {
+						return "You cannot change someone else's color. PeepoSus"
+					}
+
+					name, color := "", ""
+
+					if strings.ToLower(args[0]) == strings.ToLower(args[1]) ||
+						(common.IsValidColor(args[0]) && common.IsValidColor(args[1])) {
+						return "Name and color are ambiguous. Prefix the name with '@' or color with '#'"
+					}
+
+					// Check for explicit name
+					if strings.HasPrefix(args[0], "@") {
+						name = strings.TrimLeft(args[0], "@")
+						color = args[1]
+						common.LogDebugln("[color:mod] Found explicit name: ", name)
+					} else if strings.HasPrefix(args[1], "@") {
+						name = strings.TrimLeft(args[1], "@")
+						color = args[0]
+						common.LogDebugln("[color:mod] Found explicit name: ", name)
+
+						// Check for explicit color
+					} else if strings.HasPrefix(args[0], "#") {
+						name = strings.TrimPrefix(args[1], "@") // this shouldn't be needed, but just in case.
+						color = args[0]
+						common.LogDebugln("[color:mod] Found explicit color: ", color)
+					} else if strings.HasPrefix(args[1], "#") {
+						name = strings.TrimPrefix(args[0], "@") // this shouldn't be needed, but just in case.
+						color = args[1]
+						common.LogDebugln("[color:mod] Found explicit color: ", color)
+
+						// Guess
+					} else if common.IsValidColor(args[0]) {
+						name = strings.TrimPrefix(args[1], "@")
+						color = args[0]
+						common.LogDebugln("[color:mod] Guessed name: ", name, " and color: ", color)
+					} else if common.IsValidColor(args[1]) {
+						name = strings.TrimPrefix(args[0], "@")
+						color = args[1]
+						common.LogDebugln("[color:mod] Guessed name: ", name, " and color: ", color)
+					}
+
+					if name == "" {
+						return "Cannot determine name.  Prefix name with @."
+					}
+					if color == "" {
+						return "Cannot determine color.  Prefix name with @."
+					}
+
+					if color == "" {
+						common.LogInfof("[color:mod] %s missing color\n", cl.name)
+						return "Missing color"
+					}
+
+					if name == "" {
+						common.LogInfof("[color:mod] %s missing name\n", cl.name)
+						return "Missing name"
+					}
+
+					if err := cl.belongsTo.ForceColorChange(name, color); err != nil {
+						return err.Error()
+					}
+					return fmt.Sprintf("Color changed for user %s to %s\n", name, color)
+				}
+
+				// Don't allow an unprivilaged user to change their color if
+				// it was changed by a mod
+				if cl.IsColorForced {
+					common.LogInfof("[color] %s tried to change a forced color\n", cl.name)
+					return "You are not allowed to change your color."
+				}
+
+				if len(args) == 0 {
+					cl.color = common.RandomColor()
+					return "Random color chosen: " + cl.color
+				}
+
+				// Change the color of the user
+				if !common.IsValidColor(args[0]) {
+					return "To choose a specific color use the format <i>/color #c029ce</i>.  Hex values expected."
+				}
+
+				cl.color = args[0]
+				common.LogInfof("[color] %s new color: %s\n", cl.name, cl.color)
+				return "Color changed successfully."
+			},
+		},
+
+		common.CNWhoAmI.String(): Command{
+			HelpText: "Shows debug user info",
+			Function: func(cl *Client, args []string) string {
+				return fmt.Sprintf("Name: %s IsMod: %t IsAdmin: %t",
+					cl.name,
+					cl.CmdLevel >= common.CmdlMod,
+					cl.CmdLevel == common.CmdlAdmin)
+			},
+		},
 
 		common.CNAuth.String(): Command{
 			HelpText: "Authenticate to admin",
@@ -419,113 +522,4 @@ func getHelp(lvl common.CommandLevel) map[string]string {
 		helptext[name] = cmd.HelpText
 	}
 	return helptext
-}
-
-// Commands below have more than one invoking command (aliases).
-
-var cmdColor = Command{
-	HelpText: "Change user color.",
-	Function: func(cl *Client, args []string) string {
-		if len(args) > 2 {
-			return "Too many arguments!"
-		}
-
-		// If the caller is priviledged enough, they can change the color of another user
-		if len(args) == 2 {
-			if cl.CmdLevel == common.CmdlUser {
-				return "You cannot change someone else's color. PeepoSus"
-			}
-
-			name, color := "", ""
-
-			if strings.ToLower(args[0]) == strings.ToLower(args[1]) ||
-				(common.IsValidColor(args[0]) && common.IsValidColor(args[1])) {
-				return "Name and color are ambiguous. Prefix the name with '@' or color with '#'"
-			}
-
-			// Check for explicit name
-			if strings.HasPrefix(args[0], "@") {
-				name = strings.TrimLeft(args[0], "@")
-				color = args[1]
-				common.LogDebugln("[color:mod] Found explicit name: ", name)
-			} else if strings.HasPrefix(args[1], "@") {
-				name = strings.TrimLeft(args[1], "@")
-				color = args[0]
-				common.LogDebugln("[color:mod] Found explicit name: ", name)
-
-				// Check for explicit color
-			} else if strings.HasPrefix(args[0], "#") {
-				name = strings.TrimPrefix(args[1], "@") // this shouldn't be needed, but just in case.
-				color = args[0]
-				common.LogDebugln("[color:mod] Found explicit color: ", color)
-			} else if strings.HasPrefix(args[1], "#") {
-				name = strings.TrimPrefix(args[0], "@") // this shouldn't be needed, but just in case.
-				color = args[1]
-				common.LogDebugln("[color:mod] Found explicit color: ", color)
-
-				// Guess
-			} else if common.IsValidColor(args[0]) {
-				name = strings.TrimPrefix(args[1], "@")
-				color = args[0]
-				common.LogDebugln("[color:mod] Guessed name: ", name, " and color: ", color)
-			} else if common.IsValidColor(args[1]) {
-				name = strings.TrimPrefix(args[0], "@")
-				color = args[1]
-				common.LogDebugln("[color:mod] Guessed name: ", name, " and color: ", color)
-			}
-
-			if name == "" {
-				return "Cannot determine name.  Prefix name with @."
-			}
-			if color == "" {
-				return "Cannot determine color.  Prefix name with @."
-			}
-
-			if color == "" {
-				common.LogInfof("[color:mod] %s missing color\n", cl.name)
-				return "Missing color"
-			}
-
-			if name == "" {
-				common.LogInfof("[color:mod] %s missing name\n", cl.name)
-				return "Missing name"
-			}
-
-			if err := cl.belongsTo.ForceColorChange(name, color); err != nil {
-				return err.Error()
-			}
-			return fmt.Sprintf("Color changed for user %s to %s\n", name, color)
-		}
-
-		// Don't allow an unprivilaged user to change their color if
-		// it was changed by a mod
-		if cl.IsColorForced {
-			common.LogInfof("[color] %s tried to change a forced color\n", cl.name)
-			return "You are not allowed to change your color."
-		}
-
-		if len(args) == 0 {
-			cl.color = common.RandomColor()
-			return "Random color chosen: " + cl.color
-		}
-
-		// Change the color of the user
-		if !common.IsValidColor(args[0]) {
-			return "To choose a specific color use the format <i>/color #c029ce</i>.  Hex values expected."
-		}
-
-		cl.color = args[0]
-		common.LogInfof("[color] %s new color: %s\n", cl.name, cl.color)
-		return "Color changed successfully."
-	},
-}
-
-var cmdWhoAmI = Command{
-	HelpText: "Shows debug user info",
-	Function: func(cl *Client, args []string) string {
-		return fmt.Sprintf("Name: %s IsMod: %t IsAdmin: %t",
-			cl.name,
-			cl.CmdLevel >= common.CmdlMod,
-			cl.CmdLevel == common.CmdlAdmin)
-	},
 }
