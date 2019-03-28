@@ -17,7 +17,7 @@ type twitchChannel struct {
 	Plans           map[string]string `json:"plans"`
 	Emotes          []struct {
 		Code string `json:"code"`
-		Set  string `json:"emoticon_set"`
+		Set  int    `json:"emoticon_set"`
 		Id   int    `json:"id"`
 	} `json:"emotes"`
 	BaseSetId   string `json:"base_set_id"`

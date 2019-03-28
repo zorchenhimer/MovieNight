@@ -64,6 +64,7 @@ var ChatCommands = []ChatCommandNames{
 	CNReloadEmotes,
 	CNModpass,
 	CNIP,
+	CNAddEmotes,
 }
 
 func GetFullChatCommand(c string) string {

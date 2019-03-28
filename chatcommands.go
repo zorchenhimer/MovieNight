@@ -318,6 +318,37 @@ var commands = &CommandControl{
 				return "see console for output"
 			},
 		},
+
+		common.CNAddEmotes.String(): Command{
+			HelpText: "Add emotes from a given twitch channel.",
+			Function: func(cl *Client, args []string) string {
+				// Fire this off in it's own goroutine so the client doesn't
+				// block waiting for the emote download to finish.
+				go func() {
+
+					// Pretty sure this breaks on partial downloads (eg, one good channel and one non-existant)
+					_, err := GetEmotes(args)
+					if err != nil {
+						cl.SendChatData(common.NewChatMessage("", "",
+							err.Error(),
+							common.CmdlUser, common.MsgCommandResponse))
+						return
+					}
+
+					// reload emotes now that new ones were added
+					_, err = common.LoadEmotes()
+					if err != nil {
+						cl.SendChatData(common.NewChatMessage("", "",
+							err.Error(),
+							common.CmdlUser, common.MsgCommandResponse))
+						return
+					}
+
+					cl.belongsTo.AddModNotice(cl.name + " has added emotes from the following channels: " + strings.Join(args, ", "))
+				}()
+				return "Emote download initiated for the following channels: " + strings.Join(args, ", ")
+			},
+		},
 	},
 }
 
