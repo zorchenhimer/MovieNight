@@ -80,6 +80,8 @@ func main() {
 		HandlePlay:    handlePlay,
 		HandlePublish: handlePublish,
 	}
+
+	// Define this here so we can set some timeouts and things.
 	chatServer := &http.Server{
 		Addr:           addr,
 		ReadTimeout:    10 * time.Second,
@@ -88,7 +90,12 @@ func main() {
 	}
 
 	chatServer.RegisterOnShutdown(func() { chat.Shutdown() })
+	// rtmp.Server does not implement .RegisterOnShutdown()
 	//server.RegisterOnShutdown(func() { common.LogDebugln("server shutdown callback called.") })
+
+	// These have been moved back to annon functitons so I could use
+	// `server`, `chatServer`, and `exit` in them without needing to
+	// pass them as parameters.
 
 	// Signal handler
 	exit := make(chan bool)
@@ -111,7 +118,9 @@ func main() {
 
 	// Chat and HTTP server
 	go func() {
-		// Chat websocket
+		// Use a ServeMux here instead of the default, global,
+		// http handler.  It's a good idea when we're starting more
+		// than one server.
 		mux := http.NewServeMux()
 		mux.HandleFunc("/ws", wsHandler)
 		mux.HandleFunc("/static/js/", wsStaticFiles)
@@ -128,6 +137,8 @@ func main() {
 
 		chatServer.Handler = mux
 		err := chatServer.ListenAndServe()
+		// http.ErrServerClosed is returned when server.Shuddown()
+		// is called.
 		if err != http.ErrServerClosed {
 			// If the server cannot start, don't pretend we can continue.
 			panic("Error trying to start chat/http server: " + err.Error())
@@ -138,6 +149,8 @@ func main() {
 	// RTMP server
 	go func() {
 		err := server.ListenAndServe()
+		// http.ErrServerClosed is returned when server.Shuddown()
+		// is called.
 		if err != http.ErrServerClosed {
 			// If the server cannot start, don't pretend we can continue.
 			panic("Error trying to start rtmp server: " + err.Error())
