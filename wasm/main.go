@@ -92,7 +92,7 @@ func recieve(v []js.Value) {
 func appendMessage(msg string) {
 	if timestamp {
 		h, m, _ := time.Now().Clock()
-		msg = fmt.Sprintf(`<span class="time">%d:%d</span> %s`, h, m, msg)
+		msg = fmt.Sprintf(`<span class="time">%02d:%02d</span> %s`, h, m, msg)
 	}
 	js.Call("appendMessages", "<div>"+msg+"</div>")
 }

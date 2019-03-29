@@ -66,7 +66,7 @@ function appendMessages(msg) {
     }
 
     $("#messages").append(msg);
-    $("#messages").children().last()[0].scrollIntoView({ block: "end", behavior: "smooth" });
+    $("#messages").children().last()[0].scrollIntoView({ block: "end" });
 }
 
 function purgeChat() {
@@ -248,14 +248,12 @@ function setupEvents() {
 }
 
 function defaultValues() {
-    $("#colorRed").val(0).trigger("input");
-    $("#colorGreen").val(0).trigger("input");
-    $("#colorBlue").val(0).trigger("input");
-
-    let timestamp = getCookie("timestamp")
-    if (timestamp !== "") {
-        showTimestamp(timestamp)
-    }
+    setTimeout(() => {
+        let timestamp = getCookie("timestamp")
+        if (timestamp !== "") {
+            showTimestamp(timestamp === "true")
+        }
+    }, 500);
 }
 
 window.addEventListener("onresize", updateSuggestionCss);
