@@ -287,3 +287,13 @@ span.svmsg {
 #colorSubmit:disabled {
     display: none;
 }
+
+#remote {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    margin: 1em auto;
+    width: 50px;
+    z-index: 999;
+}
