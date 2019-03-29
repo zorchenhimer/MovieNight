@@ -78,7 +78,7 @@ type ClientData struct {
 
 func (c ClientData) HTML() string {
 	// Client data is for client to server communication only, so clients should not see this
-	return `<div style="color: red;"><span>The developer messed up. You should not be seeing this.</span></div>`
+	return `<span style="color: red;">The developer messed up. You should not be seeing this.</span>`
 }
 
 type DataMessage struct {
@@ -93,20 +93,20 @@ type DataMessage struct {
 func (dc DataMessage) HTML() string {
 	switch dc.Type {
 	case MsgAction:
-		return `<div style="color:` + dc.Color + `"><span class="name">` + dc.From +
-			`</span> <span class="cmdme">` + dc.Message + `</span></div>`
+		return `<span style="color:` + dc.Color + `"><span class="name">` + dc.From +
+			`</span> <span class="cmdme">` + dc.Message + `</span></span>`
 
 	case MsgServer:
-		return `<div class="announcement">` + dc.Message + `</div>`
+		return `<span class="announcement">` + dc.Message + `</span>`
 
 	case MsgError:
-		return `<div class="error">` + dc.Message + `</div>`
+		return `<span class="error">` + dc.Message + `</span>`
 
 	case MsgNotice:
-		return `<div class="notice">` + dc.Message + `</div>`
+		return `<span class="notice">` + dc.Message + `</span>`
 
 	case MsgCommandResponse:
-		return `<div class="command">` + dc.Message + `</div>`
+		return `<span class="command">` + dc.Message + `</span>`
 
 	default:
 		badge := ""
@@ -116,8 +116,8 @@ func (dc DataMessage) HTML() string {
 		case CmdlAdmin:
 			badge = `<img src="/static/img/admin.png" class="badge" />`
 		}
-		return `<div>` + badge + `<span class="name" style="color:` + dc.Color + `">` + dc.From +
-			`</span><b>:</b> <span class="msg">` + dc.Message + `</span></div>`
+		return `<span>` + badge + `<span class="name" style="color:` + dc.Color + `">` + dc.From +
+			`</span><b>:</b> <span class="msg">` + dc.Message + `</span></span>`
 	}
 }
 
@@ -142,7 +142,7 @@ type DataCommand struct {
 func (de DataCommand) HTML() string {
 	switch de.Command {
 	case CmdPurgeChat:
-		return `<div class="notice">Chat has been purged by a moderator.</div>`
+		return `<span class="notice">Chat has been purged by a moderator.</span>`
 	default:
 		return ""
 	}
@@ -167,37 +167,37 @@ type DataEvent struct {
 func (de DataEvent) HTML() string {
 	switch de.Event {
 	case EvKick:
-		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</span> has been kicked.</div>`
+		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
+			de.User + `</span> has been kicked.</span>`
 	case EvLeave:
-		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</span> has left the chat.</div>`
+		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
+			de.User + `</span> has left the chat.</span>`
 	case EvBan:
-		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</span> has been banned.</div>`
+		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
+			de.User + `</span> has been banned.</span>`
 	case EvJoin:
-		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</span> has joined the chat.</div>`
+		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
+			de.User + `</span> has joined the chat.</span>`
 	case EvNameChange:
 		names := strings.Split(de.User, ":")
 		if len(names) != 2 {
-			return `<div class="event">Somebody changed their name, but IDK who ` +
-				ParseEmotes("Jebaited") + `.</div>`
+			return `<span class="event">Somebody changed their name, but IDK who ` +
+				ParseEmotes("Jebaited") + `.</span>`
 		}
 
-		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
+		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
 			names[0] + `</span> has changed their name to <span class="name" style="color:` +
-			de.Color + `">` + names[1] + `</span>.</div>`
+			de.Color + `">` + names[1] + `</span>.</span>`
 	case EvNameChangeForced:
 		names := strings.Split(de.User, ":")
 		if len(names) != 2 {
-			return `<div class="event">An admin changed somebody's name, but IDK who ` +
-				ParseEmotes("Jebaited") + `.</div>`
+			return `<span class="event">An admin changed somebody's name, but IDK who ` +
+				ParseEmotes("Jebaited") + `.</span>`
 		}
 
-		return `<div class="event"><span class="name" style="color:` + de.Color + `">` +
+		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
 			names[0] + `</span> has had their name changed to <span class="name" style="color:` +
-			de.Color + `">` + names[1] + `</span> by an admin.</div>`
+			de.Color + `">` + names[1] + `</span> by an admin.</span>`
 	}
 	return ""
 }
