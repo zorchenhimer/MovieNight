@@ -193,6 +193,11 @@ function changeColor() {
     }
 }
 
+function setTimestamp(v) {
+    showTimestamp(v)
+    document.cookie = "timestamp=" + v
+}
+
 // Get the websocket setup in a function so it can be recalled
 function setupWebSocket() {
     ws = new WebSocket(getWsUri());
@@ -246,6 +251,11 @@ function defaultValues() {
     $("#colorRed").val(0).trigger("input");
     $("#colorGreen").val(0).trigger("input");
     $("#colorBlue").val(0).trigger("input");
+
+    let timestamp = getCookie("timestamp")
+    if (timestamp !== "") {
+        showTimestamp(timestamp)
+    }
 }
 
 window.addEventListener("onresize", updateSuggestionCss);

@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	auth  common.CommandLevel
-	color string
+	timestamp bool
+	color     string
+	auth      common.CommandLevel
 )
 
 func recieve(v []js.Value) {
@@ -24,7 +25,7 @@ func recieve(v []js.Value) {
 	chatJSON, err := common.DecodeData(v[0].String())
 	if err != nil {
 		fmt.Printf("Error decoding data: %s\n", err)
-		js.Call("appendMessages", v)
+		js.Call("appendMessages", fmt.Sprintf("<div>%v</div>", v))
 		return
 	}
 
@@ -57,7 +58,7 @@ func recieve(v []js.Value) {
 		// on join or leave, update list of possible user names
 		fallthrough
 	case common.DTChat:
-		js.Call("appendMessages", chat.Data.HTML())
+		appendMessage(chat.Data.HTML())
 	case common.DTCommand:
 		d := chat.Data.(common.DataCommand)
 
@@ -76,16 +77,24 @@ func recieve(v []js.Value) {
 			js.Call("initPlayer", nil)
 		case common.CmdPurgeChat:
 			js.Call("purgeChat", nil)
-			js.Call("appendMessages", d.HTML())
+			appendMessage(d.HTML())
 		case common.CmdHelp:
 			url := "/help"
 			if d.Arguments != nil && len(d.Arguments) > 0 {
 				url = d.Arguments[0]
 			}
-			js.Call("appendMessages", d.HTML())
+			appendMessage(d.HTML())
 			js.Get("window").Call("open", url, "_blank", "menubar=0,status=0,toolbar=0,width=300,height=600")
 		}
 	}
+}
+
+func appendMessage(msg string) {
+	if timestamp {
+		h, m, _ := time.Now().Clock()
+		msg = fmt.Sprintf(`<span class="time">%d:%d</span> %s`, h, m, msg)
+	}
+	js.Call("appendMessages", "<div>"+msg+"</div>")
 }
 
 func websocketSend(msg string, dataType common.ClientDataType) error {
@@ -126,6 +135,14 @@ func showChatError(err error) {
 	}
 }
 
+func showTimestamp(v []js.Value) {
+	if len(v) != 1 {
+		// Don't bother with returning a value
+		return
+	}
+	timestamp = v[0].Bool()
+}
+
 func isValidColor(this js.Value, v []js.Value) interface{} {
 	if len(v) != 1 {
 		return false
@@ -141,11 +158,12 @@ func isValidName(this js.Value, v []js.Value) interface{} {
 }
 
 func debugValues(v []js.Value) {
-	fmt.Printf("auth %#v\n", auth)
-	fmt.Printf("color %#v\n", color)
-	fmt.Printf("currentName %#v\n", currentName)
-	fmt.Printf("names %#v\n", names)
-	fmt.Printf("filteredNames %#v\n", filteredNames)
+	fmt.Printf("timestamp: %#v\n", timestamp)
+	fmt.Printf("auth: %#v\n", auth)
+	fmt.Printf("color: %#v\n", color)
+	fmt.Printf("currentName: %#v\n", currentName)
+	fmt.Printf("names: %#v\n", names)
+	fmt.Printf("filteredNames: %#v\n", filteredNames)
 }
 
 func main() {
@@ -157,6 +175,7 @@ func main() {
 	js.Set("recieveMessage", js.CallbackOf(recieve))
 	js.Set("processMessage", js.CallbackOf(processMessage))
 	js.Set("debugValues", js.CallbackOf(debugValues))
+	js.Set("showTimestamp", js.CallbackOf(showTimestamp))
 
 	// This is needed so the goroutine does not end
 	for {

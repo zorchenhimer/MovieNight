@@ -57,6 +57,11 @@
                 {{end}}
             </div>
             <hr />
+            <label class="contrast">
+                <input type="checkbox" checked="false" onchange="setTimestamp(this.checked);" />
+                Show Timestamp
+            </label>
+            <hr />
             <div id="hiddencolor" class="hiddendiv">
                 <div class="range-div" style="background-image: linear-gradient(to right, transparent, red);">
                     <input id="colorRed" type="range" min="0" max="255" value="0" oninput="updateColor();" />
