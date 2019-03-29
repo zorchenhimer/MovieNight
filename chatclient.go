@@ -191,6 +191,11 @@ func (cl *Client) setName(s string) error {
 	return nil
 }
 
+func (cl *Client) setColor(s string) error {
+	cl.color = s
+	return cl.SendChatData(common.NewChatHiddenMessage(common.CdColor, cl.color))
+}
+
 func (cl *Client) replaceColorizedName(chatData common.ChatData) common.ChatData {
 	data := chatData.Data.(common.DataMessage)
 	data.Message = cl.regexName.ReplaceAllString(data.Message, `<span class="mention">$1</span>`)

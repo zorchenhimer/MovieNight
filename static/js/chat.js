@@ -1,5 +1,21 @@
 /// <reference path="./both.js" />
 
+function getCookie(cname) {
+    var name = cname + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+}
+
 function setPlaying(title, link) {
     if (title !== "") {
         $('#playing').text(title);
@@ -89,6 +105,14 @@ function join() {
     }
     setNotifyBox();
     openChat();
+
+    let color = getCookie("color");
+    if (color !== "") {
+        // Do a timeout because timings
+        setTimeout(() => {
+            sendMessage("/color " + color);
+        }, 250);
+    }
 }
 
 function websocketSend(data) {
@@ -168,7 +192,6 @@ function changeColor() {
         showColors(false);
     }
 }
-
 
 // Get the websocket setup in a function so it can be recalled
 function setupWebSocket() {

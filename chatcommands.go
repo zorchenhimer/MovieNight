@@ -127,7 +127,7 @@ var commands = &CommandControl{
 				}
 
 				if len(args) == 0 {
-					cl.color = common.RandomColor()
+					cl.setColor(common.RandomColor())
 					return "Random color chosen: " + cl.color
 				}
 
@@ -136,7 +136,11 @@ var commands = &CommandControl{
 					return "To choose a specific color use the format <i>/color #c029ce</i>.  Hex values expected."
 				}
 
-				cl.color = args[0]
+				err := cl.setColor(args[0])
+				if err != nil {
+					common.LogErrorf("[color] could not send color update to client: %v\n", err)
+				}
+
 				common.LogInfof("[color] %s new color: %s\n", cl.name, cl.color)
 				return "Color changed successfully."
 			},

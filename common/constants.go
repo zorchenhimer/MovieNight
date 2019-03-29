@@ -8,6 +8,7 @@ const (
 	CdUsers                         // get a list of users
 	CdPing                          // ping the server to keep the connection alive
 	CdAuth                          // get the auth levels of the user
+	CdColor                         // get the users color
 )
 
 type DataType int

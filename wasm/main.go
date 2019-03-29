@@ -10,7 +10,10 @@ import (
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
-var auth common.CommandLevel
+var (
+	auth  common.CommandLevel
+	color string
+)
 
 func recieve(v []js.Value) {
 	if len(v) == 0 {
@@ -41,6 +44,9 @@ func recieve(v []js.Value) {
 			}
 		case common.CdAuth:
 			auth = h.Data.(common.CommandLevel)
+		case common.CdColor:
+			color = h.Data.(string)
+			js.Get("document").Set("cookie", fmt.Sprintf("color=%s;", color))
 		}
 	case common.DTEvent:
 		d := chat.Data.(common.DataEvent)
@@ -101,19 +107,19 @@ func websocketSend(msg string, dataType common.ClientDataType) error {
 
 func send(this js.Value, v []js.Value) interface{} {
 	if len(v) != 1 {
-		showSendError(fmt.Errorf("expected 1 parameter, got %d", len(v)))
+		showChatError(fmt.Errorf("expected 1 parameter, got %d", len(v)))
 		return false
 	}
 
 	err := websocketSend(v[0].String(), common.CdMessage)
 	if err != nil {
-		showSendError(err)
+		showChatError(err)
 		return false
 	}
 	return true
 }
 
-func showSendError(err error) {
+func showChatError(err error) {
 	if err != nil {
 		fmt.Printf("Could not send: %v\n", err)
 		js.Call("appendMessages", `<div><span style="color: red;">Could not send message</span></div>`)
@@ -135,8 +141,9 @@ func isValidName(this js.Value, v []js.Value) interface{} {
 }
 
 func debugValues(v []js.Value) {
-	fmt.Printf("currentName %#v\n", currentName)
 	fmt.Printf("auth %#v\n", auth)
+	fmt.Printf("color %#v\n", color)
+	fmt.Printf("currentName %#v\n", currentName)
 	fmt.Printf("names %#v\n", names)
 	fmt.Printf("filteredNames %#v\n", filteredNames)
 }

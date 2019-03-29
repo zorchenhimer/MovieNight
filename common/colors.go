@@ -47,8 +47,7 @@ var (
 )
 
 // IsValidColor takes a string s and compares it against a list of css color names.
-// It also accepts hex codes in the form of #000 (RGB), to #00000000 (RRGGBBAA), with A
-// being the alpha value
+// It also accepts hex codes in the form of #RGB and #RRGGBB
 func IsValidColor(s string) bool {
 	s = strings.ToLower(s)
 	for _, c := range colors {
