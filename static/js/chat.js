@@ -158,6 +158,10 @@ function help() {
 }
 
 function showColors(show) {
+    if (show === undefined) {
+        show = $("#hiddencolor").css("display") === "none";
+    }
+
     $("#hiddencolor").css("display", show ? "block" : "");
 }
 

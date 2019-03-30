@@ -50,7 +50,7 @@
             <div id="chatButtons">
                 <input type="button" class="button pretty-button" onclick="auth();" value="Auth" />
                 <input type="button" class="button pretty-button" onclick="help();" value="Help" />
-                <input type="button" class="button pretty-button" onclick="showColors(true);" value="Color" />
+                <input type="button" class="button pretty-button" onclick="showColors();" value="Color" />
                 <input type="button" class="button pretty-button" onclick="nick();" value="Nick" />
                 {{if .Video}}
                 <input type="button" class="button pretty-button" onclick="initPlayer();" value="Reload Player" />
@@ -75,7 +75,10 @@
                     <input id="colorBlue" type="range" min="0" max="255" value="0" oninput="updateColor();" />
                     <span id="colorBlueLabel"></span>
                 </div>
-                <div id="colorName" class="range-div" style="font-weight: bold;">
+                <div id="colorInputDiv" class="range-div">
+                    #<input id="colorInput" type="text" maxlength="6" onchange="changeColorInput();" />
+                </div>
+                <div id="colorName" class="range-div">
                     NAME
                 </div>
                 <div id="colorWarning" class="range-div contrast">
