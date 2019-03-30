@@ -141,7 +141,7 @@ function setNotifyBox(msg = "") {
 // Button Wrapper Functions
 function auth() {
     let pass = prompt("Enter pass");
-    if (pass != "") {
+    if (pass != "" && pass !== null) {
         sendMessage("/auth " + pass);
     }
 }
