@@ -128,12 +128,12 @@ func LoadSettings(filename string) (*Settings, error) {
 	common.LogInfof("RateLimitColor: %v", s.RateLimitColor)
 	common.LogInfof("RateLimitAuth: %v", s.RateLimitAuth)
 
-	if len(settings.RoomAccess) == 0 {
-		settings.RoomAccess = AccessOpen
+	if len(s.RoomAccess) == 0 {
+		s.RoomAccess = AccessOpen
 	}
 
-	if settings.RoomAccess != AccessOpen && len(settings.RoomAccessPin) == 0 {
-		settings.RoomAccessPin = "1234"
+	if s.RoomAccess != AccessOpen && len(s.RoomAccessPin) == 0 {
+		s.RoomAccessPin = "1234"
 	}
 
 	// Don't use LogInfof() here.  Log isn't setup yet when LoadSettings() is called from init().
@@ -144,7 +144,7 @@ func LoadSettings(filename string) (*Settings, error) {
 	}
 
 	// Is this a good way to do this? Probably not...
-	if len(settings.SessionKey) == 0 {
+	if len(s.SessionKey) == 0 {
 		out := ""
 		large := big.NewInt(int64(1 << 60))
 		large = large.Add(large, large)
@@ -155,11 +155,11 @@ func LoadSettings(filename string) (*Settings, error) {
 			}
 			out = fmt.Sprintf("%s%X", out, num)
 		}
-		settings.SessionKey = out
+		s.SessionKey = out
 	}
 
 	// Save admin password to file
-	if err = settings.Save(); err != nil {
+	if err = s.Save(); err != nil {
 		return nil, fmt.Errorf("Unable to save settings: %s", err)
 	}
 
@@ -202,11 +202,11 @@ func (s *Settings) AddBan(host string, names []string) error {
 		IP:    host,
 		When:  time.Now(),
 	}
-	settings.Bans = append(settings.Bans, b)
+	s.Bans = append(s.Bans, b)
 
 	common.LogInfof("[BAN] %q (%s) has been banned.\n", strings.Join(names, ", "), host)
 
-	return settings.Save()
+	return s.Save()
 }
 
 func (s *Settings) RemoveBan(name string) error {
@@ -225,7 +225,7 @@ func (s *Settings) RemoveBan(name string) error {
 		}
 	}
 	s.Bans = newBans
-	return settings.Save()
+	return s.Save()
 }
 
 func (s *Settings) IsBanned(host string) (bool, []string) {
@@ -262,9 +262,9 @@ func (s *Settings) generateNewPin() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	settings.RoomAccessPin = fmt.Sprintf("%04d", num)
+	s.RoomAccessPin = fmt.Sprintf("%04d", num)
 	if err = s.Save(); err != nil {
 		return "", err
 	}
-	return settings.RoomAccessPin, nil
+	return s.RoomAccessPin, nil
 }
