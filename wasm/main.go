@@ -189,6 +189,16 @@ func main() {
 	js.Set("debugValues", js.CallbackOf(debugValues))
 	js.Set("showTimestamp", js.CallbackOf(showTimestamp))
 
+	go func() {
+		time.Sleep(time.Second * 1)
+		inner := `<option value=""></option>`
+		for _, c := range common.Colors {
+			inner += fmt.Sprintf(`<option value="%s">%s</option>\n`, c, c)
+		}
+
+		js.Get("colorSelect").Set("innerHTML", inner)
+	}()
+
 	// This is needed so the goroutine does not end
 	for {
 		// heatbeat to keep connection alive to deal with nginx

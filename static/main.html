@@ -75,8 +75,8 @@
                     <input id="colorBlue" type="range" min="0" max="255" value="0" oninput="updateColor();" />
                     <span id="colorBlueLabel"></span>
                 </div>
-                <div id="colorInputDiv" class="range-div">
-                    #<input id="colorInput" type="text" maxlength="6" onchange="changeColorInput();" />
+                <div class="range-div">
+                    <select id="colorSelect" onchange="colorSelectChange();"></select>
                 </div>
                 <div id="colorName" class="range-div">
                     NAME
