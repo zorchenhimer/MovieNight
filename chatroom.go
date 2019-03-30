@@ -30,6 +30,8 @@ type ChatRoom struct {
 
 	modPasswords    []string // single-use mod passwords
 	modPasswordsMtx sync.Mutex
+
+	isShutdown bool
 }
 
 //initializing the chatroom
@@ -53,6 +55,11 @@ func newChatRoom() (*ChatRoom, error) {
 }
 
 func (cr *ChatRoom) JoinTemp(conn *chatConnection) (string, error) {
+	// Don't allow new joins when the server is closing.
+	if cr.isShutdown {
+		return "", fmt.Errorf("Server is shutting down")
+	}
+
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock()
 
@@ -77,6 +84,11 @@ func (cr *ChatRoom) JoinTemp(conn *chatConnection) (string, error) {
 //registering a new client
 //returns pointer to a Client, or Nil, if the name is already taken
 func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
+	// Don't allow new joins when the server is closing.
+	if cr.isShutdown {
+		return nil, fmt.Errorf("Server is shutting down")
+	}
+
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock()
 
@@ -499,4 +511,27 @@ func (cr *ChatRoom) changeName(oldName, newName string, forced bool) error {
 	}
 
 	return fmt.Errorf("Client not found with name %q", oldName)
+}
+
+// Shutdown the chatroom.  First, dissallow new joins by setting
+// isShutdown, then close each client connection.  This would be
+// a good place to put a final command that gets sent to the client.
+func (cr *ChatRoom) Shutdown() {
+	cr.isShutdown = true
+	common.LogInfoln("ChatRoom is shutting down.")
+
+	cr.clientsMtx.Lock()
+	defer cr.clientsMtx.Unlock()
+
+	for uuid, client := range cr.clients {
+		common.LogDebugf("Closing connection for %s", uuid)
+		client.conn.Close()
+	}
+
+	for uuid, conn := range cr.tempConn {
+		common.LogDebugf("Closing connection for temp %s", uuid)
+		conn.Close()
+	}
+
+	common.LogInfoln("ChatRoom Shutdown() finished")
 }
