@@ -28,10 +28,6 @@ func setupSettings() error {
 		return fmt.Errorf("Missing stream key is settings.json")
 	}
 
-	if err = settings.SetupLogging(); err != nil {
-		return fmt.Errorf("Unable to setup logger: %s", err)
-	}
-
 	// Save admin password to file
 	if err = settings.Save(); err != nil {
 		return fmt.Errorf("Unable to save settings: %s", err)

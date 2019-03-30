@@ -56,6 +56,10 @@ func LoadSettings(filename string) (*Settings, error) {
 	}
 	s.filename = filename
 
+	if err = common.SetupLogging(s.LogLevel, s.LogFile); err != nil {
+		return nil, fmt.Errorf("Unable to setup logger: %s", err)
+	}
+
 	// have a default of 200
 	if s.MaxMessageCount == 0 {
 		s.MaxMessageCount = 300
@@ -167,8 +171,4 @@ func (s *Settings) GetStreamKey() string {
 		return s.cmdLineKey
 	}
 	return s.StreamKey
-}
-
-func (s *Settings) SetupLogging() error {
-	return common.SetupLogging(s.LogLevel, s.LogFile)
 }
