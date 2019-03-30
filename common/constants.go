@@ -9,6 +9,7 @@ const (
 	CdPing                          // ping the server to keep the connection alive
 	CdAuth                          // get the auth levels of the user
 	CdColor                         // get the users color
+	CdEmote                         // get a list of emotes
 )
 
 type DataType int

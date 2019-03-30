@@ -8,6 +8,10 @@ import (
 
 var Emotes map[string]string
 
+func EmoteToHtml(file, title string) string {
+	return fmt.Sprintf(`<img src="/emotes/%s" height="28px" title="%s" />`, file, title)
+}
+
 func ParseEmotesArray(words []string) []string {
 	newWords := []string{}
 	for _, word := range words {
@@ -17,7 +21,7 @@ func ParseEmotesArray(words []string) []string {
 		found := false
 		for key, val := range Emotes {
 			if key == word {
-				newWords = append(newWords, fmt.Sprintf(`<img src="/emotes/%s" height="28px" title="%s" />`, val, key))
+				newWords = append(newWords, EmoteToHtml(val, key))
 				found = true
 			}
 		}

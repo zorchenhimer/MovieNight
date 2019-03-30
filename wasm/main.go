@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -43,11 +44,21 @@ func recieve(v []js.Value) {
 			for _, i := range h.Data.([]interface{}) {
 				names = append(names, i.(string))
 			}
+			sort.Strings(names)
 		case common.CdAuth:
 			auth = h.Data.(common.CommandLevel)
 		case common.CdColor:
 			color = h.Data.(string)
 			js.Get("document").Set("cookie", fmt.Sprintf("color=%s;", color))
+		case common.CdEmote:
+			data := h.Data.(map[string]interface{})
+			emoteNames = make([]string, 0, len(data))
+			emotes = make(map[string]string)
+			for k, v := range data {
+				emoteNames = append(emoteNames, k)
+				emotes[k] = v.(string)
+			}
+			sort.Strings(emoteNames)
 		}
 	case common.DTEvent:
 		d := chat.Data.(common.DataEvent)
@@ -161,9 +172,10 @@ func debugValues(v []js.Value) {
 	fmt.Printf("timestamp: %#v\n", timestamp)
 	fmt.Printf("auth: %#v\n", auth)
 	fmt.Printf("color: %#v\n", color)
-	fmt.Printf("currentName: %#v\n", currentName)
+	fmt.Printf("currentSuggestion: %#v\n", currentSug)
+	fmt.Printf("filteredSuggestions: %#v\n", filteredSug)
 	fmt.Printf("names: %#v\n", names)
-	fmt.Printf("filteredNames: %#v\n", filteredNames)
+	fmt.Printf("emoteNames: %#v\n", emoteNames)
 }
 
 func main() {

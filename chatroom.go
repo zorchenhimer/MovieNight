@@ -125,6 +125,9 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 		client.Send(playingCommand)
 	}
 	cr.AddEventMsg(common.EvJoin, name, client.color)
+
+	client.SendChatData(common.NewChatHiddenMessage(common.CdEmote, common.Emotes))
+
 	return client, nil
 }
 
