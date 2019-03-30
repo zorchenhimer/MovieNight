@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"sync"
 	"time"
+
+	"github.com/zorchenhimer/MovieNight/common"
 )
 
 type streamStats struct {
