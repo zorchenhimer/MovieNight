@@ -32,6 +32,9 @@ type Settings struct {
 	Bans            []BanInfo
 	LogLevel        common.LogLevel
 	LogFile         string
+
+	// Send the NoCache header?
+	NoCache bool
 }
 
 type BanInfo struct {
