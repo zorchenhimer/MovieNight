@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -10,7 +11,11 @@ import (
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
-var auth common.CommandLevel
+var (
+	timestamp bool
+	color     string
+	auth      common.CommandLevel
+)
 
 func recieve(v []js.Value) {
 	if len(v) == 0 {
@@ -21,7 +26,7 @@ func recieve(v []js.Value) {
 	chatJSON, err := common.DecodeData(v[0].String())
 	if err != nil {
 		fmt.Printf("Error decoding data: %s\n", err)
-		js.Call("appendMessages", v)
+		js.Call("appendMessages", fmt.Sprintf("<div>%v</div>", v))
 		return
 	}
 
@@ -39,8 +44,21 @@ func recieve(v []js.Value) {
 			for _, i := range h.Data.([]interface{}) {
 				names = append(names, i.(string))
 			}
+			sort.Strings(names)
 		case common.CdAuth:
 			auth = h.Data.(common.CommandLevel)
+		case common.CdColor:
+			color = h.Data.(string)
+			js.Get("document").Set("cookie", fmt.Sprintf("color=%s;", color))
+		case common.CdEmote:
+			data := h.Data.(map[string]interface{})
+			emoteNames = make([]string, 0, len(data))
+			emotes = make(map[string]string)
+			for k, v := range data {
+				emoteNames = append(emoteNames, k)
+				emotes[k] = v.(string)
+			}
+			sort.Strings(emoteNames)
 		}
 	case common.DTEvent:
 		d := chat.Data.(common.DataEvent)
@@ -51,7 +69,7 @@ func recieve(v []js.Value) {
 		// on join or leave, update list of possible user names
 		fallthrough
 	case common.DTChat:
-		js.Call("appendMessages", chat.Data.HTML())
+		appendMessage(chat.Data.HTML())
 	case common.DTCommand:
 		d := chat.Data.(common.DataCommand)
 
@@ -70,16 +88,24 @@ func recieve(v []js.Value) {
 			js.Call("initPlayer", nil)
 		case common.CmdPurgeChat:
 			js.Call("purgeChat", nil)
-			js.Call("appendMessages", d.HTML())
+			appendMessage(d.HTML())
 		case common.CmdHelp:
 			url := "/help"
 			if d.Arguments != nil && len(d.Arguments) > 0 {
 				url = d.Arguments[0]
 			}
-			js.Call("appendMessages", d.HTML())
+			appendMessage(d.HTML())
 			js.Get("window").Call("open", url, "_blank", "menubar=0,status=0,toolbar=0,width=300,height=600")
 		}
 	}
+}
+
+func appendMessage(msg string) {
+	if timestamp {
+		h, m, _ := time.Now().Clock()
+		msg = fmt.Sprintf(`<span class="time">%02d:%02d</span> %s`, h, m, msg)
+	}
+	js.Call("appendMessages", "<div>"+msg+"</div>")
 }
 
 func websocketSend(msg string, dataType common.ClientDataType) error {
@@ -101,23 +127,31 @@ func websocketSend(msg string, dataType common.ClientDataType) error {
 
 func send(this js.Value, v []js.Value) interface{} {
 	if len(v) != 1 {
-		showSendError(fmt.Errorf("expected 1 parameter, got %d", len(v)))
+		showChatError(fmt.Errorf("expected 1 parameter, got %d", len(v)))
 		return false
 	}
 
 	err := websocketSend(v[0].String(), common.CdMessage)
 	if err != nil {
-		showSendError(err)
+		showChatError(err)
 		return false
 	}
 	return true
 }
 
-func showSendError(err error) {
+func showChatError(err error) {
 	if err != nil {
 		fmt.Printf("Could not send: %v\n", err)
 		js.Call("appendMessages", `<div><span style="color: red;">Could not send message</span></div>`)
 	}
+}
+
+func showTimestamp(v []js.Value) {
+	if len(v) != 1 {
+		// Don't bother with returning a value
+		return
+	}
+	timestamp = v[0].Bool()
 }
 
 func isValidColor(this js.Value, v []js.Value) interface{} {
@@ -135,10 +169,13 @@ func isValidName(this js.Value, v []js.Value) interface{} {
 }
 
 func debugValues(v []js.Value) {
-	fmt.Printf("currentName %#v\n", currentName)
-	fmt.Printf("auth %#v\n", auth)
-	fmt.Printf("names %#v\n", names)
-	fmt.Printf("filteredNames %#v\n", filteredNames)
+	fmt.Printf("timestamp: %#v\n", timestamp)
+	fmt.Printf("auth: %#v\n", auth)
+	fmt.Printf("color: %#v\n", color)
+	fmt.Printf("currentSuggestion: %#v\n", currentSug)
+	fmt.Printf("filteredSuggestions: %#v\n", filteredSug)
+	fmt.Printf("names: %#v\n", names)
+	fmt.Printf("emoteNames: %#v\n", emoteNames)
 }
 
 func main() {
@@ -150,6 +187,7 @@ func main() {
 	js.Set("recieveMessage", js.CallbackOf(recieve))
 	js.Set("processMessage", js.CallbackOf(processMessage))
 	js.Set("debugValues", js.CallbackOf(debugValues))
+	js.Set("showTimestamp", js.CallbackOf(showTimestamp))
 
 	// This is needed so the goroutine does not end
 	for {

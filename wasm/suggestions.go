@@ -4,24 +4,30 @@ import (
 	"strings"
 
 	"github.com/dennwc/dom/js"
+	"github.com/zorchenhimer/MovieNight/common"
 )
 
 const (
-	keyTab   = 9
-	keyEnter = 13
-	keyUp    = 38
-	keyDown  = 40
+	keyTab          = 9
+	keyEnter        = 13
+	keyUp           = 38
+	keyDown         = 40
+	suggestionName  = '@'
+	suggestionEmote = ':'
 )
 
 var (
-	currentName   string
-	names         []string
-	filteredNames []string
+	currentSugType rune
+	currentSug     string
+	filteredSug    []string
+	names          []string
+	emoteNames     []string
+	emotes         map[string]string
 )
 
 // The returned value is a bool deciding to prevent the event from propagating
 func processMessageKey(this js.Value, v []js.Value) interface{} {
-	if len(filteredNames) == 0 || currentName == "" {
+	if len(filteredSug) == 0 || currentSug == "" {
 		return false
 	}
 
@@ -30,12 +36,12 @@ func processMessageKey(this js.Value, v []js.Value) interface{} {
 	switch keyCode {
 	case keyUp, keyDown:
 		newidx := 0
-		for i, n := range filteredNames {
-			if n == currentName {
+		for i, n := range filteredSug {
+			if n == currentSug {
 				newidx = i
 				if keyCode == keyDown {
 					newidx = i + 1
-					if newidx == len(filteredNames) {
+					if newidx == len(filteredSug) {
 						newidx--
 					}
 				} else if keyCode == keyUp {
@@ -47,14 +53,19 @@ func processMessageKey(this js.Value, v []js.Value) interface{} {
 				break
 			}
 		}
-		currentName = filteredNames[newidx]
+		currentSug = filteredSug[newidx]
 	case keyTab, keyEnter:
 		msg := js.Get("msg")
 		val := msg.Get("value").String()
 		newval := val[:startIdx]
 
-		if i := strings.LastIndex(newval, "@"); i != -1 {
-			newval = newval[:i+1] + currentName
+		if i := strings.LastIndex(newval, string(currentSugType)); i != -1 {
+			var offset int
+			if currentSugType == suggestionName {
+				offset = 1
+			}
+
+			newval = newval[:i+offset] + currentSug
 		}
 
 		endVal := val[startIdx:]
@@ -67,7 +78,7 @@ func processMessageKey(this js.Value, v []js.Value) interface{} {
 		msg.Set("selectionEnd", len(newval)+1)
 
 		// Clear out filtered names since it is no longer needed
-		filteredNames = nil
+		filteredSug = nil
 	default:
 		// We only want to handle the caught keys, so return early
 		return false
@@ -82,9 +93,9 @@ func processMessage(v []js.Value) {
 	text := strings.ToLower(msg.Get("value").String())
 	startIdx := msg.Get("selectionStart").Int()
 
-	filteredNames = nil
+	filteredSug = nil
 	if len(text) != 0 {
-		if len(names) > 0 {
+		if len(names) > 0 || len(emoteNames) > 0 {
 			var caretIdx int
 			textParts := strings.Split(text, " ")
 
@@ -97,18 +108,29 @@ func processMessage(v []js.Value) {
 				// It is possible to have a double space "  ", which will lead to an
 				// empty string element in the slice. Also check that the index of the
 				// cursor is between the start of the word and the end
-				if len(word) > 0 && word[0] == '@' &&
-					caretIdx <= startIdx && startIdx <= caretIdx+len(word) {
-					// fill filtered first so the "modifier" keys can modify it
-					for _, n := range names {
-						if len(word) == 1 || strings.HasPrefix(strings.ToLower(n), word[1:]) {
-							filteredNames = append(filteredNames, n)
+				if len(word) > 0 && caretIdx <= startIdx && startIdx <= caretIdx+len(word) {
+					var suggestions []string
+					if word[0] == suggestionName {
+						currentSugType = suggestionName
+						suggestions = names
+					} else if word[0] == suggestionEmote {
+						suggestions = emoteNames
+						currentSugType = suggestionEmote
+					}
+
+					for _, s := range suggestions {
+						if len(word) == 1 || strings.Contains(strings.ToLower(s), word[1:]) {
+							filteredSug = append(filteredSug, s)
+						}
+
+						if len(filteredSug) > 10 {
+							break
 						}
 					}
 				}
 
-				if len(filteredNames) > 0 {
-					currentName = ""
+				if len(filteredSug) > 0 {
+					currentSug = ""
 					break
 				}
 
@@ -124,26 +146,34 @@ func updateSuggestionDiv() {
 	const selectedClass = ` class="selectedName"`
 
 	var divs []string
-	if len(filteredNames) > 0 {
+	if len(filteredSug) > 0 {
 		// set current name to first if not set already
-		if currentName == "" {
-			currentName = filteredNames[0]
+		if currentSug == "" {
+			currentSug = filteredSug[0]
 		}
 
-		var hasCurrentName bool
-		divs = make([]string, len(filteredNames))
+		var hascurrentSuggestion bool
+		divs = make([]string, len(filteredSug))
 
 		// Create inner body of html
-		for i := range filteredNames {
+		for i := range filteredSug {
 			divs[i] = "<div"
-			if filteredNames[i] == currentName {
-				hasCurrentName = true
+
+			sug := filteredSug[i]
+			if sug == currentSug {
+				hascurrentSuggestion = true
 				divs[i] += selectedClass
 			}
-			divs[i] += ">" + filteredNames[i] + "</div>"
+			divs[i] += ">"
+
+			if currentSugType == suggestionEmote {
+				divs[i] += common.EmoteToHtml(emotes[sug], sug)
+			}
+
+			divs[i] += sug + "</div>"
 		}
 
-		if !hasCurrentName {
+		if !hascurrentSuggestion {
 			divs[0] = divs[0][:4] + selectedClass + divs[0][4:]
 		}
 	}

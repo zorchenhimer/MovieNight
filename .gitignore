@@ -35,3 +35,6 @@ static/main.wasm
 
 # tags for vim
 tags
+
+# channel and emote list from twitch
+subscribers.json

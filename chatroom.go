@@ -96,16 +96,9 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 		}
 	}
 
-	conn.clientName = name
-	client := &Client{
-		conn:      conn,
-		belongsTo: cr,
-		color:     common.RandomColor(),
-	}
-
-	err := client.setName(name)
+	client, err := NewClient(conn, cr, name, common.RandomColor())
 	if err != nil {
-		return nil, fmt.Errorf("could not set client name to %#v: %v", name, err)
+		return nil, fmt.Errorf("Unable to join client: %v", err)
 	}
 
 	host := client.Host()
@@ -125,6 +118,9 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 		client.Send(playingCommand)
 	}
 	cr.AddEventMsg(common.EvJoin, name, client.color)
+
+	client.SendChatData(common.NewChatHiddenMessage(common.CdEmote, common.Emotes))
+
 	return client, nil
 }
 

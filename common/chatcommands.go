@@ -36,17 +36,40 @@ var (
 	CNReloadEmotes ChatCommandNames = []string{"reloademotes"}
 	CNModpass      ChatCommandNames = []string{"modpass"}
 	CNIP           ChatCommandNames = []string{"iplist"}
+	CNAddEmotes    ChatCommandNames = []string{"addemotes"}
 	CNNewPin       ChatCommandNames = []string{"newpin", "newpassword"}
 	CNRoomAccess   ChatCommandNames = []string{"changeaccess", "hodor"}
 )
 
 var ChatCommands = []ChatCommandNames{
 	// User
-	CNMe, CNHelp, CNCount, CNColor, CNWhoAmI, CNAuth, CNUsers, CNNick,
+	CNMe,
+	CNHelp,
+	CNCount,
+	CNColor,
+	CNWhoAmI,
+	CNAuth,
+	CNUsers,
+	CNNick,
+
 	// Mod
 	CNSv, CNPlaying, CNUnmod, CNKick, CNBan, CNUnban, CNPurge, CNPin,
+	CNSv,
+	CNPlaying,
+	CNUnmod,
+	CNKick,
+	CNBan,
+	CNUnban,
+	CNPurge,
+
 	// Admin
 	CNMod, CNReloadPlayer, CNReloadEmotes, CNModpass, CNRoomAccess, CNIP,
+	CNMod,
+	CNReloadPlayer,
+	CNReloadEmotes,
+	CNModpass,
+	CNIP,
+	CNAddEmotes,
 }
 
 func GetFullChatCommand(c string) string {

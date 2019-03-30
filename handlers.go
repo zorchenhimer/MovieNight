@@ -64,7 +64,9 @@ func wsStaticFiles(w http.ResponseWriter, r *http.Request) {
 }
 
 func wsWasmFile(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "no-cache, must-revalidate")
+	if settings.NoCache {
+		w.Header().Set("Cache-Control", "no-cache, must-revalidate")
+	}
 	http.ServeFile(w, r, "./static/main.wasm")
 }
 
@@ -333,7 +335,9 @@ func handleIndexTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Force browser to replace cache since file was not changed
-	w.Header().Set("Cache-Control", "no-cache, must-revalidate")
+	if settings.NoCache {
+		w.Header().Set("Cache-Control", "no-cache, must-revalidate")
+	}
 
 	err = t.Execute(w, data)
 	if err != nil {

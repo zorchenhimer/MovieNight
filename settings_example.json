@@ -5,4 +5,14 @@
 	"Bans": [],
 	"StreamKey": "ALongStreamKey",
 	"ListenAddress": ":8089"
+	"ApprovedEmotes": null,
+	"Bans": [],
+	"LogLevel": "debug",
+	"LogFile": "thelog.log",
+	"RateLimitChat": 1,
+	"RateLimitNick": 300,
+	"RateLimitColor": 60,
+	"RateLimitAuth": 5,
+	"RateLimitDuplicate": 30,
+	"NoCache": false
 }

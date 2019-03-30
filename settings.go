@@ -30,12 +30,23 @@ type Settings struct {
 	AdminPassword   string
 	StreamKey       string
 	ListenAddress   string
-	SessionKey      string // key for session data
+	ApprovedEmotes  []EmoteSet // list of channels that have been approved for emote use.  Global emotes are always "approved".
+	SessionKey      string     // key for session data
 	Bans            []BanInfo
 	LogLevel        common.LogLevel
 	LogFile         string
 	RoomAccess      AccessMode
 	RoomAccessPin   string // auto generate this,
+
+	// Rate limiting stuff, in seconds
+	RateLimitChat      time.Duration
+	RateLimitNick      time.Duration
+	RateLimitColor     time.Duration
+	RateLimitAuth      time.Duration
+	RateLimitDuplicate time.Duration // Amount of seconds between allowed duplicate messages
+
+	// Send the NoCache header?
+	NoCache bool
 }
 
 type AccessMode string
@@ -65,6 +76,10 @@ func LoadSettings(filename string) (*Settings, error) {
 	}
 	s.filename = filename
 
+	if err = common.SetupLogging(s.LogLevel, s.LogFile); err != nil {
+		return nil, fmt.Errorf("Unable to setup logger: %s", err)
+	}
+
 	// have a default of 200
 	if s.MaxMessageCount == 0 {
 		s.MaxMessageCount = 300
@@ -77,11 +92,75 @@ func LoadSettings(filename string) (*Settings, error) {
 		return nil, fmt.Errorf("unable to generate admin password: %s", err)
 	}
 
+	if s.RateLimitChat == -1 {
+		s.RateLimitChat = 0
+	} else if s.RateLimitChat <= 0 {
+		s.RateLimitChat = 1
+	}
+
+	if s.RateLimitNick == -1 {
+		s.RateLimitNick = 0
+	} else if s.RateLimitNick <= 0 {
+		s.RateLimitNick = 300
+	}
+
+	if s.RateLimitColor == -1 {
+		s.RateLimitColor = 0
+	} else if s.RateLimitColor <= 0 {
+		s.RateLimitColor = 60
+	}
+
+	if s.RateLimitAuth == -1 {
+		s.RateLimitAuth = 0
+	} else if s.RateLimitAuth <= 0 {
+		s.RateLimitAuth = 5
+	}
+
+	if s.RateLimitDuplicate == -1 {
+		s.RateLimitDuplicate = 0
+	} else if s.RateLimitDuplicate <= 0 {
+		s.RateLimitDuplicate = 30
+	}
+
+	// Print this stuff before we multiply it by time.Second
+	common.LogInfof("RateLimitChat: %v", s.RateLimitChat)
+	common.LogInfof("RateLimitNick: %v", s.RateLimitNick)
+	common.LogInfof("RateLimitColor: %v", s.RateLimitColor)
+	common.LogInfof("RateLimitAuth: %v", s.RateLimitAuth)
+
+	if len(settings.RoomAccess) == 0 {
+		settings.RoomAccess = AccessOpen
+	}
+
+	if settings.RoomAccess != AccessOpen && len(settings.RoomAccessPin) == 0 {
+		settings.RoomAccessPin = "1234"
+	}
+
 	// Don't use LogInfof() here.  Log isn't setup yet when LoadSettings() is called from init().
 	fmt.Printf("Settings reloaded.  New admin password: %s\n", s.AdminPassword)
 
 	if s.TitleLength <= 0 {
 		s.TitleLength = 50
+	}
+
+	// Is this a good way to do this? Probably not...
+	if len(settings.SessionKey) == 0 {
+		out := ""
+		large := big.NewInt(int64(1 << 60))
+		large = large.Add(large, large)
+		for len(out) < 50 {
+			num, err := rand.Int(rand.Reader, large)
+			if err != nil {
+				panic("Error generating session key: " + err.Error())
+			}
+			out = fmt.Sprintf("%s%X", out, num)
+		}
+		settings.SessionKey = out
+	}
+
+	// Save admin password to file
+	if err = settings.Save(); err != nil {
+		return nil, fmt.Errorf("Unable to save settings: %s", err)
 	}
 
 	return s, nil
@@ -176,10 +255,6 @@ func (s *Settings) GetStreamKey() string {
 		return s.cmdLineKey
 	}
 	return s.StreamKey
-}
-
-func (s *Settings) SetupLogging() error {
-	return common.SetupLogging(s.LogLevel, s.LogFile)
 }
 
 func (s *Settings) generateNewPin() (string, error) {

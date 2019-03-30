@@ -1,10 +1,8 @@
 package main
 
 import (
-	"crypto/rand"
 	"flag"
 	"fmt"
-	"math/big"
 	"net/http"
 	"os"
 	"os/signal"
@@ -31,43 +29,11 @@ func setupSettings() error {
 		return fmt.Errorf("Missing stream key is settings.json")
 	}
 
-	if err = settings.SetupLogging(); err != nil {
-		return fmt.Errorf("Unable to setup logger: %s", err)
-	}
-
-	// Is this a good way to do this? Probably not...
-	if len(settings.SessionKey) == 0 {
-		out := ""
-		large := big.NewInt(int64(1 << 60))
-		large = large.Add(large, large)
-		for len(out) < 50 {
-			num, err := rand.Int(rand.Reader, large)
-			if err != nil {
-				panic("Error generating session key: " + err.Error())
-			}
-			out = fmt.Sprintf("%s%X", out, num)
-		}
-		settings.SessionKey = out
-	}
-
-	if len(settings.RoomAccess) == 0 {
-		settings.RoomAccess = AccessOpen
-	}
-
-	if settings.RoomAccess != AccessOpen && len(settings.RoomAccessPin) == 0 {
-		settings.RoomAccessPin = "1234"
-	}
-
 	sstore = sessions.NewCookieStore([]byte(settings.SessionKey))
 	sstore.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   60 * 60 * 24, // one day
 		SameSite: http.SameSiteStrictMode,
-	}
-
-	// Save admin password to file
-	if err = settings.Save(); err != nil {
-		return fmt.Errorf("Unable to save settings: %s", err)
 	}
 
 	return nil

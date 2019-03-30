@@ -238,6 +238,7 @@ span.svmsg {
     grid-gap: 10px;
     margin: 0px 5px;
     overflow: auto;
+    font-size: 12px;
 }
 
 #messages {
@@ -258,14 +259,6 @@ span.svmsg {
     display: grid;
 }
 
-#suggestions {
-    background: #3b3b43;
-    position: absolute;
-    min-width: 10em;
-    border-radius: 5px 5px 0px 5px;
-    color: var(--var-message-color);
-}
-
 #msg {
     background: transparent;
     border: var(--var-border);
@@ -276,8 +269,22 @@ span.svmsg {
     resize: none;
 }
 
-#suggestions div {
+#suggestions {
+    background: #3b3b43;
+    position: absolute;
+    min-width: 10em;
+    border-radius: 5px 5px 0px 5px;
+    color: var(--var-message-color);
+}
+
+#suggestions>div {
+    display: flex;
+    align-items: center;
     padding: 5px;
+}
+
+#suggestions>div>img {
+    margin-right: 1em;
 }
 
 #suggestions div.selectedName {
@@ -290,4 +297,14 @@ span.svmsg {
 
 #colorSubmit:disabled {
     display: none;
+}
+
+#remote {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    margin: 1em auto;
+    width: 50px;
+    z-index: 999;
 }

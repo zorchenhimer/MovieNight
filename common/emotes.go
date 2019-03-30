@@ -8,15 +8,20 @@ import (
 
 var Emotes map[string]string
 
+func EmoteToHtml(file, title string) string {
+	return fmt.Sprintf(`<img src="/emotes/%s" height="28px" title="%s" />`, file, title)
+}
+
 func ParseEmotesArray(words []string) []string {
 	newWords := []string{}
 	for _, word := range words {
-		word = strings.Trim(word, "[]")
+		// make :emote: and [emote] valid for replacement.
+		wordTrimmed := strings.Trim(word, ":[]")
 
 		found := false
 		for key, val := range Emotes {
-			if key == word {
-				newWords = append(newWords, fmt.Sprintf(`<img src="/emotes/%s" height="28px" title="%s" />`, val, key))
+			if key == wordTrimmed {
+				newWords = append(newWords, EmoteToHtml(val, key))
 				found = true
 			}
 		}

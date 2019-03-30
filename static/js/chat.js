@@ -1,5 +1,21 @@
 /// <reference path="./both.js" />
 
+function getCookie(cname) {
+    var name = cname + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+}
+
 function setPlaying(title, link) {
     if (title !== "") {
         $('#playing').text(title);
@@ -50,7 +66,7 @@ function appendMessages(msg) {
     }
 
     $("#messages").append(msg);
-    $("#messages").children().last()[0].scrollIntoView({ block: "end", behavior: "smooth" });
+    $("#messages").children().last()[0].scrollIntoView({ block: "end" });
 }
 
 function purgeChat() {
@@ -89,6 +105,14 @@ function join() {
     }
     setNotifyBox();
     openChat();
+
+    let color = getCookie("color");
+    if (color !== "") {
+        // Do a timeout because timings
+        setTimeout(() => {
+            sendMessage("/color " + color);
+        }, 250);
+    }
 }
 
 function websocketSend(data) {
@@ -117,14 +141,14 @@ function setNotifyBox(msg = "") {
 // Button Wrapper Functions
 function auth() {
     let pass = prompt("Enter pass");
-    if (pass != "") {
+    if (pass != "" && pass !== null) {
         sendMessage("/auth " + pass);
     }
 }
 
 function nick() {
     let nick = prompt("Enter new name");
-    if (nick != "") {
+    if (nick != "" && nick !== null) {
         sendMessage("/nick " + nick);
     }
 }
@@ -169,6 +193,10 @@ function changeColor() {
     }
 }
 
+function setTimestamp(v) {
+    showTimestamp(v)
+    document.cookie = "timestamp=" + v
+}
 
 // Get the websocket setup in a function so it can be recalled
 function setupWebSocket() {
@@ -220,9 +248,12 @@ function setupEvents() {
 }
 
 function defaultValues() {
-    $("#colorRed").val(0).trigger("input");
-    $("#colorGreen").val(0).trigger("input");
-    $("#colorBlue").val(0).trigger("input");
+    setTimeout(() => {
+        let timestamp = getCookie("timestamp")
+        if (timestamp !== "") {
+            showTimestamp(timestamp === "true")
+        }
+    }, 500);
 }
 
 window.addEventListener("onresize", updateSuggestionCss);
