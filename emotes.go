@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/zorchenhimer/MovieNight/common"
 )
 
 type twitchChannel struct {
