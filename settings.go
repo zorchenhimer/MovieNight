@@ -33,6 +33,13 @@ type Settings struct {
 	LogLevel        common.LogLevel
 	LogFile         string
 
+	// Rate limiting stuff, in seconds
+	RateLimitChat      time.Duration
+	RateLimitNick      time.Duration
+	RateLimitColor     time.Duration
+	RateLimitAuth      time.Duration
+	RateLimitDuplicate time.Duration // Amount of seconds between allowed duplicate messages
+
 	// Send the NoCache header?
 	NoCache bool
 }
@@ -71,6 +78,42 @@ func LoadSettings(filename string) (*Settings, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to generate admin password: %s", err)
 	}
+
+	if s.RateLimitChat == -1 {
+		s.RateLimitChat = 0
+	} else if s.RateLimitChat <= 0 {
+		s.RateLimitChat = 1
+	}
+
+	if s.RateLimitNick == -1 {
+		s.RateLimitNick = 0
+	} else if s.RateLimitNick <= 0 {
+		s.RateLimitNick = 300
+	}
+
+	if s.RateLimitColor == -1 {
+		s.RateLimitColor = 0
+	} else if s.RateLimitColor <= 0 {
+		s.RateLimitColor = 60
+	}
+
+	if s.RateLimitAuth == -1 {
+		s.RateLimitAuth = 0
+	} else if s.RateLimitAuth <= 0 {
+		s.RateLimitAuth = 5
+	}
+
+	if s.RateLimitDuplicate == -1 {
+		s.RateLimitDuplicate = 0
+	} else if s.RateLimitDuplicate <= 0 {
+		s.RateLimitDuplicate = 30
+	}
+
+	// Print this stuff before we multiply it by time.Second
+	common.LogInfof("RateLimitChat: %v", s.RateLimitChat)
+	common.LogInfof("RateLimitNick: %v", s.RateLimitNick)
+	common.LogInfof("RateLimitColor: %v", s.RateLimitColor)
+	common.LogInfof("RateLimitAuth: %v", s.RateLimitAuth)
 
 	// Don't use LogInfof() here.  Log isn't setup yet when LoadSettings() is called from init().
 	fmt.Printf("Settings reloaded.  New admin password: %s\n", s.AdminPassword)

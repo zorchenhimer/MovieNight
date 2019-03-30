@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html"
 	"strings"
+	"time"
 
 	"github.com/zorchenhimer/MovieNight/common"
 )
@@ -126,6 +127,10 @@ var commands = &CommandControl{
 					return "You are not allowed to change your color."
 				}
 
+				if time.Now().Before(cl.nextColor) && cl.CmdLevel == common.CmdlUser {
+					return fmt.Sprintf("Slow down. You can change your color in %0.0f seconds.", time.Until(cl.nextColor).Seconds())
+				}
+
 				if len(args) == 0 {
 					cl.setColor(common.RandomColor())
 					return "Random color chosen: " + cl.color
@@ -135,6 +140,8 @@ var commands = &CommandControl{
 				if !common.IsValidColor(args[0]) {
 					return "To choose a specific color use the format <i>/color #c029ce</i>.  Hex values expected."
 				}
+
+				cl.nextColor = time.Now().Add(time.Second * settings.RateLimitColor)
 
 				err := cl.setColor(args[0])
 				if err != nil {
@@ -162,6 +169,14 @@ var commands = &CommandControl{
 				if cl.CmdLevel == common.CmdlAdmin {
 					return "You are already authenticated."
 				}
+
+				// TODO: handle backoff policy
+				if time.Now().Before(cl.nextAuth) {
+					cl.nextAuth = time.Now().Add(time.Second * settings.RateLimitAuth)
+					return "Slow down."
+				}
+				cl.authTries += 1 // this isn't used yet
+				cl.nextAuth = time.Now().Add(time.Second * settings.RateLimitAuth)
 
 				pw := html.UnescapeString(strings.Join(args, " "))
 
@@ -196,6 +211,12 @@ var commands = &CommandControl{
 		common.CNNick.String(): Command{
 			HelpText: "Change display name",
 			Function: func(cl *Client, args []string) string {
+				if time.Now().Before(cl.nextNick) {
+					//cl.nextNick = time.Now().Add(time.Second * settings.RateLimitNick)
+					return fmt.Sprintf("Slow down. You can change your nick in %0.0f seconds.", time.Until(cl.nextNick).Seconds())
+				}
+				cl.nextNick = time.Now().Add(time.Second * settings.RateLimitNick)
+
 				if len(args) == 0 {
 					return "Missing name to change to."
 				}

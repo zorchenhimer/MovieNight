@@ -5,6 +5,7 @@ import (
 	"html"
 	"regexp"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/zorchenhimer/MovieNight/common"
@@ -25,6 +26,36 @@ type Client struct {
 	IsColorForced bool
 	IsNameForced  bool
 	regexName     *regexp.Regexp
+
+	// Times since last event.  use time.Duration.Since()
+	nextChat  time.Time // rate limit chat messages
+	nextNick  time.Time // rate limit nickname changes
+	nextColor time.Time // rate limit color changes
+	nextAuth  time.Time // rate limit failed auth attempts.  Sould prolly have a backoff policy.
+	authTries int       // number of failed auth attempts
+
+	nextDuplicate time.Time
+	lastMsg       string
+}
+
+func NewClient(connection *chatConnection, room *ChatRoom, name, color string) (*Client, error) {
+	c := &Client{
+		conn:      connection,
+		belongsTo: room,
+		color:     color,
+	}
+
+	if err := c.setName(name); err != nil {
+		return nil, fmt.Errorf("could not set client name to %#v: %v", name, err)
+	}
+
+	// Set initial vaules to their rate limit duration in the past.
+	c.nextChat = time.Now()
+	c.nextNick = time.Now()
+	c.nextColor = time.Now()
+	c.nextAuth = time.Now()
+
+	return c, nil
 }
 
 //Client has a new message to broadcast
@@ -85,10 +116,41 @@ func (cl *Client) NewMsg(data common.ClientData) {
 			}
 
 		} else {
+			// Limit the rate of sent chat messages.  Ignore mods and admins
+			if time.Now().Before(cl.nextChat) && cl.CmdLevel == common.CmdlUser {
+				err := cl.SendChatData(common.NewChatMessage("", "",
+					"Slow down.",
+					common.CmdlUser,
+					common.MsgCommandResponse))
+				if err != nil {
+					common.LogErrorf("Unable to send slowdown for chat: %v", err)
+				}
+				return
+			}
+
 			// Trim long messages
 			if len(msg) > 400 {
 				msg = msg[0:400]
 			}
+
+			// Limit the rate of duplicate messages.  Ignore mods and admins.
+			// Only checks the last message.
+			if strings.TrimSpace(strings.ToLower(msg)) == cl.lastMsg &&
+				time.Now().Before(cl.nextDuplicate) &&
+				cl.CmdLevel == common.CmdlUser {
+				err := cl.SendChatData(common.NewChatMessage("", "",
+					common.ParseEmotes("You already sent that PeepoSus"),
+					common.CmdlUser,
+					common.MsgCommandResponse))
+				if err != nil {
+					common.LogErrorf("Unable to send slowdown for chat: %v", err)
+				}
+				return
+			}
+
+			cl.nextChat = time.Now().Add(time.Second * settings.RateLimitChat)
+			cl.nextDuplicate = time.Now().Add(time.Second * settings.RateLimitDuplicate)
+			cl.lastMsg = strings.TrimSpace(strings.ToLower(msg))
 
 			common.LogChatf("[chat] <%s> %q\n", cl.name, msg)
 
@@ -188,6 +250,7 @@ func (cl *Client) setName(s string) error {
 
 	cl.name = s
 	cl.regexName = regex
+	cl.conn.clientName = s
 	return nil
 }
 
