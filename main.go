@@ -74,8 +74,8 @@ func main() {
 	common.LogInfoln("Stream key: ", settings.GetStreamKey())
 	common.LogInfoln("Admin password: ", settings.AdminPassword)
 	common.LogInfoln("Listen and serve ", addr)
-	fmt.Println("RoomAccess: ", settings.RoomAccess)
-	fmt.Println("RoomAccessPin: ", settings.RoomAccessPin)
+	common.LogInfoln("RoomAccess: ", settings.RoomAccess)
+	common.LogInfoln("RoomAccessPin: ", settings.RoomAccessPin)
 
 	go startServer()
 	go startRmtpServer()

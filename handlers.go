@@ -160,7 +160,7 @@ func checkRoomAccess(w http.ResponseWriter, r *http.Request) bool {
 	session, err := sstore.Get(r, "moviesession")
 	if err != nil {
 		// Don't return as server error here, just make a new session.
-		fmt.Printf("Unable to get session for client %s: %v\n", r.RemoteAddr, err)
+		common.LogErrorf("Unable to get session for client %s: %v\n", r.RemoteAddr, err)
 	}
 
 	if settings.RoomAccess == AccessPin {
@@ -171,12 +171,12 @@ func checkRoomAccess(w http.ResponseWriter, r *http.Request) bool {
 				// Check for correct pin
 				err = r.ParseForm()
 				if err != nil {
-					fmt.Printf("Error parsing form")
+					common.LogErrorf("Error parsing form")
 					http.Error(w, "Unable to get session data", http.StatusInternalServerError)
 				}
 
 				postPin := r.Form.Get("txtInput")
-				fmt.Printf("Received pin: %s\n", postPin)
+				common.LogDebugf("Received pin: %s\n", postPin)
 				if postPin == settings.RoomAccessPin {
 					// Pin is correct.  Save it to session and return true.
 					session.Values["pin"] = settings.RoomAccessPin
@@ -220,7 +220,7 @@ func checkRoomAccess(w http.ResponseWriter, r *http.Request) bool {
 func handlePinTemplate(w http.ResponseWriter, r *http.Request, errorMessage string) {
 	t, err := template.ParseFiles("./static/base.html", "./static/thedoor.html")
 	if err != nil {
-		fmt.Printf("Error parsing template file: %v", err)
+		common.LogErrorf("Error parsing template file: %v", err)
 		return
 	}
 
@@ -238,7 +238,7 @@ func handlePinTemplate(w http.ResponseWriter, r *http.Request, errorMessage stri
 
 	err = t.Execute(w, data)
 	if err != nil {
-		fmt.Printf("Error executing file, %v", err)
+		common.LogErrorf("Error executing file, %v", err)
 	}
 }
 
@@ -278,7 +278,7 @@ func handleHelpTemplate(w http.ResponseWriter, r *http.Request) {
 func handlePin(w http.ResponseWriter, r *http.Request) {
 	session, err := sstore.Get(r, "moviesession")
 	if err != nil {
-		fmt.Printf("Unable to get session: %v\n", err)
+		common.LogDebugf("Unable to get session: %v\n", err)
 	}
 
 	val := session.Values["pin"]
@@ -289,21 +289,20 @@ func handlePin(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "unable to save session: %v", err)
 		}
 		fmt.Fprint(w, "Pin was not set")
-		fmt.Println("pin was not set")
+		common.LogDebugln("pin was not set")
 	} else {
 		fmt.Fprintf(w, "pin set: %v", val)
-		fmt.Printf("pin is set: %v\n", val)
+		common.LogDebugf("pin is set: %v\n", val)
 	}
 }
 
 func handleIndexTemplate(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("RoomAcces: %s\n", settings.RoomAccess)
 	if settings.RoomAccess != AccessOpen {
 		if !checkRoomAccess(w, r) {
-			fmt.Println("Denied access")
+			common.LogDebugln("Denied access")
 			return
 		}
-		fmt.Println("Granted access")
+		common.LogDebugln("Granted access")
 	}
 
 	t, err := template.ParseFiles("./static/base.html", "./static/main.html")

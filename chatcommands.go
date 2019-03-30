@@ -454,7 +454,7 @@ var commands = &CommandControl{
 					return "Unable to generate new pin: " + err.Error()
 				}
 
-				fmt.Println("New room access pin: ", pin)
+				common.LogInfoln("New room access pin: ", pin)
 				return "New access pin: " + pin
 			},
 		},
@@ -470,7 +470,7 @@ var commands = &CommandControl{
 				switch AccessMode(strings.ToLower(args[0])) {
 				case AccessOpen:
 					settings.RoomAccess = AccessOpen
-					fmt.Println("[access] Room set to open")
+					common.LogInfoln("[access] Room set to open")
 					return "Room access set to open"
 
 				case AccessPin:
@@ -482,17 +482,17 @@ var commands = &CommandControl{
 					} else {
 						_, err := settings.generateNewPin()
 						if err != nil {
-							fmt.Println("Error generating new access pin: ", err.Error())
+							common.LogErrorln("Error generating new access pin: ", err.Error())
 							return "Unable to generate a new pin, access unchanged: " + err.Error()
 						}
 					}
 					settings.RoomAccess = AccessPin
-					fmt.Println("[access] Room set to pin: " + settings.RoomAccessPin)
+					common.LogInfoln("[access] Room set to pin: " + settings.RoomAccessPin)
 					return "Room access set to Pin: " + settings.RoomAccessPin
 
 				case AccessRequest:
 					settings.RoomAccess = AccessRequest
-					fmt.Println("[access] Room set to request")
+					common.LogInfoln("[access] Room set to request")
 					return "Room access set to request. WARNING: this isn't implemented yet."
 
 				default:
