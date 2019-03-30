@@ -16,11 +16,11 @@ func ParseEmotesArray(words []string) []string {
 	newWords := []string{}
 	for _, word := range words {
 		// make :emote: and [emote] valid for replacement.
-		word = strings.Trim(word, ":[]")
+		wordTrimmed := strings.Trim(word, ":[]")
 
 		found := false
 		for key, val := range Emotes {
-			if key == word {
+			if key == wordTrimmed {
 				newWords = append(newWords, EmoteToHtml(val, key))
 				found = true
 			}
