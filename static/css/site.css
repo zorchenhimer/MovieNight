@@ -42,6 +42,23 @@ span.svmsg {
     color: #ea6260;
 }
 
+input[type=text] {
+    background: transparent;
+    border: var(--var-border);
+    border-radius: var(--var-border-radius);
+    color: var(--var-message-color);
+    padding: 5px;
+    font-weight: bold;
+}
+
+#colorInputDiv {
+    font-size: 14px;
+}
+
+#colorInput {
+    border: 2px solid var(--var-message-color);
+}
+
 .root {
     max-width: var(--var-max-width);
     max-height: var(--var-max-height);
@@ -223,15 +240,6 @@ span.svmsg {
     margin: 5px auto;
 }
 
-#name {
-    background: transparent;
-    border: var(--var-border);
-    border-radius: var(--var-border-radius);
-    color: var(--var-message-color);
-    padding: 5px;
-    font-weight: bold;
-}
-
 #chat {
     display: grid;
     grid-template-rows: 1.5em 2em 1fr 6em 2.5em 1em;
@@ -293,6 +301,12 @@ span.svmsg {
 
 #helpbody {
     color: #b1b1b1;
+}
+
+#colorName {
+    font-weight: bold;
+    background: var(--var-background-color);
+    padding: -10px;
 }
 
 #colorSubmit:disabled {
