@@ -47,7 +47,7 @@ func (tc *twitchChannel) downloadEmotes() (*EmoteSet, error) {
 				b := emote.Code[i]
 				if b >= 'A' && b <= 'Z' {
 					es.Prefix = emote.Code[0 : i-1]
-					fmt.Printf("Found prefix for channel %q: %q (%q)\n", es.Channel, es.Prefix, emote)
+					common.LogDebugf("Found prefix for channel %q: %q (%q)\n", es.Channel, es.Prefix, emote)
 					break
 				}
 			}

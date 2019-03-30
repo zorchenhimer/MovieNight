@@ -29,7 +29,7 @@ func (s *streamStats) msgOutInc() {
 }
 
 func (s *streamStats) Print() {
-	fmt.Printf("Messages In: %d\n", s.messageIn)
-	fmt.Printf("Messages Out: %d\n", s.messageOut)
-	fmt.Printf("Total Time: %s\n", time.Since(s.start))
+	common.LogInfof("Messages In: %d\n", s.messageIn)
+	common.LogInfof("Messages Out: %d\n", s.messageOut)
+	common.LogInfof("Total Time: %s\n", time.Since(s.start))
 }
