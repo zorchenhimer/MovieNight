@@ -171,13 +171,18 @@ func isValidName(this js.Value, v []js.Value) interface{} {
 }
 
 func debugValues(v []js.Value) {
-	fmt.Printf("timestamp: %#v\n", timestamp)
-	fmt.Printf("auth: %#v\n", auth)
-	fmt.Printf("color: %#v\n", color)
-	fmt.Printf("currentSuggestion: %#v\n", currentSug)
-	fmt.Printf("filteredSuggestions: %#v\n", filteredSug)
-	fmt.Printf("names: %#v\n", names)
-	fmt.Printf("emoteNames: %#v\n", emoteNames)
+	for k, v := range map[string]interface{}{
+		"timestamp":               timestamp,
+		"auth":                    auth,
+		"color":                   color,
+		"current suggestion":      currentSug,
+		"current suggestion type": currentSugType,
+		"filtered suggestions":    filteredSug,
+		"user names":              names,
+		"emote names":             emoteNames,
+	} {
+		fmt.Printf("%s: %#v\n", k, v)
+	}
 }
 
 func main() {
