@@ -226,8 +226,13 @@ func (cr *ChatRoom) AddMsg(from *Client, isAction, isServer bool, msg string) {
 		t = common.MsgServer
 	}
 
+	cr.AddChatMsg(common.NewChatMessage(from.name, from.color, msg, from.CmdLevel, t))
+}
+
+// Add a chat message object to the queue
+func (cr *ChatRoom) AddChatMsg(data common.ChatData) {
 	select {
-	case cr.queue <- common.NewChatMessage(from.name, from.color, msg, from.CmdLevel, t):
+	case cr.queue <- data:
 	default:
 		common.LogErrorln("Unable to queue chat message. Channel full.")
 	}

@@ -414,6 +414,7 @@ var commands = &CommandControl{
 					return fmt.Sprintf("ERROR: %s", err)
 				}
 
+				cl.belongsTo.AddChatMsg(common.NewChatHiddenMessage(common.CdEmote, common.Emotes))
 				cl.belongsTo.AddModNotice(cl.name + " has reloaded emotes")
 				common.LogInfof("Loaded %d emotes\n", num)
 				return fmt.Sprintf("Emotes loaded: %d", num)
