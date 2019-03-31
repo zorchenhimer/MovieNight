@@ -12,6 +12,7 @@ import (
 const (
 	keyTab          = 9
 	keyEnter        = 13
+	keyEsc          = 27
 	keyUp           = 38
 	keyDown         = 40
 	suggestionName  = '@'
@@ -36,6 +37,10 @@ func processMessageKey(this js.Value, v []js.Value) interface{} {
 	startIdx := v[0].Get("target").Get("selectionStart").Int()
 	keyCode := v[0].Get("keyCode").Int()
 	switch keyCode {
+	case keyEsc:
+		filteredSug = nil
+		currentSug = ""
+		currentSugType = 0
 	case keyUp, keyDown:
 		newidx := 0
 		for i, n := range filteredSug {
