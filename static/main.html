@@ -105,6 +105,13 @@
         <div>
             <input id="name" type="text" maxlength="36">
             <input id="join" type="button" class="button pretty-button" onclick="join();" value="Join" />
+            {{if .Video}}
+            <div style="display: flex; flex-direction: column; align-items: center;">
+                <a href="/chat">Chat Only</a>
+                <a href="/video">Video Only</a>
+                <a href="/video" onclick="window.open('/chat', '_blank');">Both Separatly</a>
+            </div>
+            {{end}}
         </div>
     </div>
 </div>
