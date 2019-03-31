@@ -22,7 +22,6 @@ function checkKonami(e) {
     if (lastKeys.length === konamiCode.length) {
         for (let i = 0; i < lastKeys.length; i++) {
             if (lastKeys[i] != konamiCode[i]) {
-                console.log(i);
                 return;
             }
         }
