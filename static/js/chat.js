@@ -134,6 +134,13 @@ function updateSuggestionCss(m) {
     }
 }
 
+function updateSuggestionScroll() {
+    let item = $("#suggestions .selectedName");
+    if (item.length !== 0) {
+        item[0].scrollIntoView({ block: "center" });
+    }
+}
+
 function setNotifyBox(msg = "") {
     $("#notifyBox").html(msg);
 }
@@ -246,6 +253,7 @@ function setupEvents() {
             }
         },
         keydown: (e) => {
+            console.log(e.keyCode + e.key + e.ctrlKey)
             if (processMessageKey(e)) {
                 e.preventDefault();
             }

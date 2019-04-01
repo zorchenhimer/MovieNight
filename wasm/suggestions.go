@@ -13,6 +13,7 @@ const (
 	keyTab          = 9
 	keyEnter        = 13
 	keyEsc          = 27
+	keySpace        = 32
 	keyUp           = 38
 	keyDown         = 40
 	suggestionName  = '@'
@@ -30,12 +31,19 @@ var (
 
 // The returned value is a bool deciding to prevent the event from propagating
 func processMessageKey(this js.Value, v []js.Value) interface{} {
+	startIdx := v[0].Get("target").Get("selectionStart").Int()
+	keyCode := v[0].Get("keyCode").Int()
+	ctrl := v[0].Get("ctrlKey").Bool()
+
+	if ctrl && keyCode == keySpace {
+		processMessage(nil)
+		return true
+	}
+
 	if len(filteredSug) == 0 || currentSug == "" {
 		return false
 	}
 
-	startIdx := v[0].Get("target").Get("selectionStart").Int()
-	keyCode := v[0].Get("keyCode").Int()
 	switch keyCode {
 	case keyEsc:
 		filteredSug = nil
@@ -129,10 +137,6 @@ func processMessage(v []js.Value) {
 						if len(word) == 1 || strings.Contains(strings.ToLower(s), word[1:]) {
 							filteredSug = append(filteredSug, s)
 						}
-
-						if len(filteredSug) > 10 {
-							break
-						}
 					}
 				}
 
@@ -186,4 +190,5 @@ func updateSuggestionDiv() {
 	}
 	// The \n is so it's easier to read th source in web browsers for the dev
 	js.Get("suggestions").Set("innerHTML", strings.Join(divs, "\n"))
+	js.Call("updateSuggestionScroll")
 }
