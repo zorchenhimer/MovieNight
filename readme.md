@@ -17,6 +17,9 @@ To just download and run:
 
 ```bash
 $ go get -u -v github.com/zorchenhimer/MovieNight
+$ cd $GOROOT/src/zorchenhimer/MovieNight
+$ make
+$ cp settings_example.json settings.json
 $ MovieNight  -l :8089 -k longSecurityKey
 ```
 
