@@ -2,7 +2,7 @@ TAGS=
 
 .PHONY: fmt vet get clean dev setdev test
 
-all: fmt vet test MovieNight MovieNight.exe static/main.wasm
+all: fmt vet test MovieNight MovieNight.exe static/main.wasm settings.json
 
 setdev:
 	$(eval export TAGS=-tags "dev")
@@ -33,3 +33,8 @@ vet:
 
 test:
 	go test $(TAGS) ./...
+
+# Do not put settings_example.json here as a prereq to avoid overwriting
+# the settings if the example is updated.
+settings.json:
+	cp settings_example.json settings.json

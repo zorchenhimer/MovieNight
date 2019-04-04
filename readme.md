@@ -16,11 +16,11 @@ online.
 To just download and run:
 
 ```bash
-$ go get -u -v github.com/zorchenhimer/MovieNight
-$ cd $GOROOT/src/zorchenhimer/MovieNight
+$ git clone https://github.com/zorchenhimer/MovieNight
+$ cd MovieNight
+$ make get	# only needs to be run once
 $ make
-$ cp settings_example.json settings.json
-$ MovieNight  -l :8089 -k longSecurityKey
+$ ./MovieNight
 ```
 
 ## Usage
