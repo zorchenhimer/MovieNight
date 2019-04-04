@@ -25,8 +25,6 @@ fmt:
 	goimports -w .
 
 get:
-	go get -u -v ./...
-	GOOS=js GOARCH=wasm go get -u -v ./...
 	go get golang.org/x/tools/cmd/goimports
 
 vet:
