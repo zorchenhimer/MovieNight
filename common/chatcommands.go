@@ -29,6 +29,7 @@ var (
 	CNBan     ChatCommandNames = []string{"ban"}
 	CNUnban   ChatCommandNames = []string{"unban"}
 	CNPurge   ChatCommandNames = []string{"purge"}
+	CNPin     ChatCommandNames = []string{"pin", "password"}
 	// Admin Commands
 	CNMod          ChatCommandNames = []string{"mod"}
 	CNReloadPlayer ChatCommandNames = []string{"reloadplayer"}
@@ -36,6 +37,8 @@ var (
 	CNModpass      ChatCommandNames = []string{"modpass"}
 	CNIP           ChatCommandNames = []string{"iplist"}
 	CNAddEmotes    ChatCommandNames = []string{"addemotes"}
+	CNNewPin       ChatCommandNames = []string{"newpin", "newpassword"}
+	CNRoomAccess   ChatCommandNames = []string{"changeaccess", "hodor"}
 )
 
 var ChatCommands = []ChatCommandNames{
@@ -50,6 +53,7 @@ var ChatCommands = []ChatCommandNames{
 	CNNick,
 
 	// Mod
+	CNSv, CNPlaying, CNUnmod, CNKick, CNBan, CNUnban, CNPurge, CNPin,
 	CNSv,
 	CNPlaying,
 	CNUnmod,
@@ -59,6 +63,7 @@ var ChatCommands = []ChatCommandNames{
 	CNPurge,
 
 	// Admin
+	CNMod, CNReloadPlayer, CNReloadEmotes, CNModpass, CNRoomAccess, CNIP,
 	CNMod,
 	CNReloadPlayer,
 	CNReloadEmotes,

@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/gorilla/sessions"
 	"github.com/nareix/joy4/format"
 	"github.com/nareix/joy4/format/rtmp"
 	"github.com/zorchenhimer/MovieNight/common"
@@ -28,9 +29,11 @@ func setupSettings() error {
 		return fmt.Errorf("Missing stream key is settings.json")
 	}
 
-	// Save admin password to file
-	if err = settings.Save(); err != nil {
-		return fmt.Errorf("Unable to save settings: %s", err)
+	sstore = sessions.NewCookieStore([]byte(settings.SessionKey))
+	sstore.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   60 * 60 * 24, // one day
+		SameSite: http.SameSiteStrictMode,
 	}
 
 	return nil
@@ -71,6 +74,8 @@ func main() {
 	common.LogInfoln("Stream key: ", settings.GetStreamKey())
 	common.LogInfoln("Admin password: ", settings.AdminPassword)
 	common.LogInfoln("Listen and serve ", addr)
+	common.LogInfoln("RoomAccess: ", settings.RoomAccess)
+	common.LogInfoln("RoomAccessPin: ", settings.RoomAccessPin)
 
 	go startServer()
 	go startRmtpServer()
@@ -102,6 +107,7 @@ func startServer() {
 	http.HandleFunc("/chat", handleIndexTemplate)
 	http.HandleFunc("/video", handleIndexTemplate)
 	http.HandleFunc("/help", handleHelpTemplate)
+	http.HandleFunc("/pin", handlePin)
 
 	http.HandleFunc("/", handleDefault)
 

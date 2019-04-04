@@ -376,6 +376,19 @@ var commands = &CommandControl{
 				return ""
 			},
 		},
+
+		common.CNPin.String(): Command{
+			HelpText: "Display the current room access type and pin/password (if applicable).",
+			Function: func(cl *Client, args []string) string {
+				switch settings.RoomAccess {
+				case AccessPin:
+					return "Room is secured via PIN.  Current PIN: " + settings.RoomAccessPin
+				case AccessRequest:
+					return "Room is secured via access requests.  Users must request to be granted access."
+				}
+				return "Room is open access.  Anybody can join."
+			},
+		},
 	},
 
 	admin: map[string]Command{
@@ -427,6 +440,65 @@ var commands = &CommandControl{
 				cl.belongsTo.AddModNotice(cl.name + " generated a mod password")
 				password := cl.belongsTo.generateModPass()
 				return "Single use password: " + password
+			},
+		},
+
+		common.CNNewPin.String(): Command{
+			HelpText: "Generate a room acces new pin",
+			Function: func(cl *Client, args []string) string {
+				if settings.RoomAccess != AccessPin {
+					return "Room is not restricted by Pin. (" + string(settings.RoomAccess) + ")"
+				}
+
+				pin, err := settings.generateNewPin()
+				if err != nil {
+					return "Unable to generate new pin: " + err.Error()
+				}
+
+				common.LogInfoln("New room access pin: ", pin)
+				return "New access pin: " + pin
+			},
+		},
+
+		common.CNRoomAccess.String(): Command{
+			HelpText: "Change the room access type.",
+			Function: func(cl *Client, args []string) string {
+				// Print current access type if no arguments given
+				if len(args) == 0 {
+					return "Current room access type: " + string(settings.RoomAccess)
+				}
+
+				switch AccessMode(strings.ToLower(args[0])) {
+				case AccessOpen:
+					settings.RoomAccess = AccessOpen
+					common.LogInfoln("[access] Room set to open")
+					return "Room access set to open"
+
+				case AccessPin:
+					// A pin/password was provided, use it.
+					if len(args) == 2 {
+						settings.RoomAccessPin = args[1]
+
+						// A pin/password was not provided, generate a new one.
+					} else {
+						_, err := settings.generateNewPin()
+						if err != nil {
+							common.LogErrorln("Error generating new access pin: ", err.Error())
+							return "Unable to generate a new pin, access unchanged: " + err.Error()
+						}
+					}
+					settings.RoomAccess = AccessPin
+					common.LogInfoln("[access] Room set to pin: " + settings.RoomAccessPin)
+					return "Room access set to Pin: " + settings.RoomAccessPin
+
+				case AccessRequest:
+					settings.RoomAccess = AccessRequest
+					common.LogInfoln("[access] Room set to request")
+					return "Room access set to request. WARNING: this isn't implemented yet."
+
+				default:
+					return "Invalid access mode"
+				}
 			},
 		},
 

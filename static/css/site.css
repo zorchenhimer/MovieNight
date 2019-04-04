@@ -211,6 +211,10 @@ input[type=text] {
     text-align: center;
 }
 
+#accessRequest div {
+    margin-bottom: 5px;
+}
+
 #playing {
     color: #288a85;
     font-size: x-Large;

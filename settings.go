@@ -10,11 +10,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gorilla/sessions"
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
 var settings *Settings
 var settingsMtx sync.Mutex
+var sstore *sessions.CookieStore
 
 type Settings struct {
 	// Non-Saved settings
@@ -29,9 +31,12 @@ type Settings struct {
 	StreamKey       string
 	ListenAddress   string
 	ApprovedEmotes  []EmoteSet // list of channels that have been approved for emote use.  Global emotes are always "approved".
+	SessionKey      string     // key for session data
 	Bans            []BanInfo
 	LogLevel        common.LogLevel
 	LogFile         string
+	RoomAccess      AccessMode
+	RoomAccessPin   string // auto generate this,
 
 	// Rate limiting stuff, in seconds
 	RateLimitChat      time.Duration
@@ -43,6 +48,14 @@ type Settings struct {
 	// Send the NoCache header?
 	NoCache bool
 }
+
+type AccessMode string
+
+const (
+	AccessOpen    AccessMode = "open"
+	AccessPin     AccessMode = "pin"
+	AccessRequest AccessMode = "request"
+)
 
 type BanInfo struct {
 	IP    string
@@ -115,11 +128,39 @@ func LoadSettings(filename string) (*Settings, error) {
 	common.LogInfof("RateLimitColor: %v", s.RateLimitColor)
 	common.LogInfof("RateLimitAuth: %v", s.RateLimitAuth)
 
+	if len(s.RoomAccess) == 0 {
+		s.RoomAccess = AccessOpen
+	}
+
+	if s.RoomAccess != AccessOpen && len(s.RoomAccessPin) == 0 {
+		s.RoomAccessPin = "1234"
+	}
+
 	// Don't use LogInfof() here.  Log isn't setup yet when LoadSettings() is called from init().
 	fmt.Printf("Settings reloaded.  New admin password: %s\n", s.AdminPassword)
 
 	if s.TitleLength <= 0 {
 		s.TitleLength = 50
+	}
+
+	// Is this a good way to do this? Probably not...
+	if len(s.SessionKey) == 0 {
+		out := ""
+		large := big.NewInt(int64(1 << 60))
+		large = large.Add(large, large)
+		for len(out) < 50 {
+			num, err := rand.Int(rand.Reader, large)
+			if err != nil {
+				panic("Error generating session key: " + err.Error())
+			}
+			out = fmt.Sprintf("%s%X", out, num)
+		}
+		s.SessionKey = out
+	}
+
+	// Save admin password to file
+	if err = s.Save(); err != nil {
+		return nil, fmt.Errorf("Unable to save settings: %s", err)
 	}
 
 	return s, nil
@@ -161,11 +202,11 @@ func (s *Settings) AddBan(host string, names []string) error {
 		IP:    host,
 		When:  time.Now(),
 	}
-	settings.Bans = append(settings.Bans, b)
+	s.Bans = append(s.Bans, b)
 
 	common.LogInfof("[BAN] %q (%s) has been banned.\n", strings.Join(names, ", "), host)
 
-	return settings.Save()
+	return s.Save()
 }
 
 func (s *Settings) RemoveBan(name string) error {
@@ -184,7 +225,7 @@ func (s *Settings) RemoveBan(name string) error {
 		}
 	}
 	s.Bans = newBans
-	return settings.Save()
+	return s.Save()
 }
 
 func (s *Settings) IsBanned(host string) (bool, []string) {
@@ -214,4 +255,16 @@ func (s *Settings) GetStreamKey() string {
 		return s.cmdLineKey
 	}
 	return s.StreamKey
+}
+
+func (s *Settings) generateNewPin() (string, error) {
+	num, err := rand.Int(rand.Reader, big.NewInt(int64(9999)))
+	if err != nil {
+		return "", err
+	}
+	s.RoomAccessPin = fmt.Sprintf("%04d", num)
+	if err = s.Save(); err != nil {
+		return "", err
+	}
+	return s.RoomAccessPin, nil
 }

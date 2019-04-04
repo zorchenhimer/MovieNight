@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"io"
 	"net/http"
@@ -154,6 +155,93 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
+// returns if it's OK to proceed
+func checkRoomAccess(w http.ResponseWriter, r *http.Request) bool {
+	session, err := sstore.Get(r, "moviesession")
+	if err != nil {
+		// Don't return as server error here, just make a new session.
+		common.LogErrorf("Unable to get session for client %s: %v\n", r.RemoteAddr, err)
+	}
+
+	if settings.RoomAccess == AccessPin {
+		pin := session.Values["pin"]
+		// No pin found in session
+		if pin == nil || len(pin.(string)) == 0 {
+			if r.Method == "POST" {
+				// Check for correct pin
+				err = r.ParseForm()
+				if err != nil {
+					common.LogErrorf("Error parsing form")
+					http.Error(w, "Unable to get session data", http.StatusInternalServerError)
+				}
+
+				postPin := r.Form.Get("txtInput")
+				common.LogDebugf("Received pin: %s\n", postPin)
+				if postPin == settings.RoomAccessPin {
+					// Pin is correct.  Save it to session and return true.
+					session.Values["pin"] = settings.RoomAccessPin
+					session.Save(r, w)
+					return true
+				}
+				// Pin is incorrect.
+				handlePinTemplate(w, r, "Incorrect PIN")
+				return false
+			}
+			// nope.  display pin entry and return
+			handlePinTemplate(w, r, "")
+			return false
+		}
+
+		// Pin found in session, but it has changed since last time.
+		if pin.(string) != settings.RoomAccessPin {
+			// Clear out the old pin.
+			session.Values["pin"] = nil
+			session.Save(r, w)
+
+			// Prompt for new one.
+			handlePinTemplate(w, r, "Pin has changed.  Enter new PIN.")
+			return false
+		}
+
+		// Correct pin found in session
+		return true
+	}
+
+	// TODO: this.
+	if settings.RoomAccess == AccessRequest {
+		http.Error(w, "Requesting access not implemented yet", http.StatusNotImplemented)
+		return false
+	}
+
+	// Room is open.
+	return true
+}
+
+func handlePinTemplate(w http.ResponseWriter, r *http.Request, errorMessage string) {
+	t, err := template.ParseFiles("./static/base.html", "./static/thedoor.html")
+	if err != nil {
+		common.LogErrorf("Error parsing template file: %v", err)
+		return
+	}
+
+	type Data struct {
+		Title      string
+		SubmitText string
+		Error      string
+	}
+
+	data := Data{
+		Title:      "Enter Pin",
+		SubmitText: "Submit Pin",
+		Error:      errorMessage,
+	}
+
+	err = t.Execute(w, data)
+	if err != nil {
+		common.LogErrorf("Error executing file, %v", err)
+	}
+}
+
 func handleHelpTemplate(w http.ResponseWriter, r *http.Request) {
 	t, err := template.ParseFiles("./static/base.html", "./static/help.html")
 	if err != nil {
@@ -187,7 +275,36 @@ func handleHelpTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handlePin(w http.ResponseWriter, r *http.Request) {
+	session, err := sstore.Get(r, "moviesession")
+	if err != nil {
+		common.LogDebugf("Unable to get session: %v\n", err)
+	}
+
+	val := session.Values["pin"]
+	if val == nil {
+		session.Values["pin"] = "1234"
+		err := session.Save(r, w)
+		if err != nil {
+			fmt.Fprintf(w, "unable to save session: %v", err)
+		}
+		fmt.Fprint(w, "Pin was not set")
+		common.LogDebugln("pin was not set")
+	} else {
+		fmt.Fprintf(w, "pin set: %v", val)
+		common.LogDebugf("pin is set: %v\n", val)
+	}
+}
+
 func handleIndexTemplate(w http.ResponseWriter, r *http.Request) {
+	if settings.RoomAccess != AccessOpen {
+		if !checkRoomAccess(w, r) {
+			common.LogDebugln("Denied access")
+			return
+		}
+		common.LogDebugln("Granted access")
+	}
+
 	t, err := template.ParseFiles("./static/base.html", "./static/main.html")
 	if err != nil {
 		common.LogErrorf("Error parsing template file, %v\n", err)

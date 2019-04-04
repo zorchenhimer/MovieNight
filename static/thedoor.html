@@ -1,0 +1,13 @@
+{{define "header"}}
+
+{{end}}
+
+{{define "body"}}
+<div>
+    {{if .Error}}<div>{{.Error}}</div>{{end}}
+    <form action="/" method="post">
+        <input type="text" name="txtInput" /><br />
+        <input type="submit" value="{{.SubmitText}}" />
+    </form>
+</div>
+{{end}}
