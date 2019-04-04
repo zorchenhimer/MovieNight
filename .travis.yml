@@ -6,3 +6,5 @@ before_install:
 go:
     - 1.12.x
 
+env:
+    - GO111MODULE=on
