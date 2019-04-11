@@ -115,6 +115,16 @@ input[type=text] {
 .notice {
     color: #595959;
     font-size: 75%;
+}
+
+.command {
+    color: #B1B1B1;
+}
+
+.notice,
+.command,
+.announcement {
+    display: block;
     text-align: center;
 }
 
@@ -123,10 +133,6 @@ input[type=text] {
     color: var(--var-background-color);
     padding: 1px 2px;
     border-radius: 4px;
-}
-
-.command {
-    color: #B1B1B1;
 }
 
 .contrast {
