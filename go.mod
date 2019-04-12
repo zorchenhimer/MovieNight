@@ -4,7 +4,6 @@ go 1.12
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.3.3 // indirect
-	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/dennwc/dom v0.3.0
 	github.com/gorilla/sessions v1.1.3
 	github.com/gorilla/websocket v1.4.0
