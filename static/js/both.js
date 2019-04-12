@@ -10,7 +10,6 @@ $(document).on("keydown", function (e) {
     if (lastKeys.length > 10) {
         lastKeys.shift();
     }
-    a = e
 
     if (devKeys) {
         let modifiedLastKeys = []
@@ -38,7 +37,7 @@ $(document).on("keydown", function (e) {
 function checkKonami(e) {
     if (lastKeys.length === konamiCode.length) {
         for (let i = 0; i < lastKeys.length; i++) {
-            if (lastKeys[i] != konamiCode[i]) {
+            if (lastKeys[i].key != konamiCode[i]) {
                 return;
             }
         }

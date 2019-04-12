@@ -253,7 +253,6 @@ function setupEvents() {
             }
         },
         keydown: (e) => {
-            console.log(e.keyCode + e.key + e.ctrlKey)
             if (processMessageKey(e)) {
                 e.preventDefault();
             }
