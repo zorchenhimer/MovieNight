@@ -20,17 +20,17 @@ type Command struct {
 	Function CommandFunction
 }
 
-type CommandFunction func(client *Client, args []string) string
+type CommandFunction func(client *Client, args []string) (string, error)
 
 var commands = &CommandControl{
 	user: map[string]Command{
 		common.CNMe.String(): Command{
 			HelpText: "Display an action message.",
-			Function: func(client *Client, args []string) string {
+			Function: func(client *Client, args []string) (string, error) {
 				if len(args) != 0 {
 					client.Me(strings.Join(args, " "))
 				}
-				return ""
+				return "", fmt.Errorf("Missing a message")
 			},
 		},
 
@@ -41,29 +41,29 @@ var commands = &CommandControl{
 
 		common.CNCount.String(): Command{
 			HelpText: "Display number of users in chat.",
-			Function: func(client *Client, args []string) string {
-				return fmt.Sprintf("Users in chat: %d", client.belongsTo.UserCount())
+			Function: func(client *Client, args []string) (string, error) {
+				return fmt.Sprintf("Users in chat: %d", client.belongsTo.UserCount()), nil
 			},
 		},
 
 		common.CNColor.String(): Command{
 			HelpText: "Change user color.",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				if len(args) > 2 {
-					return "Too many arguments!"
+					return "", fmt.Errorf("Too many arguments!")
 				}
 
 				// If the caller is priviledged enough, they can change the color of another user
 				if len(args) == 2 {
 					if cl.CmdLevel == common.CmdlUser {
-						return "You cannot change someone else's color. PeepoSus"
+						return "", fmt.Errorf("You cannot change someone else's color. PeepoSus")
 					}
 
 					name, color := "", ""
 
 					if strings.ToLower(args[0]) == strings.ToLower(args[1]) ||
 						(common.IsValidColor(args[0]) && common.IsValidColor(args[1])) {
-						return "Name and color are ambiguous. Prefix the name with '@' or color with '#'"
+						return "", fmt.Errorf("Name and color are ambiguous. Prefix the name with '@' or color with '#'")
 					}
 
 					// Check for explicit name
@@ -98,47 +98,47 @@ var commands = &CommandControl{
 					}
 
 					if name == "" {
-						return "Cannot determine name.  Prefix name with @."
+						return "", fmt.Errorf("Cannot determine name.  Prefix name with @.")
 					}
 					if color == "" {
-						return "Cannot determine color.  Prefix name with @."
+						return "", fmt.Errorf("Cannot determine color.  Prefix name with @.")
 					}
 
 					if color == "" {
 						common.LogInfof("[color:mod] %s missing color\n", cl.name)
-						return "Missing color"
+						return "", fmt.Errorf("Missing color")
 					}
 
 					if name == "" {
 						common.LogInfof("[color:mod] %s missing name\n", cl.name)
-						return "Missing name"
+						return "", fmt.Errorf("Missing name")
 					}
 
 					if err := cl.belongsTo.ForceColorChange(name, color); err != nil {
-						return err.Error()
+						return "", err
 					}
-					return fmt.Sprintf("Color changed for user %s to %s\n", name, color)
+					return fmt.Sprintf("Color changed for user %s to %s\n", name, color), nil
 				}
 
-				// Don't allow an unprivilaged user to change their color if
+				// Don't allow an unprivileged user to change their color if
 				// it was changed by a mod
 				if cl.IsColorForced {
 					common.LogInfof("[color] %s tried to change a forced color\n", cl.name)
-					return "You are not allowed to change your color."
+					return "", fmt.Errorf("You are not allowed to change your color.")
 				}
 
 				if time.Now().Before(cl.nextColor) && cl.CmdLevel == common.CmdlUser {
-					return fmt.Sprintf("Slow down. You can change your color in %0.0f seconds.", time.Until(cl.nextColor).Seconds())
+					return "", fmt.Errorf("Slow down. You can change your color in %0.0f seconds.", time.Until(cl.nextColor).Seconds())
 				}
 
 				if len(args) == 0 {
 					cl.setColor(common.RandomColor())
-					return "Random color chosen: " + cl.color
+					return "Random color chosen: " + cl.color, nil
 				}
 
 				// Change the color of the user
 				if !common.IsValidColor(args[0]) {
-					return "To choose a specific color use the format <i>/color #c029ce</i>.  Hex values expected."
+					return "", fmt.Errorf("To choose a specific color use the format <i>/color #c029ce</i>.  Hex values expected.")
 				}
 
 				cl.nextColor = time.Now().Add(time.Second * settings.RateLimitColor)
@@ -149,31 +149,31 @@ var commands = &CommandControl{
 				}
 
 				common.LogInfof("[color] %s new color: %s\n", cl.name, cl.color)
-				return "Color changed successfully."
+				return "Color changed successfully.", nil
 			},
 		},
 
 		common.CNWhoAmI.String(): Command{
 			HelpText: "Shows debug user info",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				return fmt.Sprintf("Name: %s IsMod: %t IsAdmin: %t",
 					cl.name,
 					cl.CmdLevel >= common.CmdlMod,
-					cl.CmdLevel == common.CmdlAdmin)
+					cl.CmdLevel == common.CmdlAdmin), nil
 			},
 		},
 
 		common.CNAuth.String(): Command{
 			HelpText: "Authenticate to admin",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				if cl.CmdLevel == common.CmdlAdmin {
-					return "You are already authenticated."
+					return "", fmt.Errorf("You are already authenticated.")
 				}
 
-				// TODO: handle backoff policy
+				// TODO: handle back off policy
 				if time.Now().Before(cl.nextAuth) {
 					cl.nextAuth = time.Now().Add(time.Second * settings.RateLimitAuth)
-					return "Slow down."
+					return "", fmt.Errorf("Slow down.")
 				}
 				cl.authTries += 1 // this isn't used yet
 				cl.nextAuth = time.Now().Add(time.Second * settings.RateLimitAuth)
@@ -184,41 +184,41 @@ var commands = &CommandControl{
 					cl.CmdLevel = common.CmdlAdmin
 					cl.belongsTo.AddModNotice(cl.name + " used the admin password")
 					common.LogInfof("[auth] %s used the admin password\n", cl.name)
-					return "Admin rights granted."
+					return "Admin rights granted.", nil
 				}
 
 				if cl.belongsTo.redeemModPass(pw) {
 					cl.CmdLevel = common.CmdlMod
 					cl.belongsTo.AddModNotice(cl.name + " used a mod password")
 					common.LogInfof("[auth] %s used a mod password\n", cl.name)
-					return "Moderator privileges granted."
+					return "Moderator privileges granted.", nil
 				}
 
 				cl.belongsTo.AddModNotice(cl.name + " attempted to auth without success")
 				common.LogInfof("[auth] %s gave an invalid password\n", cl.name)
-				return "Invalid password."
+				return "", fmt.Errorf("Invalid password.")
 			},
 		},
 
 		common.CNUsers.String(): Command{
 			HelpText: "Show a list of users in chat",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				names := cl.belongsTo.GetNames()
-				return strings.Join(names, " ")
+				return strings.Join(names, " "), nil
 			},
 		},
 
 		common.CNNick.String(): Command{
 			HelpText: "Change display name",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				if time.Now().Before(cl.nextNick) {
 					//cl.nextNick = time.Now().Add(time.Second * settings.RateLimitNick)
-					return fmt.Sprintf("Slow down. You can change your nick in %0.0f seconds.", time.Until(cl.nextNick).Seconds())
+					return "", fmt.Errorf("Slow down. You can change your nick in %0.0f seconds.", time.Until(cl.nextNick).Seconds())
 				}
 				cl.nextNick = time.Now().Add(time.Second * settings.RateLimitNick)
 
 				if len(args) == 0 {
-					return "Missing name to change to."
+					return "", fmt.Errorf("Missing name to change to.")
 				}
 
 				newName := strings.TrimLeft(args[0], "@")
@@ -228,7 +228,7 @@ var commands = &CommandControl{
 				// Two arguments to force a name change on another user: `/nick OldName NewName`
 				if len(args) == 2 {
 					if cl.CmdLevel != common.CmdlAdmin {
-						return "Only admins can do that PeepoSus"
+						return "", fmt.Errorf("Only admins can do that PeepoSus")
 					}
 
 					oldName = strings.TrimLeft(args[0], "@")
@@ -237,15 +237,15 @@ var commands = &CommandControl{
 				}
 
 				if len(args) == 1 && cl.IsNameForced && cl.CmdLevel != common.CmdlAdmin {
-					return "You cannot change your name once it has been changed by an admin."
+					return "", fmt.Errorf("You cannot change your name once it has been changed by an admin.")
 				}
 
 				err := cl.belongsTo.changeName(oldName, newName, forced)
 				if err != nil {
-					return "Unable to change name: " + err.Error()
+					return "", fmt.Errorf("Unable to change name: " + err.Error())
 				}
 
-				return ""
+				return "", nil
 			},
 		},
 	},
@@ -253,29 +253,29 @@ var commands = &CommandControl{
 	mod: map[string]Command{
 		common.CNSv.String(): Command{
 			HelpText: "Send a server announcement message.  It will show up red with a border in chat.",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				if len(args) == 0 {
-					return "Missing message"
+					return "", fmt.Errorf("Missing message")
 				}
 				svmsg := formatLinks(strings.Join(common.ParseEmotesArray(args), " "))
 				cl.belongsTo.AddModNotice("Server message from " + cl.name)
 				cl.belongsTo.AddMsg(cl, false, true, svmsg)
-				return ""
+				return "", nil
 			},
 		},
 
 		common.CNPlaying.String(): Command{
 			HelpText: "Set the title text and info link.",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				// Clear/hide title if sent with no arguments.
 				if len(args) == 0 {
 					cl.belongsTo.ClearPlaying()
-					return "Title cleared"
+					return "Title cleared", nil
 				}
 				link := ""
 				title := ""
 
-				// pickout the link (can be anywhere, as long as there are no spaces).
+				// pick out the link (can be anywhere, as long as there are no spaces).
 				for _, word := range args {
 					word = html.UnescapeString(word)
 					if strings.HasPrefix(word, "http://") || strings.HasPrefix(word, "https://") {
@@ -289,7 +289,7 @@ var commands = &CommandControl{
 				link = strings.TrimSpace(link)
 
 				if len(title) > settings.TitleLength {
-					return fmt.Sprintf("Title too long (%d/%d)", len(title), settings.TitleLength)
+					return "", fmt.Errorf("Title too long (%d/%d)", len(title), settings.TitleLength)
 				}
 
 				// Send a notice to the mods and admins
@@ -300,93 +300,93 @@ var commands = &CommandControl{
 				}
 
 				cl.belongsTo.SetPlaying(title, link)
-				return ""
+				return "", nil
 			},
 		},
 
 		common.CNUnmod.String(): Command{
 			HelpText: "Revoke a user's moderator privilages.  Moderators can only unmod themselves.",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				if len(args) > 0 && cl.CmdLevel != common.CmdlAdmin && cl.name != args[0] {
-					return "You can only unmod yourself, not others."
+					return "", fmt.Errorf("You can only unmod yourself, not others.")
 				}
 
 				if len(args) == 0 || (len(args) == 1 && strings.TrimLeft(args[0], "@") == cl.name) {
 					cl.Unmod()
 					cl.belongsTo.AddModNotice(cl.name + " has unmodded themselves")
-					return "You have unmodded yourself."
+					return "You have unmodded yourself.", nil
 				}
 				name := strings.TrimLeft(args[0], "@")
 
 				if err := cl.belongsTo.Unmod(name); err != nil {
-					return err.Error()
+					return "", err
 				}
 
 				cl.belongsTo.AddModNotice(cl.name + " has unmodded " + name)
-				return ""
+				return "", nil
 			},
 		},
 
 		common.CNKick.String(): Command{
 			HelpText: "Kick a user from chat.",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				if len(args) == 0 {
-					return "Missing name to kick."
+					return "", fmt.Errorf("Missing name to kick.")
 				}
-				return cl.belongsTo.Kick(strings.TrimLeft(args[0], "@"))
+				return "", cl.belongsTo.Kick(strings.TrimLeft(args[0], "@"))
 			},
 		},
 
 		common.CNBan.String(): Command{
 			HelpText: "Ban a user from chat.  They will not be able to re-join chat, but will still be able to view the stream.",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				if len(args) == 0 {
-					return "missing name to ban."
+					return "", fmt.Errorf("missing name to ban.")
 				}
 
 				name := strings.TrimLeft(args[0], "@")
 				common.LogInfof("[ban] Attempting to ban %s\n", name)
-				return cl.belongsTo.Ban(name)
+				return "", cl.belongsTo.Ban(name)
 			},
 		},
 
 		common.CNUnban.String(): Command{
 			HelpText: "Remove a ban on a user.",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				if len(args) == 0 {
-					return "missing name to unban."
+					return "", fmt.Errorf("missing name to unban.")
 				}
 				name := strings.TrimLeft(args[0], "@")
 				common.LogInfof("[ban] Attempting to unban %s\n", name)
 
 				err := settings.RemoveBan(name)
 				if err != nil {
-					return err.Error()
+					return "", err
 				}
 				cl.belongsTo.AddModNotice(cl.name + " has unbanned " + name)
-				return ""
+				return "", nil
 			},
 		},
 
 		common.CNPurge.String(): Command{
 			HelpText: "Purge the chat.",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				common.LogInfoln("[purge] clearing chat")
 				cl.belongsTo.AddCmdMsg(common.CmdPurgeChat, nil)
-				return ""
+				return "", nil
 			},
 		},
 
 		common.CNPin.String(): Command{
 			HelpText: "Display the current room access type and pin/password (if applicable).",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				switch settings.RoomAccess {
 				case AccessPin:
-					return "Room is secured via PIN.  Current PIN: " + settings.RoomAccessPin
+					return "Room is secured via PIN.  Current PIN: " + settings.RoomAccessPin, nil
 				case AccessRequest:
-					return "Room is secured via access requests.  Users must request to be granted access."
+					return "Room is secured via access requests.  Users must request to be granted access.", nil
 				}
-				return "Room is open access.  Anybody can join."
+				return "Room is open access.  Anybody can join.", nil
 			},
 		},
 	},
@@ -394,85 +394,68 @@ var commands = &CommandControl{
 	admin: map[string]Command{
 		common.CNMod.String(): Command{
 			HelpText: "Grant moderator privilages to a user.",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				if len(args) == 0 {
-					return "Missing user to mod."
+					return "", fmt.Errorf("Missing user to mod.")
 				}
 
 				name := strings.TrimLeft(args[0], "@")
 				if err := cl.belongsTo.Mod(name); err != nil {
-					return err.Error()
+					return "", err
 				}
 				cl.belongsTo.AddModNotice(cl.name + " has modded " + name)
-				return ""
+				return "", nil
 			},
 		},
 
 		common.CNReloadPlayer.String(): Command{
 			HelpText: "Reload the stream player for everybody in chat.",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				cl.belongsTo.AddModNotice(cl.name + " has modded forced a player reload")
 				cl.belongsTo.AddCmdMsg(common.CmdRefreshPlayer, nil)
-				return "Reloading player for all chatters."
+				return "Reloading player for all chatters.", nil
 			},
 		},
 
 		common.CNReloadEmotes.String(): Command{
 			HelpText: "Reload the emotes on the server.",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				cl.SendServerMessage("Reloading emotes")
 				num, err := common.LoadEmotes()
 				if err != nil {
 					common.LogErrorf("Unbale to reload emotes: %s\n", err)
-					return fmt.Sprintf("ERROR: %s", err)
+					return "", err
 				}
 
 				cl.belongsTo.AddChatMsg(common.NewChatHiddenMessage(common.CdEmote, common.Emotes))
 				cl.belongsTo.AddModNotice(cl.name + " has reloaded emotes")
 				common.LogInfof("Loaded %d emotes\n", num)
-				return fmt.Sprintf("Emotes loaded: %d", num)
+				return fmt.Sprintf("Emotes loaded: %d", num), nil
 			},
 		},
 
 		common.CNModpass.String(): Command{
 			HelpText: "Generate a single-use mod password.",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				cl.belongsTo.AddModNotice(cl.name + " generated a mod password")
 				password := cl.belongsTo.generateModPass()
-				return "Single use password: " + password
-			},
-		},
-
-		common.CNNewPin.String(): Command{
-			HelpText: "Generate a room acces new pin",
-			Function: func(cl *Client, args []string) string {
-				if settings.RoomAccess != AccessPin {
-					return "Room is not restricted by Pin. (" + string(settings.RoomAccess) + ")"
-				}
-
-				pin, err := settings.generateNewPin()
-				if err != nil {
-					return "Unable to generate new pin: " + err.Error()
-				}
-
-				common.LogInfoln("New room access pin: ", pin)
-				return "New access pin: " + pin
+				return "Single use password: " + password, nil
 			},
 		},
 
 		common.CNRoomAccess.String(): Command{
 			HelpText: "Change the room access type.",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				// Print current access type if no arguments given
 				if len(args) == 0 {
-					return "Current room access type: " + string(settings.RoomAccess)
+					return "Current room access type: " + string(settings.RoomAccess), nil
 				}
 
 				switch AccessMode(strings.ToLower(args[0])) {
 				case AccessOpen:
 					settings.RoomAccess = AccessOpen
 					common.LogInfoln("[access] Room set to open")
-					return "Room access set to open"
+					return "Room access set to open", nil
 
 				case AccessPin:
 					// A pin/password was provided, use it.
@@ -484,27 +467,27 @@ var commands = &CommandControl{
 						_, err := settings.generateNewPin()
 						if err != nil {
 							common.LogErrorln("Error generating new access pin: ", err.Error())
-							return "Unable to generate a new pin, access unchanged: " + err.Error()
+							return "", fmt.Errorf("Unable to generate a new pin, access unchanged: " + err.Error())
 						}
 					}
 					settings.RoomAccess = AccessPin
 					common.LogInfoln("[access] Room set to pin: " + settings.RoomAccessPin)
-					return "Room access set to Pin: " + settings.RoomAccessPin
+					return "Room access set to Pin: " + settings.RoomAccessPin, nil
 
 				case AccessRequest:
 					settings.RoomAccess = AccessRequest
 					common.LogInfoln("[access] Room set to request")
-					return "Room access set to request. WARNING: this isn't implemented yet."
+					return "Room access set to request. WARNING: this isn't implemented yet.", nil
 
 				default:
-					return "Invalid access mode"
+					return "", fmt.Errorf("Invalid access mode")
 				}
 			},
 		},
 
 		common.CNIP.String(): Command{
 			HelpText: "List users and IP in the server console.  Requires logging level to be set to info or above.",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				cl.belongsTo.clientsMtx.Lock()
 				common.LogInfoln("Clients:")
 				for uuid, client := range cl.belongsTo.clients {
@@ -516,18 +499,18 @@ var commands = &CommandControl{
 					common.LogInfof("  [%s] %s\n", uuid, conn.Host())
 				}
 				cl.belongsTo.clientsMtx.Unlock()
-				return "see console for output"
+				return "see console for output", nil
 			},
 		},
 
 		common.CNAddEmotes.String(): Command{
 			HelpText: "Add emotes from a given twitch channel.",
-			Function: func(cl *Client, args []string) string {
+			Function: func(cl *Client, args []string) (string, error) {
 				// Fire this off in it's own goroutine so the client doesn't
 				// block waiting for the emote download to finish.
 				go func() {
 
-					// Pretty sure this breaks on partial downloads (eg, one good channel and one non-existant)
+					// Pretty sure this breaks on partial downloads (eg, one good channel and one non-existent)
 					_, err := GetEmotes(args)
 					if err != nil {
 						cl.SendChatData(common.NewChatMessage("", "",
@@ -547,13 +530,13 @@ var commands = &CommandControl{
 
 					cl.belongsTo.AddModNotice(cl.name + " has added emotes from the following channels: " + strings.Join(args, ", "))
 				}()
-				return "Emote download initiated for the following channels: " + strings.Join(args, ", ")
+				return "Emote download initiated for the following channels: " + strings.Join(args, ", "), nil
 			},
 		},
 	},
 }
 
-func (cc *CommandControl) RunCommand(command string, args []string, sender *Client) string {
+func (cc *CommandControl) RunCommand(command string, args []string, sender *Client) (string, error) {
 	// get correct command from combined commands
 	cmd := common.GetFullChatCommand(command)
 
@@ -571,7 +554,7 @@ func (cc *CommandControl) RunCommand(command string, args []string, sender *Clie
 		}
 
 		common.LogInfof("[mod REJECTED] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
-		return "You are not a mod Jebaited"
+		return "", fmt.Errorf("You are not a mod Jebaited")
 	}
 
 	// Look for admin command
@@ -581,15 +564,15 @@ func (cc *CommandControl) RunCommand(command string, args []string, sender *Clie
 			return adminCmd.Function(sender, args)
 		}
 		common.LogInfof("[admin REJECTED] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
-		return "You are not the admin Jebaited"
+		return "", fmt.Errorf("You are not the admin Jebaited")
 	}
 
 	// Command not found
 	common.LogInfof("[cmd] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
-	return "Invalid command."
+	return "", fmt.Errorf("Invalid command.")
 }
 
-func cmdHelp(cl *Client, args []string) string {
+func cmdHelp(cl *Client, args []string) (string, error) {
 	url := "/help"
 
 	if cl.CmdLevel >= common.CmdlMod {
@@ -601,7 +584,7 @@ func cmdHelp(cl *Client, args []string) string {
 	}
 
 	cl.SendChatData(common.NewChatCommand(common.CmdHelp, []string{url}))
-	return `Opening help in new window.`
+	return `Opening help in new window.`, nil
 }
 
 func getHelp(lvl common.CommandLevel) map[string]string {

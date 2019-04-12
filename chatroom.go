@@ -145,21 +145,21 @@ func (cr *ChatRoom) Leave(name, color string) {
 }
 
 // kicked from the chatroom
-func (cr *ChatRoom) Kick(name string) string {
+func (cr *ChatRoom) Kick(name string) error {
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock() //preventing simultaneous access to the `clients` map
 
 	client, suid, err := cr.getClient(name)
 	if err != nil {
-		return "Unable to get client for name " + name
+		return fmt.Errorf("Unable to get client for name " + name)
 	}
 
 	if client.CmdLevel == common.CmdlMod {
-		return "You cannot kick another mod."
+		return fmt.Errorf("You cannot kick another mod.")
 	}
 
 	if client.CmdLevel == common.CmdlAdmin {
-		return "Jebaited No."
+		return fmt.Errorf("Jebaited No.")
 	}
 
 	color := client.color
@@ -169,21 +169,21 @@ func (cr *ChatRoom) Kick(name string) string {
 
 	cr.AddEventMsg(common.EvKick, name, color)
 	common.LogInfof("[kick] %s %s has been kicked\n", host, name)
-	return ""
+	return nil
 }
 
-func (cr *ChatRoom) Ban(name string) string {
+func (cr *ChatRoom) Ban(name string) error {
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock()
 
 	client, suid, err := cr.getClient(name)
 	if err != nil {
 		common.LogErrorf("[ban] Unable to get client for name %q\n", name)
-		return "Cannot find that name"
+		return fmt.Errorf("Cannot find that name")
 	}
 
 	if client.CmdLevel == common.CmdlAdmin {
-		return "You cannot ban an admin Jebaited"
+		return fmt.Errorf("You cannot ban an admin Jebaited")
 	}
 
 	names := []string{}
@@ -211,7 +211,7 @@ func (cr *ChatRoom) Ban(name string) string {
 	} else {
 		cr.AddEventMsg(common.EvBan, name, color)
 	}
-	return ""
+	return nil
 }
 
 // Add a chat message from a viewer

@@ -37,7 +37,6 @@ var (
 	CNModpass      ChatCommandNames = []string{"modpass"}
 	CNIP           ChatCommandNames = []string{"iplist"}
 	CNAddEmotes    ChatCommandNames = []string{"addemotes"}
-	CNNewPin       ChatCommandNames = []string{"newpin", "newpassword"}
 	CNRoomAccess   ChatCommandNames = []string{"changeaccess", "hodor"}
 )
 

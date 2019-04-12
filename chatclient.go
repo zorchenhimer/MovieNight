@@ -103,10 +103,15 @@ func (cl *Client) NewMsg(data common.ClientData) {
 			cmd := strings.ToLower(fullcmd[0])
 			args := fullcmd[1:len(fullcmd)]
 
-			response := commands.RunCommand(cmd, args, cl)
-			if response != "" {
+			response, err := commands.RunCommand(cmd, args, cl)
+			if response != "" || err != nil {
+				respText := response
+				if err != nil {
+					respText = err.Error()
+				}
+
 				err := cl.SendChatData(common.NewChatMessage("", "",
-					common.ParseEmotes(response),
+					common.ParseEmotes(respText),
 					common.CmdlUser,
 					common.MsgCommandResponse))
 				if err != nil {
