@@ -65,5 +65,6 @@ const (
 	MsgServer                             // server message
 	MsgError                              // something went wrong
 	MsgNotice                             // Like MsgServer, but for mods and admins only.
-	MsgCommandResponse                    // The response to a command
+	MsgCommandResponse                    // The response from command
+	MsgCommandError                       // The error response from command
 )

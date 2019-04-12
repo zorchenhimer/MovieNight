@@ -113,6 +113,10 @@ input[type=text] {
     color: #B1B1B1;
 }
 
+.commanderror {
+    color: #e82222;
+}
+
 .notice,
 .command,
 .announcement {

@@ -54,7 +54,7 @@ var commands = &CommandControl{
 					return "", fmt.Errorf("Too many arguments!")
 				}
 
-				// If the caller is priviledged enough, they can change the color of another user
+				// If the caller is privileged enough, they can change the color of another user
 				if len(args) == 2 {
 					if cl.CmdLevel == common.CmdlUser {
 						return "", fmt.Errorf("You cannot change someone else's color. PeepoSus")

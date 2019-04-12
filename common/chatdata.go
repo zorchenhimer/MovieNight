@@ -108,6 +108,9 @@ func (dc DataMessage) HTML() string {
 	case MsgCommandResponse:
 		return `<span class="command">` + dc.Message + `</span>`
 
+	case MsgCommandError:
+		return `<span class="commanderror">` + dc.Message + `</span>`
+
 	default:
 		badge := ""
 		switch dc.Level {

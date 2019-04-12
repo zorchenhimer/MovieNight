@@ -105,15 +105,17 @@ func (cl *Client) NewMsg(data common.ClientData) {
 
 			response, err := commands.RunCommand(cmd, args, cl)
 			if response != "" || err != nil {
+				msgType := common.MsgCommandResponse
 				respText := response
 				if err != nil {
 					respText = err.Error()
+					msgType = common.MsgCommandError
 				}
 
 				err := cl.SendChatData(common.NewChatMessage("", "",
 					common.ParseEmotes(respText),
 					common.CmdlUser,
-					common.MsgCommandResponse))
+					msgType))
 				if err != nil {
 					common.LogErrorf("Error command results %v\n", err)
 				}
