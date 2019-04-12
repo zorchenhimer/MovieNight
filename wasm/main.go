@@ -71,7 +71,15 @@ func recieve(v []js.Value) {
 		// on join or leave, update list of possible user names
 		fallthrough
 	case common.DTChat:
-		appendMessage(chat.Data.HTML())
+		msg := chat.Data.HTML()
+		if d, ok := chat.Data.(common.DataMessage); ok {
+			if timestamp && (d.Type == common.MsgChat || d.Type == common.MsgAction) {
+				h, m, _ := time.Now().Clock()
+				msg = fmt.Sprintf(`<span class="time">%02d:%02d</span> %s`, h, m, msg)
+			}
+		}
+
+		appendMessage(msg)
 	case common.DTCommand:
 		d := chat.Data.(common.DataCommand)
 
@@ -103,10 +111,6 @@ func recieve(v []js.Value) {
 }
 
 func appendMessage(msg string) {
-	if timestamp {
-		h, m, _ := time.Now().Clock()
-		msg = fmt.Sprintf(`<span class="time">%02d:%02d</span> %s`, h, m, msg)
-	}
 	js.Call("appendMessages", "<div>"+msg+"</div>")
 }
 
