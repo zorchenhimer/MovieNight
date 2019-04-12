@@ -37,6 +37,10 @@ span.msg {
     color: #cfccd1;
 }
 
+.msg a {
+    color: #cfccd1;
+}
+
 span.svmsg {
     font-style: italic;
     color: #ea6260;
