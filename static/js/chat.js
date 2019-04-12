@@ -42,6 +42,9 @@ function startGo() {
     const go = new Go();
     WebAssembly.instantiateStreaming(fetch("/static/main.wasm"), go.importObject).then((result) => {
         go.run(result.instance);
+    }).then(() => {
+        $("#chatwindow").css("display", "grid");
+        $("#loadingFiles").css("display", "none");
     }).catch((err) => {
         console.error(err);
     });

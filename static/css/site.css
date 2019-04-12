@@ -51,14 +51,6 @@ input[type=text] {
     font-weight: bold;
 }
 
-#colorInputDiv {
-    font-size: 14px;
-}
-
-#colorInput {
-    border: 2px solid var(--var-message-color);
-}
-
 .root {
     max-width: var(--var-max-width);
     max-height: var(--var-max-height);
@@ -184,8 +176,15 @@ input[type=text] {
     width: 100%;
 }
 
+#loadingFiles {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
 #chatwindow {
-    display: grid;
+    display: none;
     grid-template-rows: auto 1fr;
     position: relative;
     padding-top: 1vh;
@@ -220,6 +219,15 @@ input[type=text] {
 #accessRequest div {
     margin-bottom: 5px;
 }
+
+#colorInputDiv {
+    font-size: 14px;
+}
+
+#colorInput {
+    border: 2px solid var(--var-message-color);
+}
+
 
 #playing {
     color: #288a85;
