@@ -29,6 +29,7 @@ var commands = &CommandControl{
 			Function: func(client *Client, args []string) (string, error) {
 				if len(args) != 0 {
 					client.Me(strings.Join(args, " "))
+					return "", nil
 				}
 				return "", fmt.Errorf("Missing a message")
 			},
