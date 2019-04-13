@@ -1,13 +1,11 @@
-{{define "header"}}
-
-{{end}}
+{{define "header"}}{{end}}
 
 {{define "body"}}
-<div>
-    {{if .Error}}<div>{{.Error}}</div>{{end}}
+<div id="doorentry">
+    {{if .Notice}}<div class="doornotice">{{.Notice}}</div>{{end}}
     <form action="/" method="post">
         <input type="text" name="txtInput" /><br />
-        <input type="submit" value="{{.SubmitText}}" />
+        <input type="submit" value="{{.SubmitText}}" class="button pretty-button" />
     </form>
 </div>
 {{end}}

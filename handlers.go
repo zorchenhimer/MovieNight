@@ -237,13 +237,17 @@ func handlePinTemplate(w http.ResponseWriter, r *http.Request, errorMessage stri
 	type Data struct {
 		Title      string
 		SubmitText string
-		Error      string
+		Notice     string
+	}
+
+	if errorMessage == "" {
+		errorMessage = "Please enter the PIN"
 	}
 
 	data := Data{
 		Title:      "Enter Pin",
 		SubmitText: "Submit Pin",
-		Error:      errorMessage,
+		Notice:     errorMessage,
 	}
 
 	err = t.Execute(w, data)

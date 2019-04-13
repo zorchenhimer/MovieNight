@@ -37,7 +37,7 @@ span.msg {
     color: #cfccd1;
 }
 
-.msg a {
+.msg a, .doornotice {
     color: #cfccd1;
 }
 
@@ -190,6 +190,13 @@ input[type=text] {
     justify-content: center;
 }
 
+#doorentry {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: 100%;
+}
 
 #chatwindow {
     display: none;
