@@ -172,6 +172,12 @@ func (cl *Client) NewMsg(data common.ClientData) {
 }
 
 func (cl *Client) SendChatData(data common.ChatData) error {
+	// Don't send chat or event data to clients that have not fully joined the
+	// chatroom (ie, they have not set a name).
+	if cl.name == "" && (data.Type == common.DTChat || data.Type == common.DTEvent) {
+		return nil
+	}
+
 	// Colorize name on chat messages
 	if data.Type == common.DTChat {
 		var err error

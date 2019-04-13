@@ -491,13 +491,8 @@ var commands = &CommandControl{
 			Function: func(cl *Client, args []string) (string, error) {
 				cl.belongsTo.clientsMtx.Lock()
 				common.LogInfoln("Clients:")
-				for uuid, client := range cl.belongsTo.clients {
-					common.LogInfof("  [%s] %s %s\n", uuid, client.name, client.conn.Host())
-				}
-
-				common.LogInfoln("TmpConn:")
-				for uuid, conn := range cl.belongsTo.tempConn {
-					common.LogInfof("  [%s] %s\n", uuid, conn.Host())
+				for id, client := range cl.belongsTo.clients {
+					common.LogInfof("  [%d] %s %s\n", id, client.name, client.conn.Host())
 				}
 				cl.belongsTo.clientsMtx.Unlock()
 				return "see console for output", nil

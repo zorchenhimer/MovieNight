@@ -99,6 +99,8 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	common.LogDebugln("Connection has been upgraded to websocket")
+
 	chatConn := &chatConnection{
 		Conn: conn,
 		// If the server is behind a reverse proxy (eg, Nginx), look
@@ -109,14 +111,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		var client *Client
 
-		uid, err := chat.JoinTemp(chatConn)
-		if err != nil {
-			common.LogErrorf("[handler] could not do a temp join, %v\n", err)
-			conn.Close()
-		}
-
-		//first message has to be the name
-		// loop through name since websocket is opened once
+		// Get the client object
 		for client == nil {
 			var data common.ClientData
 			err := chatConn.ReadData(&data)
@@ -134,7 +129,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			client, err = chat.Join(uid, joinData)
+			client, err = chat.Join(chatConn, joinData)
 			if err != nil {
 				switch err.(type) {
 				case UserFormatError, UserTakenError:
@@ -151,7 +146,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		//then watch for incoming messages
+		// Handle incomming messages
 		for {
 			var data common.ClientData
 			err := conn.ReadJSON(&data)

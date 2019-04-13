@@ -1,10 +1,7 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-
-	uuid "github.com/satori/go.uuid"
 
 	"strings"
 	"sync"
@@ -18,9 +15,8 @@ const (
 )
 
 type ChatRoom struct {
-	clients    map[string]*Client // this needs to be a pointer. key is suid.
+	clients    []*Client // this needs to be a pointer. key is suid.
 	clientsMtx sync.Mutex
-	tempConn   map[string]*chatConnection
 
 	queue    chan common.ChatData
 	modqueue chan common.ChatData // mod and admin broadcast messages
@@ -37,8 +33,7 @@ func newChatRoom() (*ChatRoom, error) {
 	cr := &ChatRoom{
 		queue:    make(chan common.ChatData, 1000),
 		modqueue: make(chan common.ChatData, 1000),
-		clients:  make(map[string]*Client),
-		tempConn: make(map[string]*chatConnection),
+		clients:  []*Client{},
 	}
 
 	num, err := common.LoadEmotes()
@@ -52,38 +47,10 @@ func newChatRoom() (*ChatRoom, error) {
 	return cr, nil
 }
 
-func (cr *ChatRoom) JoinTemp(conn *chatConnection) (string, error) {
+// A new client joined
+func (cr *ChatRoom) Join(conn *chatConnection, data common.JoinData) (*Client, error) {
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock()
-
-	if conn == nil {
-		return "", errors.New("conn should not be nil")
-	}
-
-	uid, err := uuid.NewV4()
-	if err != nil {
-		return "", fmt.Errorf("could not create uuid: %v", err)
-	}
-
-	suid := uid.String()
-	if _, ok := cr.tempConn[suid]; ok {
-		return "", fmt.Errorf("%#v is already in the temp connections", suid)
-	}
-
-	cr.tempConn[suid] = conn
-	return suid, nil
-}
-
-//registering a new client
-//returns pointer to a Client, or Nil, if the name is already taken
-func (cr *ChatRoom) Join(uid string, data common.JoinData) (*Client, error) {
-	defer cr.clientsMtx.Unlock()
-	cr.clientsMtx.Lock()
-
-	conn, hasConn := cr.tempConn[uid]
-	if !hasConn {
-		return nil, errors.New("connection is missing from temp connections")
-	}
 
 	sendHiddenMessage := func(cd common.ClientDataType, i interface{}) {
 		// If the message cant be converted, then just don't send
@@ -128,8 +95,7 @@ func (cr *ChatRoom) Join(uid string, data common.JoinData) (*Client, error) {
 		return nil, newBannedUserError(host, data.Name, names)
 	}
 
-	cr.clients[uid] = client
-	delete(cr.tempConn, uid)
+	cr.clients = append(cr.clients, client)
 
 	common.LogChatf("[join] %s %s\n", host, data.Color)
 	playingCommand, err := common.NewChatCommand(common.CmdPlaying, []string{cr.playing, cr.playingLink}).ToJSON()
@@ -152,7 +118,7 @@ func (cr *ChatRoom) Leave(name, color string) {
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock() //preventing simultaneous access to the `clients` map
 
-	client, suid, err := cr.getClient(name)
+	client, id, err := cr.getClient(name)
 	if err != nil {
 		common.LogErrorf("[leave] Unable to get client suid %v\n", err)
 		return
@@ -160,7 +126,7 @@ func (cr *ChatRoom) Leave(name, color string) {
 	host := client.Host()
 	name = client.name // grab the name from here for proper capitalization
 	client.conn.Close()
-	cr.delClient(suid)
+	cr.delClient(id)
 
 	cr.AddEventMsg(common.EvLeave, name, color)
 	common.LogChatf("[leave] %s %s\n", host, name)
@@ -171,7 +137,7 @@ func (cr *ChatRoom) Kick(name string) error {
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock() //preventing simultaneous access to the `clients` map
 
-	client, suid, err := cr.getClient(name)
+	client, id, err := cr.getClient(name)
 	if err != nil {
 		return fmt.Errorf("Unable to get client for name " + name)
 	}
@@ -187,7 +153,7 @@ func (cr *ChatRoom) Kick(name string) error {
 	color := client.color
 	host := client.Host()
 	client.conn.Close()
-	cr.delClient(suid)
+	cr.delClient(id)
 
 	cr.AddEventMsg(common.EvKick, name, color)
 	common.LogInfof("[kick] %s %s has been kicked\n", host, name)
@@ -198,7 +164,7 @@ func (cr *ChatRoom) Ban(name string) error {
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock()
 
-	client, suid, err := cr.getClient(name)
+	client, id, err := cr.getClient(name)
 	if err != nil {
 		common.LogErrorf("[ban] Unable to get client for name %q\n", name)
 		return fmt.Errorf("Cannot find that name")
@@ -212,14 +178,16 @@ func (cr *ChatRoom) Ban(name string) error {
 	host := client.Host()
 	color := client.color
 
+	// Remove the named client
 	client.conn.Close()
-	cr.delClient(suid)
+	cr.delClient(id)
 
-	for suid, c := range cr.clients {
+	// Remove additional clients on that IP address
+	for id, c := range cr.clients {
 		if c.Host() == host {
 			names = append(names, client.name)
 			client.conn.Close()
-			cr.delClient(suid)
+			cr.delClient(id)
 		}
 	}
 
@@ -348,32 +316,6 @@ func (cr *ChatRoom) Broadcast() {
 			for _, client := range cr.clients {
 				go send(msg, client)
 			}
-
-			// Only send Chat and Event stuff to temp clients
-			if msg.Type != common.DTChat && msg.Type != common.DTEvent {
-				// Put this here instead of having two lock/unlock blocks.  We want
-				// to avoid a case where a client is removed from the temp users
-				// and added to the clients between the two blocks.
-				cr.clientsMtx.Unlock()
-				break
-			}
-
-			data, err := msg.ToJSON()
-			if err != nil {
-				common.LogErrorf("Error converting ChatData to ChatDataJSON: %v\n", err)
-				cr.clientsMtx.Unlock()
-				break
-			}
-
-			for uuid, conn := range cr.tempConn {
-				go func(c *chatConnection, suid string) {
-					err = c.WriteData(data)
-					if err != nil {
-						common.LogErrorf("Error writing data to connection: %v\n", err)
-						delete(cr.tempConn, suid)
-					}
-				}(conn, uuid)
-			}
 			cr.clientsMtx.Unlock()
 		case msg := <-cr.modqueue:
 			cr.clientsMtx.Lock()
@@ -416,18 +358,18 @@ func (cr *ChatRoom) GetNames() []string {
 	return names
 }
 
-func (cr *ChatRoom) delClient(suid string) {
-	delete(cr.clients, strings.ToLower(suid))
+func (cr *ChatRoom) delClient(sliceId int) {
+	cr.clients = append(cr.clients[:sliceId], cr.clients[sliceId+1:]...)
 }
 
-func (cr *ChatRoom) getClient(name string) (*Client, string, error) {
-	for suid, client := range cr.clients {
+func (cr *ChatRoom) getClient(name string) (*Client, int, error) {
+	for id, client := range cr.clients {
 		if client.name == name {
-			return client, suid, nil
+			return client, id, nil
 		}
 	}
 
-	return nil, "", fmt.Errorf("client with that name not found")
+	return nil, -1, fmt.Errorf("client with that name not found")
 }
 
 func (cr *ChatRoom) generateModPass() string {
