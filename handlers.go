@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -223,12 +222,6 @@ func checkRoomAccess(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func handlePinTemplate(w http.ResponseWriter, r *http.Request, errorMessage string) {
-	t, err := template.ParseFiles("./static/base.html", "./static/thedoor.html")
-	if err != nil {
-		common.LogErrorf("Error parsing template file: %v", err)
-		return
-	}
-
 	type Data struct {
 		Title      string
 		SubmitText string
@@ -245,19 +238,13 @@ func handlePinTemplate(w http.ResponseWriter, r *http.Request, errorMessage stri
 		Notice:     errorMessage,
 	}
 
-	err = t.Execute(w, data)
+	err := common.ExecuteServerTemplate(w, "pin", data)
 	if err != nil {
 		common.LogErrorf("Error executing file, %v", err)
 	}
 }
 
 func handleHelpTemplate(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("./static/base.html", "./static/help.html")
-	if err != nil {
-		common.LogErrorf("Error parsing template file, %v\n", err)
-		return
-	}
-
 	type Data struct {
 		Title         string
 		Commands      map[string]string
@@ -278,7 +265,7 @@ func handleHelpTemplate(w http.ResponseWriter, r *http.Request) {
 		data.AdminCommands = getHelp(common.CmdlAdmin)
 	}
 
-	err = t.Execute(w, data)
+	err := common.ExecuteServerTemplate(w, "help", data)
 	if err != nil {
 		common.LogErrorf("Error executing file, %v", err)
 	}
@@ -314,12 +301,6 @@ func handleIndexTemplate(w http.ResponseWriter, r *http.Request) {
 		common.LogDebugln("Granted access")
 	}
 
-	t, err := template.ParseFiles("./static/base.html", "./static/main.html")
-	if err != nil {
-		common.LogErrorf("Error parsing template file, %v\n", err)
-		return
-	}
-
 	type Data struct {
 		Video, Chat         bool
 		MessageHistoryCount int
@@ -347,7 +328,7 @@ func handleIndexTemplate(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-cache, must-revalidate")
 	}
 
-	err = t.Execute(w, data)
+	err := common.ExecuteServerTemplate(w, "main", data)
 	if err != nil {
 		common.LogErrorf("Error executing file, %v", err)
 	}

@@ -51,6 +51,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err := common.InitTemplates(); err != nil {
+		common.LogErrorln(err)
+		os.Exit(1)
+	}
+
 	exit := make(chan bool)
 	go handleInterrupt(exit)
 
