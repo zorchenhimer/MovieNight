@@ -76,7 +76,7 @@ func (cr *ChatRoom) JoinTemp(conn *chatConnection) (string, error) {
 
 //registering a new client
 //returns pointer to a Client, or Nil, if the name is already taken
-func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
+func (cr *ChatRoom) Join(uid string, data common.JoinData) (*Client, error) {
 	defer cr.clientsMtx.Unlock()
 	cr.clientsMtx.Lock()
 
@@ -85,41 +85,63 @@ func (cr *ChatRoom) Join(name, uid string) (*Client, error) {
 		return nil, errors.New("connection is missing from temp connections")
 	}
 
-	if !common.IsValidName(name) {
-		return nil, UserFormatError{Name: name}
-	}
-
-	nameLower := strings.ToLower(name)
-	for _, client := range cr.clients {
-		if strings.ToLower(client.name) == nameLower {
-			return nil, UserTakenError{Name: name}
+	sendHiddenMessage := func(cd common.ClientDataType, i interface{}) {
+		// If the message cant be converted, then just don't send
+		if d, err := common.NewChatHiddenMessage(cd, i).ToJSON(); err == nil {
+			conn.WriteJSON(d)
 		}
 	}
 
-	client, err := NewClient(conn, cr, name, common.RandomColor())
+	if !common.IsValidName(data.Name) {
+		sendHiddenMessage(common.CdNotify, "Invalid name")
+		return nil, UserFormatError{Name: data.Name}
+	}
+
+	nameLower := strings.ToLower(data.Name)
+	for _, client := range cr.clients {
+		if strings.ToLower(client.name) == nameLower {
+			sendHiddenMessage(common.CdNotify, "Name already taken")
+			return nil, UserTakenError{Name: data.Name}
+		}
+	}
+
+	// If color is invalid, then set it to a random color
+	if !common.IsValidColor(data.Color) {
+		data.Color = common.RandomColor()
+	}
+
+	client, err := NewClient(conn, cr, data.Name, data.Color)
 	if err != nil {
+		sendHiddenMessage(common.CdNotify, "Could not join client")
 		return nil, fmt.Errorf("Unable to join client: %v", err)
+	}
+
+	// Overwrite to use client instead
+	sendHiddenMessage = func(cd common.ClientDataType, i interface{}) {
+		client.SendChatData(common.NewChatHiddenMessage(cd, i))
 	}
 
 	host := client.Host()
 
 	if banned, names := settings.IsBanned(host); banned {
-		return nil, newBannedUserError(host, name, names)
+		sendHiddenMessage(common.CdNotify, "You are banned")
+		return nil, newBannedUserError(host, data.Name, names)
 	}
 
 	cr.clients[uid] = client
 	delete(cr.tempConn, uid)
 
-	common.LogChatf("[join] %s %s\n", host, name)
+	common.LogChatf("[join] %s %s\n", host, data.Color)
 	playingCommand, err := common.NewChatCommand(common.CmdPlaying, []string{cr.playing, cr.playingLink}).ToJSON()
 	if err != nil {
 		common.LogErrorf("Unable to encode playing command on join: %s\n", err)
 	} else {
 		client.Send(playingCommand)
 	}
-	cr.AddEventMsg(common.EvJoin, name, client.color)
+	cr.AddEventMsg(common.EvJoin, data.Name, data.Color)
 
-	client.SendChatData(common.NewChatHiddenMessage(common.CdEmote, common.Emotes))
+	sendHiddenMessage(common.CdJoin, nil)
+	sendHiddenMessage(common.CdEmote, common.Emotes)
 
 	return client, nil
 }

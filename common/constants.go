@@ -10,6 +10,8 @@ const (
 	CdAuth                          // get the auth levels of the user
 	CdColor                         // get the users color
 	CdEmote                         // get a list of emotes
+	CdJoin                          // a message saying the client wants to join
+	CdNotify                        // a notify message for the client to show
 )
 
 type DataType int

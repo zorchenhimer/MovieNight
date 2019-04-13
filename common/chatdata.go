@@ -242,3 +242,8 @@ func DecodeData(rawjson string) (ChatDataJSON, error) {
 	err := json.Unmarshal([]byte(rawjson), &data)
 	return data, err
 }
+
+type JoinData struct {
+	Name  string
+	Color string
+}

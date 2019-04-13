@@ -19,6 +19,41 @@ var (
 	auth      common.CommandLevel
 )
 
+func getElement(s string) js.Value {
+	return js.Get("document").Call("getElementById", s)
+}
+
+func join(v []js.Value) {
+	color := js.Call("getCookie", "color").String()
+	if color == "" {
+		// If a color is not set, do a random color
+		color = common.RandomColor()
+	} else if !common.IsValidColor(color) {
+		// Don't show the user the error, just clear the cookie
+		common.LogInfof("%#v is not a valid color, clearing cookie", color)
+		js.Call("deleteCookie", "color")
+	}
+
+	joinData, err := json.Marshal(common.JoinData{
+		Name:  getElement("name").Get("value").String(),
+		Color: color,
+	})
+	if err != nil {
+		notify("Error prepping data for join")
+		common.LogErrorf("Could not prep data: %#v\n", err)
+	}
+
+	data, err := json.Marshal(common.ClientData{
+		Type:    common.CdJoin,
+		Message: string(joinData),
+	})
+	if err != nil {
+		common.LogErrorf("Could not marshal data: %v", err)
+	}
+
+	js.Call("websocketSend", string(data))
+}
+
 func recieve(v []js.Value) {
 	if len(v) == 0 {
 		fmt.Println("No data received")
@@ -61,6 +96,11 @@ func recieve(v []js.Value) {
 				emotes[k] = v.(string)
 			}
 			sort.Strings(emoteNames)
+		case common.CdJoin:
+			notify("")
+			js.Call("openChat")
+		case common.CdNotify:
+			notify(h.Data.(string))
 		}
 	case common.DTEvent:
 		d := chat.Data.(common.DataEvent)
@@ -152,6 +192,10 @@ func showChatError(err error) {
 	}
 }
 
+func notify(msg string) {
+	js.Call("setNotifyBox", msg)
+}
+
 func showTimestamp(v []js.Value) {
 	if len(v) != 1 {
 		// Don't bother with returning a value
@@ -165,13 +209,6 @@ func isValidColor(this js.Value, v []js.Value) interface{} {
 		return false
 	}
 	return common.IsValidColor(v[0].String())
-}
-
-func isValidName(this js.Value, v []js.Value) interface{} {
-	if len(v) != 1 {
-		return false
-	}
-	return common.IsValidName(v[0].String())
 }
 
 func debugValues(v []js.Value) {
@@ -190,15 +227,17 @@ func debugValues(v []js.Value) {
 }
 
 func main() {
+	common.SetupLogging(common.LLDebug, "")
+
 	js.Set("processMessageKey", js.FuncOf(processMessageKey))
 	js.Set("sendMessage", js.FuncOf(send))
 	js.Set("isValidColor", js.FuncOf(isValidColor))
-	js.Set("isValidName", js.FuncOf(isValidName))
 
 	js.Set("recieveMessage", js.CallbackOf(recieve))
 	js.Set("processMessage", js.CallbackOf(processMessage))
 	js.Set("debugValues", js.CallbackOf(debugValues))
 	js.Set("showTimestamp", js.CallbackOf(showTimestamp))
+	js.Set("join", js.CallbackOf(join))
 
 	go func() {
 		time.Sleep(time.Second * 1)

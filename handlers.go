@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -119,12 +120,20 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 			var data common.ClientData
 			err := chatConn.ReadData(&data)
 			if err != nil {
-				common.LogInfof("[handler] Client closed connection: %s\n", conn.RemoteAddr().String())
+				common.LogInfof("[handler] Client closed connection: %s: %v\n",
+					conn.RemoteAddr().String(), err)
 				conn.Close()
 				return
 			}
 
-			client, err = chat.Join(data.Message, uid)
+			var joinData common.JoinData
+			err = json.Unmarshal([]byte(data.Message), &joinData)
+			if err != nil {
+				common.LogInfof("[handler] Could not unmarshal join data %#v: %v\n", data.Message, err)
+				continue
+			}
+
+			client, err = chat.Join(uid, joinData)
 			if err != nil {
 				switch err.(type) {
 				case UserFormatError, UserTakenError:

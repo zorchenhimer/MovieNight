@@ -16,6 +16,10 @@ function getCookie(cname) {
     return "";
 }
 
+function deleteCookie(cname) {
+    document.cookie = `${cname}=;expires=Thu, 01 Jan 1970 00:00:01 GMT`
+}
+
 function setPlaying(title, link) {
     if (title !== "") {
         $('#playing').text(title);
@@ -94,28 +98,6 @@ function closeChat() {
     $("#hidden").css("display", "none")
     setNotifyBox("That name was already used!");
     inChat = false;
-}
-
-function join() {
-    let name = $("#name").val();
-    if (!isValidName(name)) {
-        setNotifyBox("Please input a valid name");
-        return;
-    }
-    if (!sendMessage($("#name").val())) {
-        setNotifyBox("could not join");
-        return;
-    }
-    setNotifyBox();
-    openChat();
-
-    let color = getCookie("color");
-    if (color !== "") {
-        // Do a timeout because timings
-        setTimeout(() => {
-            sendMessage("/color " + color);
-        }, 250);
-    }
 }
 
 function websocketSend(data) {
