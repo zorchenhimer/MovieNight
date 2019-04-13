@@ -68,6 +68,7 @@ func wsWasmFile(w http.ResponseWriter, r *http.Request) {
 	if settings.NoCache {
 		w.Header().Set("Cache-Control", "no-cache, must-revalidate")
 	}
+	common.LogDebugln("[static] serving wasm file")
 	http.ServeFile(w, r, "./static/main.wasm")
 }
 
