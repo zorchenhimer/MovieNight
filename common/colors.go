@@ -1,10 +1,12 @@
 package common
 
 import (
+	"errors"
+	"fmt"
+	"math/rand"
 	"regexp"
+	"strconv"
 	"strings"
-
-	"github.com/lucasb-eyer/go-colorful"
 )
 
 // Colors holds all the valid html color names for MovieNight
@@ -40,13 +42,13 @@ var Colors = []string{
 }
 
 var (
-	regexColor = regexp.MustCompile(`^#([0-9A-Fa-f]{3}){1,2}$`)
+	regexColor = regexp.MustCompile(`^([0-9A-Fa-f]{3}){1,2}$`)
 )
 
 // IsValidColor takes a string s and compares it against a list of css color names.
 // It also accepts hex codes in the form of #RGB and #RRGGBB
 func IsValidColor(s string) bool {
-	s = strings.ToLower(s)
+	s = strings.TrimLeft(strings.ToLower(s), "#")
 	for _, c := range Colors {
 		if s == c {
 			return true
@@ -54,21 +56,77 @@ func IsValidColor(s string) bool {
 	}
 
 	if regexColor.MatchString(s) {
-		c, err := colorful.Hex(s)
+		r, g, b, err := hex(s)
 		if err != nil {
 			return false
 		}
-		total := c.R + c.G + c.B
-		return total > 0.7 && c.B/total < 0.7
+		total := float32(r + g + b)
+		fmt.Println(total)
+		fmt.Println(float32(b) / total)
+		return total > 0.7 && float32(b)/total < 0.7
 	}
 	return false
 }
 
 // RandomColor returns a hex color code
 func RandomColor() string {
-	var color colorful.Color
-	for !IsValidColor(color.Hex()) {
-		color = colorful.FastHappyColor()
+	var color string
+	for !IsValidColor(color) {
+		color = ""
+		for i := 0; i < 3; i++ {
+			s := strconv.FormatInt(rand.Int63n(255), 16)
+			if len(s) == 1 {
+				s = "0" + s
+			}
+			color += s
+		}
 	}
-	return color.Hex()
+	return "#" + color
+}
+
+// hex returns R, G, B as values
+func hex(s string) (int, int, int, error) {
+	// Make the string just the base16 numbers
+	s = strings.TrimLeft(s, "#")
+
+	if len(s) == 3 {
+		var err error
+		s, err = hexThreeToSix(s)
+		if err != nil {
+			return 0, 0, 0, err
+		}
+	}
+
+	if len(s) == 6 {
+		R64, err := strconv.ParseInt(s[0:2], 16, 32)
+		if err != nil {
+			return 0, 0, 0, err
+		}
+
+		G64, err := strconv.ParseInt(s[2:4], 16, 32)
+		if err != nil {
+			return 0, 0, 0, err
+		}
+
+		B64, err := strconv.ParseInt(s[4:6], 16, 32)
+		if err != nil {
+			return 0, 0, 0, err
+		}
+
+		return int(R64), int(G64), int(B64), nil
+	}
+	return 0, 0, 0, errors.New("incorrect format")
+}
+
+func hexThreeToSix(s string) (string, error) {
+	if len(s) != 3 {
+		return "", fmt.Errorf("%d is the incorrect length of string for convertsion", len(s))
+	}
+
+	h := ""
+	for i := 0; i < 3; i++ {
+		h += string(s[i])
+		h += string(s[i])
+	}
+	return h, nil
 }
