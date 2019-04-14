@@ -109,6 +109,8 @@ func (cr *ChatRoom) Join(conn *chatConnection, data common.JoinData) (*Client, e
 	sendHiddenMessage(common.CdJoin, nil)
 	sendHiddenMessage(common.CdEmote, common.Emotes)
 
+	stats.updateMaxUsers(len(cr.clients))
+
 	return client, nil
 }
 

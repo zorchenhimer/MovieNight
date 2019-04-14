@@ -249,6 +249,23 @@ var commands = &CommandControl{
 				return "", nil
 			},
 		},
+
+		common.CNStats.String(): Command{
+			HelpText: "Show some stats for stream.",
+			Function: func(cl *Client, args []string) (string, error) {
+				cl.belongsTo.clientsMtx.Lock()
+				users := len(cl.belongsTo.clients)
+				cl.belongsTo.clientsMtx.Unlock()
+
+				// Just print max users and time alive here
+				return fmt.Sprintf("Current users in chat: <b>%d</b><br />Max users in chat: <b>%d</b><br />Server uptime: <b>%s</b><br />Stream uptime: <b>%s</b>",
+					users,
+					stats.getMaxUsers(),
+					time.Since(stats.start),
+					stats.getStreamLength(),
+				), nil
+			},
+		},
 	},
 
 	mod: map[string]Command{

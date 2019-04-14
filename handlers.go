@@ -373,9 +373,13 @@ func handlePublish(conn *rtmp.Conn) {
 		return
 	}
 
+	stats.startStream()
+
 	common.LogInfoln("Stream started")
 	avutil.CopyPackets(ch.que, conn)
 	common.LogInfoln("Stream finished")
+
+	stats.endStream()
 
 	l.Lock()
 	delete(channels, streamPath)

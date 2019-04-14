@@ -21,6 +21,7 @@ var (
 	CNAuth   ChatCommandNames = []string{"auth"}
 	CNUsers  ChatCommandNames = []string{"users"}
 	CNNick   ChatCommandNames = []string{"nick", "name"}
+	CNStats  ChatCommandNames = []string{"stats"}
 	// Mod Commands
 	CNSv      ChatCommandNames = []string{"sv"}
 	CNPlaying ChatCommandNames = []string{"playing"}
@@ -50,6 +51,7 @@ var ChatCommands = []ChatCommandNames{
 	CNAuth,
 	CNUsers,
 	CNNick,
+	CNStats,
 
 	// Mod
 	CNSv, CNPlaying, CNUnmod, CNKick, CNBan, CNUnban, CNPurge, CNPin,
