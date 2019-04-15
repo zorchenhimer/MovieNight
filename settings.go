@@ -36,7 +36,8 @@ type Settings struct {
 	LogLevel        common.LogLevel
 	LogFile         string
 	RoomAccess      AccessMode
-	RoomAccessPin   string // auto generate this,
+	RoomAccessPin   string // The current pin
+	NewPin          bool   // Auto generate a new pin on start.  Overwrites RoomAccessPin if set.
 
 	// Rate limiting stuff, in seconds
 	RateLimitChat      time.Duration
@@ -132,8 +133,12 @@ func LoadSettings(filename string) (*Settings, error) {
 		s.RoomAccess = AccessOpen
 	}
 
-	if s.RoomAccess != AccessOpen && len(s.RoomAccessPin) == 0 {
-		s.RoomAccessPin = "1234"
+	if (s.RoomAccess != AccessOpen && len(s.RoomAccessPin) == 0) || s.NewPin {
+		pin, err := s.generateNewPin()
+		if err != nil {
+			common.LogErrorf("Unable to generate new pin: %v", err)
+		}
+		common.LogInfof("New pin generated: %s", pin)
 	}
 
 	// Don't use LogInfof() here.  Log isn't setup yet when LoadSettings() is called from init().
