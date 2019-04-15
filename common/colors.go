@@ -7,7 +7,12 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
+
+func init() {
+	rand.Seed(int64(time.Now().Nanosecond()))
+}
 
 // Colors holds all the valid html color names for MovieNight
 // the values in colors must be lowercase so it matches with the color input
@@ -61,8 +66,6 @@ func IsValidColor(s string) bool {
 			return false
 		}
 		total := float32(r + g + b)
-		fmt.Println(total)
-		fmt.Println(float32(b) / total)
 		return total > 0.7 && float32(b)/total < 0.7
 	}
 	return false
