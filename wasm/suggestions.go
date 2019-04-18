@@ -160,7 +160,7 @@ func updateSuggestionDiv() {
 	if len(filteredSug) > 0 {
 		// set current name to first if not set already
 		if currentSug == "" {
-			currentSug = filteredSug[0]
+			currentSug = filteredSug[len(filteredSug)-1]
 		}
 
 		var hascurrentSuggestion bool
