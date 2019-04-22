@@ -478,6 +478,7 @@ var commands = &CommandControl{
 				case AccessPin:
 					// A pin/password was provided, use it.
 					if len(args) == 2 {
+						// TODO: make this a bit more robust.  Currently, only accepts a single word as a pin/password
 						settings.RoomAccessPin = args[1]
 
 						// A pin/password was not provided, generate a new one.

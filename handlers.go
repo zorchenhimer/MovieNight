@@ -179,7 +179,7 @@ func checkRoomAccess(w http.ResponseWriter, r *http.Request) bool {
 					http.Error(w, "Unable to get session data", http.StatusInternalServerError)
 				}
 
-				postPin := r.Form.Get("txtInput")
+				postPin := strings.TrimSpace(r.Form.Get("txtInput"))
 				common.LogDebugf("Received pin: %s\n", postPin)
 				if postPin == settings.RoomAccessPin {
 					// Pin is correct.  Save it to session and return true.
