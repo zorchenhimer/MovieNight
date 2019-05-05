@@ -40,7 +40,7 @@ func setupSettings() error {
 }
 
 func main() {
-	flag.StringVar(&addr, "l", ":8089", "host:port of the MovieNight")
+	flag.StringVar(&addr, "l", "", "host:port of the MovieNight")
 	flag.StringVar(&sKey, "k", "", "Stream key, to protect your stream")
 	flag.Parse()
 
@@ -66,8 +66,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	if addr != "" {
+	if addr == "" {
 		addr = settings.ListenAddress
+	}
+
+	if addr[0] != ':' {
+		addr = ":" + addr
 	}
 
 	// A stream key was passed on the command line.  Use it, but don't save
