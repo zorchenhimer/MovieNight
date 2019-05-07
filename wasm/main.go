@@ -86,7 +86,7 @@ func recieve(v []js.Value) {
 			auth = h.Data.(common.CommandLevel)
 		case common.CdColor:
 			color = h.Data.(string)
-			js.Get("document").Set("cookie", fmt.Sprintf("color=%s;", color))
+			js.Get("document").Set("cookie", fmt.Sprintf("color=%s; expires=Fri, 31 Dec 9999 23:59:59 GMT", color))
 		case common.CdEmote:
 			data := h.Data.(map[string]interface{})
 			emoteNames = make([]string, 0, len(data))
