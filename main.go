@@ -14,9 +14,10 @@ import (
 )
 
 var (
-	addr  string
-	sKey  string
-	stats = newStreamStats()
+	pullEmotes bool
+	addr       string
+	sKey       string
+	stats      = newStreamStats()
 )
 
 func setupSettings() error {
@@ -42,6 +43,7 @@ func setupSettings() error {
 func main() {
 	flag.StringVar(&addr, "l", "", "host:port of the MovieNight")
 	flag.StringVar(&sKey, "k", "", "Stream key, to protect your stream")
+	flag.BoolVar(&pullEmotes, "e", false, "Pull emotes")
 	flag.Parse()
 
 	format.RegisterAll()
@@ -49,6 +51,16 @@ func main() {
 	if err := setupSettings(); err != nil {
 		fmt.Printf("Error loading settings: %v\n", err)
 		os.Exit(1)
+	}
+
+	if pullEmotes {
+		common.LogInfoln("Pulling emotes")
+		err := getEmotes(settings.ApprovedEmotes)
+		if err != nil {
+			common.LogErrorf("Error downloading emotes: %+v\n", err)
+			common.LogErrorf("Error downloading emotes: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	if err := common.InitTemplates(); err != nil {
@@ -61,7 +73,8 @@ func main() {
 
 	// Load emotes before starting server.
 	var err error
-	if chat, err = newChatRoom(); err != nil {
+	chat, err = newChatRoom()
+	if err != nil {
 		common.LogErrorln(err)
 		os.Exit(1)
 	}

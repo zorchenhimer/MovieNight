@@ -4,164 +4,224 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 
-	"github.com/zorchenhimer/MovieNight/common"
+	"github.com/pkg/errors"
 )
 
-type twitchChannel struct {
-	ChannelName     string            `json:"channel_name"`
-	DisplayName     string            `json:"display_name"`
-	ChannelId       string            `json:"channel_id"`
-	BroadcasterType string            `json:"broadcaster_type"`
-	Plans           map[string]string `json:"plans"`
-	Emotes          []struct {
-		Code string `json:"code"`
-		Set  int    `json:"emoticon_set"`
-		Id   int    `json:"id"`
-	} `json:"emotes"`
-	BaseSetId   string `json:"base_set_id"`
-	GeneratedAt string `json:"generated_at"`
+const emoteDir = "./static/emotes/"
+
+var Emotes map[string]Emote
+
+type Emote struct {
+	Dir  string
+	File string
 }
 
-// Used in settings
-type EmoteSet struct {
-	Channel string // channel name
-	Prefix  string // emote prefix
-	Found   bool   `json:"-"`
+func (e Emote) path() string {
+	return path.Join(e.Dir, e.File)
 }
 
-const subscriberJson string = `subscribers.json`
+type TwitchUser struct {
+	ID    string
+	Login string
+}
 
-// Download a single channel's emote set
-func (tc *twitchChannel) downloadEmotes() (*EmoteSet, error) {
-	es := &EmoteSet{Channel: strings.ToLower(tc.ChannelName)}
-	for _, emote := range tc.Emotes {
-		url := fmt.Sprintf(`https://static-cdn.jtvnw.net/emoticons/v1/%d/1.0`, emote.Id)
-		png := `static/emotes/` + emote.Code + `.png`
+type EmoteInfo struct {
+	ID   int
+	Code string
+}
 
-		if len(es.Prefix) == 0 {
-			// For each letter
-			for i := 0; i < len(emote.Code); i++ {
-				// Find the first capital
-				b := emote.Code[i]
-				if b >= 'A' && b <= 'Z' {
-					es.Prefix = emote.Code[0 : i-1]
-					common.LogDebugf("Found prefix for channel %q: %q (%q)\n", es.Channel, es.Prefix, emote)
-					break
+// func loadEmotes() error {
+// 	newEmotes := map[string]string{}
+
+// 	emotePNGs, err := filepath.Glob("./static/emotes/*.png")
+// 	if err != nil {
+// 		return 0, fmt.Errorf("unable to glob emote directory: %s\n", err)
+// 	}
+
+// 	emoteGIFs, err := filepath.Glob("./static/emotes/*.gif")
+// 	if err != nil {
+// 		return 0, fmt.Errorf("unable to glob emote directory: %s\n", err)
+// 	}
+// 	globbed_files := []string(emotePNGs)
+// 	globbed_files = append(globbed_files, emoteGIFs...)
+
+// 	LogInfoln("Loading emotes...")
+// 	emInfo := []string{}
+// 	for _, file := range globbed_files {
+// 		file = filepath.Base(file)
+// 		key := file[0 : len(file)-4]
+// 		newEmotes[key] = file
+// 		emInfo = append(emInfo, key)
+// 	}
+// 	Emotes = newEmotes
+// 	LogInfoln(strings.Join(emInfo, " "))
+// 	return len(Emotes), nil
+// }
+
+func loadEmotes() error {
+	fmt.Println(processEmoteDir(emoteDir))
+	return nil
+}
+
+func processEmoteDir(path string) ([]Emote, error) {
+	dir, err := os.Open(path)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not open emoteDir:")
+	}
+
+	files, err := dir.Readdir(0)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get files:")
+	}
+
+	var emotes []Emote
+	for _, file := range files {
+		emotes = append(emotes, Emote{Dir: path, File: file.Name()})
+	}
+
+	subdir, err := dir.Readdirnames(0)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get sub directories:")
+	}
+
+	for _, d := range subdir {
+		subEmotes, err := processEmoteDir(d)
+		if err != nil {
+			return nil, errors.Wrapf(err, "could not process sub directory \"%s\":", d)
+		}
+		emotes = append(emotes, subEmotes...)
+	}
+
+	return emotes, nil
+}
+
+func getEmotes(names []string) error {
+	users := getUserIDs(names)
+	users = append(users, TwitchUser{ID: "0", Login: "global"})
+
+	for _, user := range users {
+		emotes, cheers, err := getChannelEmotes(user.ID)
+		if err != nil {
+			return errors.Wrapf(err, "could not get emote data for \"%s\"", user.ID)
+		}
+
+		emoteUserDir := path.Join(emoteDir, "twitch", user.Login)
+		if _, err := os.Stat(emoteUserDir); os.IsNotExist(err) {
+			os.MkdirAll(emoteUserDir, os.ModePerm)
+		}
+
+		for _, emote := range emotes {
+			if !strings.ContainsAny(emote.Code, `:;\[]|?&`) {
+				filePath := path.Join(emoteUserDir, emote.Code+".png")
+				file, err := os.Create(filePath)
+				if err != nil {
+
+					return errors.Wrapf(err, "could not create emote file in path \"%s\":", filePath)
+				}
+
+				err = downloadEmote(emote.ID, file)
+				if err != nil {
+					return errors.Wrapf(err, "could not download emote %s:", emote.Code)
 				}
 			}
 		}
 
-		resp, err := http.Get(url)
-		if err != nil {
-			return nil, err
-		}
+		for amount, sizes := range cheers {
+			name := fmt.Sprintf("%sCheer%s.gif", user.Login, amount)
+			filePath := path.Join(emoteUserDir, name)
+			file, err := os.Create(filePath)
+			if err != nil {
+				return errors.Wrapf(err, "could not create emote file in path \"%s\":", filePath)
+			}
 
-		f, err := os.Create(png)
-		if err != nil {
-			return nil, err
-		}
-
-		_, err = io.Copy(f, resp.Body)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return es, nil
-}
-
-func GetEmotes(names []string) ([]*EmoteSet, error) {
-	// Do this up-front
-	for i := 0; i < len(names); i++ {
-		names[i] = strings.ToLower(names[i])
-	}
-
-	channels, err := findChannels(names)
-	if err != nil {
-		return nil, fmt.Errorf("Error reading %q: %v", subscriberJson, err)
-	}
-
-	emoteSets := []*EmoteSet{}
-	for _, c := range channels {
-		es, err := c.downloadEmotes()
-		if err != nil {
-			return nil, fmt.Errorf("Error downloading emotes: %v", err)
-		}
-		emoteSets = append(emoteSets, es)
-	}
-
-	for _, es := range emoteSets {
-		found := false
-		for _, name := range names {
-			if es.Channel == name {
-				found = true
-				break
+			err = downloadCheerEmote(sizes["4"], file)
+			if err != nil {
+				return errors.Wrapf(err, "could not download emote %s:", name)
 			}
 		}
-		if !found {
-			es.Found = false
-		}
 	}
-
-	return emoteSets, nil
+	return nil
 }
 
-func findChannels(names []string) ([]twitchChannel, error) {
-	file, err := os.Open(subscriberJson)
+func getUserIDs(names []string) []TwitchUser {
+	logins := strings.Join(names, "&login=")
+	request, err := http.NewRequest("GET", fmt.Sprintf("https://api.twitch.tv/helix/users?login=%s", logins), nil)
 	if err != nil {
-		return nil, err
+		log.Fatalln("Error generating new request:", err)
 	}
-	defer file.Close()
+	request.Header.Set("Client-ID", settings.TwitchClientID)
 
-	data := []twitchChannel{}
-	dec := json.NewDecoder(file)
-
-	// Open bracket
-	_, err = dec.Token()
+	client := http.Client{}
+	resp, err := client.Do(request)
 	if err != nil {
-		return nil, err
+		log.Fatalln("Error sending request:", err)
 	}
 
-	done := false
-	for dec.More() && !done {
-		// opening bracket of channel
-		_, err = dec.Token()
-		if err != nil {
-			return nil, err
-		}
+	decoder := json.NewDecoder(resp.Body)
+	type userResponse struct {
+		Data []TwitchUser
+	}
+	var data userResponse
 
-		// Decode the channel stuff
-		var c twitchChannel
-		err = dec.Decode(&c)
-		if err != nil {
-			return nil, err
-		}
-
-		// Is this a channel we are looking for?
-		found := false
-		for _, search := range names {
-			if strings.ToLower(c.ChannelName) == search {
-				found = true
-				break
-			}
-		}
-
-		// Yes it is.  Add it to the data
-		if found {
-			data = append(data, c)
-		}
-
-		// Check for completion.  Don't bother parsing the rest of
-		// the json file if we've already found everything that we're
-		// looking for.
-		if len(data) == len(names) {
-			done = true
-		}
+	err = decoder.Decode(&data)
+	if err != nil {
+		log.Fatalln("Error decoding data:", err)
 	}
 
-	return data, nil
+	return data.Data
+}
+
+func getChannelEmotes(ID string) ([]EmoteInfo, map[string]map[string]string, error) {
+	resp, err := http.Get("https://api.twitchemotes.com/api/v4/channels/" + ID)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "could not get emotes")
+	}
+	decoder := json.NewDecoder(resp.Body)
+
+	type EmoteResponse struct {
+		Emotes     []EmoteInfo
+		Cheermotes map[string]map[string]string
+	}
+	var data EmoteResponse
+
+	err = decoder.Decode(&data)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "could not decode emotes")
+	}
+
+	return data.Emotes, data.Cheermotes, nil
+}
+
+func downloadEmote(ID int, file *os.File) error {
+	resp, err := http.Get(fmt.Sprintf("https://static-cdn.jtvnw.net/emoticons/v1/%d/3.0", ID))
+	if err != nil {
+		return errors.Errorf("could not download emote file %s: %v", file.Name(), err)
+	}
+	defer resp.Body.Close()
+
+	_, err = io.Copy(file, resp.Body)
+	if err != nil {
+		return errors.Errorf("could not save emote: %v", err)
+	}
+	return nil
+}
+
+func downloadCheerEmote(url string, file *os.File) error {
+	resp, err := http.Get(url)
+	if err != nil {
+		return errors.Errorf("could not download cheer file %s: %v", file.Name(), err)
+	}
+	defer resp.Body.Close()
+
+	_, err = io.Copy(file, resp.Body)
+	if err != nil {
+		return errors.Errorf("could not save cheer: %v", err)
+	}
+	return nil
 }

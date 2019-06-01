@@ -2,14 +2,23 @@ package common
 
 import (
 	"fmt"
-	"path/filepath"
+	"path"
 	"strings"
 )
 
-var Emotes map[string]string
+var Emotes map[string]EmotePath
+
+type EmotePath struct {
+	Dir  string
+	File string
+}
+
+func (e EmotePath) path() string {
+	return path.Join(e.Dir, e.File)
+}
 
 func EmoteToHtml(file, title string) string {
-	return fmt.Sprintf(`<img src="/emotes/%s" height="28px" title="%s" />`, file, title)
+	return fmt.Sprintf(`<img src="%s" height="28px" title="%s" />`, file, title)
 }
 
 func ParseEmotesArray(words []string) []string {
@@ -21,7 +30,7 @@ func ParseEmotesArray(words []string) []string {
 		found := false
 		for key, val := range Emotes {
 			if key == wordTrimmed {
-				newWords = append(newWords, EmoteToHtml(val, key))
+				newWords = append(newWords, EmoteToHtml(val.File, key))
 				found = true
 			}
 		}
@@ -35,32 +44,4 @@ func ParseEmotesArray(words []string) []string {
 func ParseEmotes(msg string) string {
 	words := ParseEmotesArray(strings.Split(msg, " "))
 	return strings.Join(words, " ")
-}
-
-func LoadEmotes() (int, error) {
-	newEmotes := map[string]string{}
-
-	emotePNGs, err := filepath.Glob("./static/emotes/*.png")
-	if err != nil {
-		return 0, fmt.Errorf("unable to glob emote directory: %s\n", err)
-	}
-
-	emoteGIFs, err := filepath.Glob("./static/emotes/*.gif")
-	if err != nil {
-		return 0, fmt.Errorf("unable to glob emote directory: %s\n", err)
-	}
-	globbed_files := []string(emotePNGs)
-	globbed_files = append(globbed_files, emoteGIFs...)
-
-	LogInfoln("Loading emotes...")
-	emInfo := []string{}
-	for _, file := range globbed_files {
-		file = filepath.Base(file)
-		key := file[0 : len(file)-4]
-		newEmotes[key] = file
-		emInfo = append(emInfo, key)
-	}
-	Emotes = newEmotes
-	LogInfoln(strings.Join(emInfo, " "))
-	return len(Emotes), nil
 }

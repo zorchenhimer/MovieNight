@@ -439,7 +439,7 @@ var commands = &CommandControl{
 			HelpText: "Reload the emotes on the server.",
 			Function: func(cl *Client, args []string) (string, error) {
 				cl.SendServerMessage("Reloading emotes")
-				num, err := common.LoadEmotes()
+				err := loadEmotes()
 				if err != nil {
 					common.LogErrorf("Unbale to reload emotes: %s\n", err)
 					return "", err
@@ -447,6 +447,8 @@ var commands = &CommandControl{
 
 				cl.belongsTo.AddChatMsg(common.NewChatHiddenMessage(common.CdEmote, common.Emotes))
 				cl.belongsTo.AddModNotice(cl.name + " has reloaded emotes")
+
+				num := len(Emotes)
 				common.LogInfof("Loaded %d emotes\n", num)
 				return fmt.Sprintf("Emotes loaded: %d", num), nil
 			},
@@ -525,7 +527,7 @@ var commands = &CommandControl{
 				go func() {
 
 					// Pretty sure this breaks on partial downloads (eg, one good channel and one non-existent)
-					_, err := GetEmotes(args)
+					err := getEmotes(args)
 					if err != nil {
 						cl.SendChatData(common.NewChatMessage("", "",
 							err.Error(),
@@ -533,8 +535,13 @@ var commands = &CommandControl{
 						return
 					}
 
+					// If the emotes were able to be downloaded, add the channels to settings
+					settingsMtx.Lock()
+					settings.ApprovedEmotes = append(settings.ApprovedEmotes, args...)
+					settingsMtx.Unlock()
+
 					// reload emotes now that new ones were added
-					_, err = common.LoadEmotes()
+					err = loadEmotes()
 					if err != nil {
 						cl.SendChatData(common.NewChatMessage("", "",
 							err.Error(),
