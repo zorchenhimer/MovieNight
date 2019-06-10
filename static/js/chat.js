@@ -120,6 +120,9 @@ function sendChat() {
 function updateSuggestionCss(m) {
     if ($("#suggestions").children().length > 0) {
         $("#suggestions").css("bottom", $("#msg").outerHeight(true) - 1 + "px");
+        $("#suggestions").css("display", "");
+    } else {
+        $("#suggestions").css("display", "none");
     }
 }
 
