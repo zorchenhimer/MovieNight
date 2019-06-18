@@ -22,7 +22,7 @@ clean:
 	-rm MovieNight.exe MovieNight ./static/main.wasm
 
 fmt:
-	goimports -w .
+	gofmt -w .
 
 get:
 	go get golang.org/x/tools/cmd/goimports
