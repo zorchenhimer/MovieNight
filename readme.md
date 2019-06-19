@@ -18,7 +18,6 @@ To just download and run:
 ```bash
 $ git clone https://github.com/zorchenhimer/MovieNight
 $ cd MovieNight
-$ make get	# only needs to be run once
 $ make
 $ ./MovieNight
 ```

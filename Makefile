@@ -24,9 +24,6 @@ clean:
 fmt:
 	gofmt -w .
 
-get:
-	go get golang.org/x/tools/cmd/goimports
-
 vet:
 	go vet $(TAGS) ./...
 	GOOS=js GOARCH=wasm go vet $(TAGS) ./...
