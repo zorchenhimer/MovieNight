@@ -40,7 +40,7 @@ func newChatRoom() (*ChatRoom, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error loading emotes: %s", err)
 	}
-	common.LogInfof("Loaded %d emotes\n", len(Emotes))
+	common.LogInfof("Loaded %d emotes\n", len(common.Emotes))
 
 	//the "heartbeat" for broadcasting messages
 	go cr.Broadcast()

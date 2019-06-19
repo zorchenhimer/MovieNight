@@ -438,19 +438,27 @@ var commands = &CommandControl{
 		common.CNReloadEmotes.String(): Command{
 			HelpText: "Reload the emotes on the server.",
 			Function: func(cl *Client, args []string) (string, error) {
-				cl.SendServerMessage("Reloading emotes")
-				err := loadEmotes()
-				if err != nil {
-					common.LogErrorf("Unbale to reload emotes: %s\n", err)
-					return "", err
-				}
+				go func() {
+					cl.SendServerMessage("Reloading emotes")
+					err := loadEmotes()
+					if err != nil {
+						common.LogErrorf("Unbale to reload emotes: %s\n", err)
+						//return "", err
 
-				cl.belongsTo.AddChatMsg(common.NewChatHiddenMessage(common.CdEmote, common.Emotes))
-				cl.belongsTo.AddModNotice(cl.name + " has reloaded emotes")
+						cl.SendChatData(common.NewChatMessage("", "",
+							err.Error(),
+							common.CmdlUser, common.MsgCommandResponse))
+						return
+					}
 
-				num := len(Emotes)
-				common.LogInfof("Loaded %d emotes\n", num)
-				return fmt.Sprintf("Emotes loaded: %d", num), nil
+					cl.belongsTo.AddChatMsg(common.NewChatHiddenMessage(common.CdEmote, common.Emotes))
+					cl.belongsTo.AddModNotice(cl.name + " has reloaded emotes")
+
+					num := len(common.Emotes)
+					common.LogInfof("Loaded %d emotes\n", num)
+					cl.belongsTo.AddModNotice(fmt.Sprintf("%s reloaded %d emotes.", cl.name, num))
+				}()
+				return "Reloading emotes...", nil
 			},
 		},
 

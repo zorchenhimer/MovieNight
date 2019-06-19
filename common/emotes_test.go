@@ -1,6 +1,7 @@
 package common
 
 import (
+	"os"
 	"testing"
 )
 
@@ -25,21 +26,12 @@ var data_good = map[string]string{
 }
 
 func TestMain(m *testing.M) {
-	Emotes = map[string]EmotePath{
-		"one": EmotePath{
-			Dir:  "",
-			File: "one.png",
-		},
-		"two": EmotePath{
-			Dir:  "",
-			File: "two.png",
-		},
-		"three": EmotePath{
-			Dir:  "",
-			File: "three.gif",
-		},
+	Emotes = map[string]string{
+		"one":   "/emotes/one.png",
+		"two":   "/emotes/two.png",
+		"three": "/emotes/three.gif",
 	}
-	// os.Exit(m.Run())
+	os.Exit(m.Run())
 }
 
 func TestEmotes_ParseEmotes(t *testing.T) {

@@ -1,6 +1,6 @@
 {
 	"MaxMessageCount": 300,
-    	"TitleLength": 50,
+	"TitleLength": 50,
 	"AdminPassword": "",
 	"Bans": [],
 	"StreamKey": "ALongStreamKey",

@@ -2,19 +2,41 @@ package common
 
 import (
 	"fmt"
-	"path"
+	"path/filepath"
+	"regexp"
 	"strings"
 )
 
-var Emotes map[string]EmotePath
+type EmotesMap map[string]string
 
-type EmotePath struct {
-	Dir  string
-	File string
+var Emotes EmotesMap
+
+var reStripStatic = regexp.MustCompile(`^(\\|/)?static`)
+
+func init() {
+	Emotes = map[string]string{}
 }
 
-func (e EmotePath) path() string {
-	return path.Join(e.Dir, e.File)
+func (em EmotesMap) Add(fullpath string) {
+	fullpath = reStripStatic.ReplaceAllLiteralString(fullpath, "")
+
+	base := filepath.Base(fullpath)
+	code := base[0 : len(base)-len(filepath.Ext(base))]
+
+	_, exists := em[code]
+
+	num := 0
+	for exists {
+		num += 1
+		_, exists = em[fmt.Sprintf("%s-%d", code, num)]
+	}
+
+	if num > 0 {
+		code = fmt.Sprintf("%s-%d", code, num)
+	}
+
+	Emotes[code] = fullpath
+	fmt.Printf("Added emote %s at path %q\n", code, fullpath)
 }
 
 func EmoteToHtml(file, title string) string {
@@ -30,7 +52,7 @@ func ParseEmotesArray(words []string) []string {
 		found := false
 		for key, val := range Emotes {
 			if key == wordTrimmed {
-				newWords = append(newWords, EmoteToHtml(val.File, key))
+				newWords = append(newWords, EmoteToHtml(val, key))
 				found = true
 			}
 		}

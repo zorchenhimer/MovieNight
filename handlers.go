@@ -79,8 +79,7 @@ func wsImages(w http.ResponseWriter, r *http.Request) {
 }
 
 func wsEmotes(w http.ResponseWriter, r *http.Request) {
-	emotefile := filepath.Base(r.URL.Path)
-	http.ServeFile(w, r, path.Join(emoteDir, emotefile))
+	http.ServeFile(w, r, path.Join("./static/", r.URL.Path))
 }
 
 // Handling the websocket
