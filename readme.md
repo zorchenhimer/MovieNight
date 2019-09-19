@@ -8,7 +8,7 @@ online.
 
 ## Build requirements
 
-- Go 1.12 or newer
+- Go 1.12 (see #94 for details)
 - GNU Make
 
 ## Install
