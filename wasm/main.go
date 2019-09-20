@@ -9,7 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dennwc/dom/js"
+	"syscall/js"
+
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
@@ -17,21 +18,22 @@ var (
 	timestamp bool
 	color     string
 	auth      common.CommandLevel
+	global    js.Value
 )
 
 func getElement(s string) js.Value {
-	return js.Get("document").Call("getElementById", s)
+	return global.Get("document").Call("getElementById", s)
 }
 
 func join(v []js.Value) {
-	color := js.Call("getCookie", "color").String()
+	color := global.Call("getCookie", "color").String()
 	if color == "" {
 		// If a color is not set, do a random color
 		color = common.RandomColor()
 	} else if !common.IsValidColor(color) {
 		// Don't show the user the error, just clear the cookie
 		common.LogInfof("%#v is not a valid color, clearing cookie", color)
-		js.Call("deleteCookie", "color")
+		global.Call("deleteCookie", "color")
 	}
 
 	joinData, err := json.Marshal(common.JoinData{
@@ -51,7 +53,7 @@ func join(v []js.Value) {
 		common.LogErrorf("Could not marshal data: %v", err)
 	}
 
-	js.Call("websocketSend", string(data))
+	global.Call("websocketSend", string(data))
 }
 
 func recieve(v []js.Value) {
@@ -63,7 +65,7 @@ func recieve(v []js.Value) {
 	chatJSON, err := common.DecodeData(v[0].String())
 	if err != nil {
 		fmt.Printf("Error decoding data: %s\n", err)
-		js.Call("appendMessages", fmt.Sprintf("<div>%v</div>", v))
+		global.Call("appendMessages", fmt.Sprintf("<div>%v</div>", v))
 		return
 	}
 
@@ -86,7 +88,7 @@ func recieve(v []js.Value) {
 			auth = h.Data.(common.CommandLevel)
 		case common.CdColor:
 			color = h.Data.(string)
-			js.Get("document").Set("cookie", fmt.Sprintf("color=%s; expires=Fri, 31 Dec 9999 23:59:59 GMT", color))
+			global.Get("document").Set("cookie", fmt.Sprintf("color=%s; expires=Fri, 31 Dec 9999 23:59:59 GMT", color))
 		case common.CdEmote:
 			data := h.Data.(map[string]interface{})
 			emoteNames = make([]string, 0, len(data))
@@ -98,7 +100,7 @@ func recieve(v []js.Value) {
 			sort.Strings(emoteNames)
 		case common.CdJoin:
 			notify("")
-			js.Call("openChat")
+			global.Call("openChat")
 		case common.CdNotify:
 			notify(h.Data.(string))
 		}
@@ -126,18 +128,18 @@ func recieve(v []js.Value) {
 		switch d.Command {
 		case common.CmdPlaying:
 			if d.Arguments == nil || len(d.Arguments) == 0 {
-				js.Call("setPlaying", "", "")
+				global.Call("setPlaying", "", "")
 
 			} else if len(d.Arguments) == 1 {
-				js.Call("setPlaying", d.Arguments[0], "")
+				global.Call("setPlaying", d.Arguments[0], "")
 
 			} else if len(d.Arguments) == 2 {
-				js.Call("setPlaying", d.Arguments[0], d.Arguments[1])
+				global.Call("setPlaying", d.Arguments[0], d.Arguments[1])
 			}
 		case common.CmdRefreshPlayer:
-			js.Call("initPlayer", nil)
+			global.Call("initPlayer", nil)
 		case common.CmdPurgeChat:
-			js.Call("purgeChat", nil)
+			global.Call("purgeChat", nil)
 			appendMessage(d.HTML())
 		case common.CmdHelp:
 			url := "/help"
@@ -145,13 +147,13 @@ func recieve(v []js.Value) {
 				url = d.Arguments[0]
 			}
 			appendMessage(d.HTML())
-			js.Get("window").Call("open", url, "_blank", "menubar=0,status=0,toolbar=0,width=300,height=600")
+			global.Get("window").Call("open", url, "_blank", "menubar=0,status=0,toolbar=0,width=300,height=600")
 		}
 	}
 }
 
 func appendMessage(msg string) {
-	js.Call("appendMessages", "<div>"+msg+"</div>")
+	global.Call("appendMessages", "<div>"+msg+"</div>")
 }
 
 func websocketSend(msg string, dataType common.ClientDataType) error {
@@ -167,7 +169,7 @@ func websocketSend(msg string, dataType common.ClientDataType) error {
 		return fmt.Errorf("could not marshal data: %v", err)
 	}
 
-	js.Call("websocketSend", string(data))
+	global.Call("websocketSend", string(data))
 	return nil
 }
 
@@ -188,12 +190,12 @@ func send(this js.Value, v []js.Value) interface{} {
 func showChatError(err error) {
 	if err != nil {
 		fmt.Printf("Could not send: %v\n", err)
-		js.Call("appendMessages", `<div><span style="color: red;">Could not send message</span></div>`)
+		global.Call("appendMessages", `<div><span style="color: red;">Could not send message</span></div>`)
 	}
 }
 
 func notify(msg string) {
-	js.Call("setNotifyBox", msg)
+	global.Call("setNotifyBox", msg)
 }
 
 func showTimestamp(v []js.Value) {
@@ -227,17 +229,19 @@ func debugValues(v []js.Value) {
 }
 
 func main() {
+	global = js.Global()
+
 	common.SetupLogging(common.LLDebug, "")
 
-	js.Set("processMessageKey", js.FuncOf(processMessageKey))
-	js.Set("sendMessage", js.FuncOf(send))
-	js.Set("isValidColor", js.FuncOf(isValidColor))
+	global.Set("processMessageKey", js.FuncOf(processMessageKey))
+	global.Set("sendMessage", js.FuncOf(send))
+	global.Set("isValidColor", js.FuncOf(isValidColor))
 
-	js.Set("recieveMessage", js.CallbackOf(recieve))
-	js.Set("processMessage", js.CallbackOf(processMessage))
-	js.Set("debugValues", js.CallbackOf(debugValues))
-	js.Set("showTimestamp", js.CallbackOf(showTimestamp))
-	js.Set("join", js.CallbackOf(join))
+	global.Set("recieveMessage", jsCallbackOf(recieve))
+	global.Set("processMessage", jsCallbackOf(processMessage))
+	global.Set("debugValues", jsCallbackOf(debugValues))
+	global.Set("showTimestamp", jsCallbackOf(showTimestamp))
+	global.Set("join", jsCallbackOf(join))
 
 	go func() {
 		time.Sleep(time.Second * 1)
@@ -246,15 +250,26 @@ func main() {
 			inner += fmt.Sprintf(`<option value="%s">%s</option>\n`, c, c)
 		}
 
-		js.Get("colorSelect").Set("innerHTML", inner)
+		global.Get("colorSelect").Set("innerHTML", inner)
 	}()
 
 	// This is needed so the goroutine does not end
 	for {
 		// heatbeat to keep connection alive to deal with nginx
-		if js.Get("inChat").Bool() {
+		if global.Get("inChat").Bool() {
 			websocketSend("", common.CdPing)
 		}
 		time.Sleep(time.Second * 10)
 	}
+}
+
+func jsCallbackOf(fnc func(v []js.Value)) js.Func {
+	return js.FuncOf(func(this js.Value, refs []js.Value) interface{} {
+		vals := make([]js.Value, 0, len(refs))
+		for _, ref := range refs {
+			vals = append(vals, ref)
+		}
+		fnc(vals)
+		return nil
+	})
 }

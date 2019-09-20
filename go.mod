@@ -7,7 +7,6 @@ require (
 	github.com/cenkalti/backoff v2.1.1+incompatible // indirect
 	github.com/chromedp/cdproto v0.0.0-20190412020601-c4267f5c421a // indirect
 	github.com/containerd/continuity v0.0.0-20181203112020-004b46473808 // indirect
-	github.com/dennwc/dom v0.3.0
 	github.com/gorilla/sessions v1.1.3
 	github.com/gorilla/websocket v1.4.0
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
