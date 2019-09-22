@@ -266,6 +266,19 @@ var commands = &CommandControl{
 				), nil
 			},
 		},
+
+		common.CNPin.String(): Command{
+			HelpText: "Display the current room access type and pin/password (if applicable).",
+			Function: func(cl *Client, args []string) (string, error) {
+				switch settings.RoomAccess {
+				case AccessPin:
+					return "Room is secured via PIN.  Current PIN: " + settings.RoomAccessPin, nil
+				case AccessRequest:
+					return "Room is secured via access requests.  Users must request to be granted access.", nil
+				}
+				return "Room is open access.  Anybody can join.", nil
+			},
+		},
 	},
 
 	mod: map[string]Command{
@@ -392,19 +405,6 @@ var commands = &CommandControl{
 				common.LogInfoln("[purge] clearing chat")
 				cl.belongsTo.AddCmdMsg(common.CmdPurgeChat, nil)
 				return "", nil
-			},
-		},
-
-		common.CNPin.String(): Command{
-			HelpText: "Display the current room access type and pin/password (if applicable).",
-			Function: func(cl *Client, args []string) (string, error) {
-				switch settings.RoomAccess {
-				case AccessPin:
-					return "Room is secured via PIN.  Current PIN: " + settings.RoomAccessPin, nil
-				case AccessRequest:
-					return "Room is secured via access requests.  Users must request to be granted access.", nil
-				}
-				return "Room is open access.  Anybody can join.", nil
 			},
 		},
 	},
@@ -580,7 +580,7 @@ func (cc *CommandControl) RunCommand(command string, args []string, sender *Clie
 	}
 
 	// Command not found
-	common.LogInfof("[cmd] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
+	common.LogInfof("[cmd|error] %s /%s %s\n", sender.name, command, strings.Join(args, " "))
 	return "", fmt.Errorf("Invalid command.")
 }
 
