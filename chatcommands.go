@@ -438,26 +438,7 @@ var commands = &CommandControl{
 		common.CNReloadEmotes.String(): Command{
 			HelpText: "Reload the emotes on the server.",
 			Function: func(cl *Client, args []string) (string, error) {
-				go func() {
-					cl.SendServerMessage("Reloading emotes")
-					err := loadEmotes()
-					if err != nil {
-						common.LogErrorf("Unbale to reload emotes: %s\n", err)
-						//return "", err
-
-						cl.SendChatData(common.NewChatMessage("", "",
-							err.Error(),
-							common.CmdlUser, common.MsgCommandResponse))
-						return
-					}
-
-					cl.belongsTo.AddChatMsg(common.NewChatHiddenMessage(common.CdEmote, common.Emotes))
-					cl.belongsTo.AddModNotice(cl.name + " has reloaded emotes")
-
-					num := len(common.Emotes)
-					common.LogInfof("Loaded %d emotes\n", num)
-					cl.belongsTo.AddModNotice(fmt.Sprintf("%s reloaded %d emotes.", cl.name, num))
-				}()
+				go commandReloadEmotes(cl)
 				return "Reloading emotes...", nil
 			},
 		},
@@ -558,6 +539,8 @@ var commands = &CommandControl{
 					}
 
 					cl.belongsTo.AddModNotice(cl.name + " has added emotes from the following channels: " + strings.Join(args, ", "))
+
+					commandReloadEmotes(cl)
 				}()
 				return "Emote download initiated for the following channels: " + strings.Join(args, ", "), nil
 			},
@@ -632,4 +615,25 @@ func getHelp(lvl common.CommandLevel) map[string]string {
 		helptext[name] = cmd.HelpText
 	}
 	return helptext
+}
+
+func commandReloadEmotes(cl *Client) {
+	cl.SendServerMessage("Reloading emotes")
+	err := loadEmotes()
+	if err != nil {
+		common.LogErrorf("Unbale to reload emotes: %s\n", err)
+		//return "", err
+
+		cl.SendChatData(common.NewChatMessage("", "",
+			err.Error(),
+			common.CmdlUser, common.MsgCommandResponse))
+		return
+	}
+
+	cl.belongsTo.AddChatMsg(common.NewChatHiddenMessage(common.CdEmote, common.Emotes))
+	cl.belongsTo.AddModNotice(cl.name + " has reloaded emotes")
+
+	num := len(common.Emotes)
+	common.LogInfof("Loaded %d emotes\n", num)
+	cl.belongsTo.AddModNotice(fmt.Sprintf("%s reloaded %d emotes.", cl.name, num))
 }

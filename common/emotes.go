@@ -14,10 +14,14 @@ var Emotes EmotesMap
 var reStripStatic = regexp.MustCompile(`^(\\|/)?static`)
 
 func init() {
-	Emotes = map[string]string{}
+	Emotes = NewEmotesMap()
 }
 
-func (em EmotesMap) Add(fullpath string) {
+func NewEmotesMap() EmotesMap {
+	return map[string]string{}
+}
+
+func (em EmotesMap) Add(fullpath string) EmotesMap {
 	fullpath = reStripStatic.ReplaceAllLiteralString(fullpath, "")
 
 	base := filepath.Base(fullpath)
@@ -35,8 +39,9 @@ func (em EmotesMap) Add(fullpath string) {
 		code = fmt.Sprintf("%s-%d", code, num)
 	}
 
-	Emotes[code] = fullpath
-	fmt.Printf("Added emote %s at path %q\n", code, fullpath)
+	em[code] = fullpath
+	//fmt.Printf("Added emote %s at path %q\n", code, fullpath)
+	return em
 }
 
 func EmoteToHtml(file, title string) string {
