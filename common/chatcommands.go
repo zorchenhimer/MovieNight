@@ -54,7 +54,6 @@ var ChatCommands = []ChatCommandNames{
 	CNStats,
 
 	// Mod
-	CNSv, CNPlaying, CNUnmod, CNKick, CNBan, CNUnban, CNPurge, CNPin,
 	CNSv,
 	CNPlaying,
 	CNUnmod,
@@ -64,7 +63,6 @@ var ChatCommands = []ChatCommandNames{
 	CNPurge,
 
 	// Admin
-	CNMod, CNReloadPlayer, CNReloadEmotes, CNModpass, CNRoomAccess, CNIP,
 	CNMod,
 	CNReloadPlayer,
 	CNReloadEmotes,
