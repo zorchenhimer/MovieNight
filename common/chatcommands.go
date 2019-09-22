@@ -22,6 +22,7 @@ var (
 	CNUsers  ChatCommandNames = []string{"users"}
 	CNNick   ChatCommandNames = []string{"nick", "name"}
 	CNStats  ChatCommandNames = []string{"stats"}
+	CNPin    ChatCommandNames = []string{"pin", "password"}
 	// Mod Commands
 	CNSv      ChatCommandNames = []string{"sv"}
 	CNPlaying ChatCommandNames = []string{"playing"}
@@ -30,7 +31,6 @@ var (
 	CNBan     ChatCommandNames = []string{"ban"}
 	CNUnban   ChatCommandNames = []string{"unban"}
 	CNPurge   ChatCommandNames = []string{"purge"}
-	CNPin     ChatCommandNames = []string{"pin", "password"}
 	// Admin Commands
 	CNMod          ChatCommandNames = []string{"mod"}
 	CNReloadPlayer ChatCommandNames = []string{"reloadplayer"}
@@ -52,6 +52,7 @@ var ChatCommands = []ChatCommandNames{
 	CNUsers,
 	CNNick,
 	CNStats,
+	CNPin,
 
 	// Mod
 	CNSv,
@@ -69,6 +70,7 @@ var ChatCommands = []ChatCommandNames{
 	CNModpass,
 	CNIP,
 	CNAddEmotes,
+	CNRoomAccess,
 }
 
 func GetFullChatCommand(c string) string {
