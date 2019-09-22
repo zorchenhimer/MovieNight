@@ -30,8 +30,9 @@ type Settings struct {
 	AdminPassword   string
 	StreamKey       string
 	ListenAddress   string
-	ApprovedEmotes  []EmoteSet // list of channels that have been approved for emote use.  Global emotes are always "approved".
-	SessionKey      string     // key for session data
+	ApprovedEmotes  []string // list of channels that have been approved for emote use.  Global emotes are always "approved".
+	TwitchClientID  string   // client id from twitch developers portal
+	SessionKey      string   // key for session data
 	Bans            []BanInfo
 	LogLevel        common.LogLevel
 	LogFile         string

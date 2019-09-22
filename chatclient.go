@@ -255,15 +255,10 @@ func (cl *Client) Host() string {
 }
 
 func (cl *Client) setName(s string) error {
-	// Case-insensitive search.  Match whole words only (`\b` is word boundary).
-	regex, err := regexp.Compile(fmt.Sprintf(`(?i)\b(%s|@%s)\b`, s, s))
-	if err != nil {
-		return fmt.Errorf("could not compile regex: %v", err)
-	}
-
 	cl.name = s
-	cl.regexName = regex
-	cl.conn.clientName = s
+	if cl.conn != nil {
+		cl.conn.clientName = s
+	}
 	return nil
 }
 
@@ -274,7 +269,18 @@ func (cl *Client) setColor(s string) error {
 
 func (cl *Client) replaceColorizedName(chatData common.ChatData) common.ChatData {
 	data := chatData.Data.(common.DataMessage)
-	data.Message = cl.regexName.ReplaceAllString(data.Message, `<span class="mention">$1</span>`)
+	words := strings.Split(data.Message, " ")
+	newWords := []string{}
+
+	for _, word := range words {
+		if strings.ToLower(word) == strings.ToLower(cl.name) || strings.ToLower(word) == strings.ToLower("@"+cl.name) {
+			newWords = append(newWords, `<span class="mention">`+word+`</span>`)
+		} else {
+			newWords = append(newWords, word)
+		}
+	}
+
+	data.Message = strings.Join(newWords, " ")
 	chatData.Data = data
 	return chatData
 }

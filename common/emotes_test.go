@@ -27,9 +27,9 @@ var data_good = map[string]string{
 
 func TestMain(m *testing.M) {
 	Emotes = map[string]string{
-		"one":   "one.png",
-		"two":   "two.png",
-		"three": "three.gif",
+		"one":   "/emotes/one.png",
+		"two":   "/emotes/two.png",
+		"three": "/emotes/three.gif",
 	}
 	os.Exit(m.Run())
 }

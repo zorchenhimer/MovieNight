@@ -3,13 +3,49 @@ package common
 import (
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
-var Emotes map[string]string
+type EmotesMap map[string]string
+
+var Emotes EmotesMap
+
+var reStripStatic = regexp.MustCompile(`^(\\|/)?static`)
+
+func init() {
+	Emotes = NewEmotesMap()
+}
+
+func NewEmotesMap() EmotesMap {
+	return map[string]string{}
+}
+
+func (em EmotesMap) Add(fullpath string) EmotesMap {
+	fullpath = reStripStatic.ReplaceAllLiteralString(fullpath, "")
+
+	base := filepath.Base(fullpath)
+	code := base[0 : len(base)-len(filepath.Ext(base))]
+
+	_, exists := em[code]
+
+	num := 0
+	for exists {
+		num += 1
+		_, exists = em[fmt.Sprintf("%s-%d", code, num)]
+	}
+
+	if num > 0 {
+		code = fmt.Sprintf("%s-%d", code, num)
+	}
+
+	em[code] = fullpath
+	//fmt.Printf("Added emote %s at path %q\n", code, fullpath)
+	return em
+}
 
 func EmoteToHtml(file, title string) string {
-	return fmt.Sprintf(`<img src="/emotes/%s" height="28px" title="%s" />`, file, title)
+	return fmt.Sprintf(`<img src="%s" height="28px" title="%s" />`, file, title)
 }
 
 func ParseEmotesArray(words []string) []string {
@@ -35,32 +71,4 @@ func ParseEmotesArray(words []string) []string {
 func ParseEmotes(msg string) string {
 	words := ParseEmotesArray(strings.Split(msg, " "))
 	return strings.Join(words, " ")
-}
-
-func LoadEmotes() (int, error) {
-	newEmotes := map[string]string{}
-
-	emotePNGs, err := filepath.Glob("./static/emotes/*.png")
-	if err != nil {
-		return 0, fmt.Errorf("unable to glob emote directory: %s\n", err)
-	}
-
-	emoteGIFs, err := filepath.Glob("./static/emotes/*.gif")
-	if err != nil {
-		return 0, fmt.Errorf("unable to glob emote directory: %s\n", err)
-	}
-	globbed_files := []string(emotePNGs)
-	globbed_files = append(globbed_files, emoteGIFs...)
-
-	LogInfoln("Loading emotes...")
-	emInfo := []string{}
-	for _, file := range globbed_files {
-		file = filepath.Base(file)
-		key := file[0 : len(file)-4]
-		newEmotes[key] = file
-		emInfo = append(emInfo, key)
-	}
-	Emotes = newEmotes
-	LogInfoln(strings.Join(emInfo, " "))
-	return len(Emotes), nil
 }

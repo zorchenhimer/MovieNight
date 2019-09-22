@@ -5,7 +5,8 @@ package main
 import (
 	"strings"
 
-	"github.com/dennwc/dom/js"
+	"syscall/js"
+
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
@@ -70,7 +71,7 @@ func processMessageKey(this js.Value, v []js.Value) interface{} {
 		}
 		currentSug = filteredSug[newidx]
 	case keyTab, keyEnter:
-		msg := js.Get("msg")
+		msg := global.Get("msg")
 		val := msg.Get("value").String()
 		newval := val[:startIdx]
 
@@ -104,7 +105,7 @@ func processMessageKey(this js.Value, v []js.Value) interface{} {
 }
 
 func processMessage(v []js.Value) {
-	msg := js.Get("msg")
+	msg := global.Get("msg")
 	text := strings.ToLower(msg.Get("value").String())
 	startIdx := msg.Get("selectionStart").Int()
 
@@ -189,6 +190,6 @@ func updateSuggestionDiv() {
 		}
 	}
 	// The \n is so it's easier to read th source in web browsers for the dev
-	js.Get("suggestions").Set("innerHTML", strings.Join(divs, "\n"))
-	js.Call("updateSuggestionScroll")
+	global.Get("suggestions").Set("innerHTML", strings.Join(divs, "\n"))
+	global.Call("updateSuggestionScroll")
 }
