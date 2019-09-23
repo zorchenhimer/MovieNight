@@ -8,7 +8,7 @@ online.
 
 ## Build requirements
 
-- Go 1.12 (see [this issue](https://github.com/zorchenhimer/MovieNight/issues/94) for details)
+- Go 1.12 or newer
 - GNU Make
 
 ## Install
