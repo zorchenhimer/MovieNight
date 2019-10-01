@@ -2,7 +2,7 @@ TAGS=
 
 .PHONY: fmt vet get clean dev setdev test
 
-all: fmt vet test MovieNight MovieNight.exe static/main.wasm settings.json
+all: fmt vet test MovieNight MovieNight.exe MovieNightOSX static/main.wasm settings.json
 
 setdev:
 	$(eval export TAGS=-tags "dev")
@@ -15,11 +15,14 @@ MovieNight.exe: *.go common/*.go
 MovieNight: *.go common/*.go
 	GOOS=linux GOARCH=386 go build -o MovieNight $(TAGS)
 
+MovieNightOSX: *.go common/*.go
+	GOOS=darwin GOARCH=amd64 go build -o MovieNightOSX $(TAGS)
+
 static/main.wasm: wasm/*.go common/*.go
 	GOOS=js GOARCH=wasm go build -o ./static/main.wasm $(TAGS) wasm/*.go
 
 clean:
-	-rm MovieNight.exe MovieNight ./static/main.wasm
+	-rm MovieNight.exe MovieNight MovieNightOSX ./static/main.wasm
 
 fmt:
 	gofmt -w .
