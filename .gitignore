@@ -21,6 +21,12 @@ debug
 # Linux binary
 MovieNight
 
+# Windows binary
+MovieNight.exe
+
+# Darwin binary
+MovieNightDarwin
+
 # Twitch channel info
 static/subscriber.json
 
