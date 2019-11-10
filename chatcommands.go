@@ -212,7 +212,7 @@ var commands = &CommandControl{
 		common.CNNick.String(): Command{
 			HelpText: "Change display name",
 			Function: func(cl *Client, args []string) (string, error) {
-				if time.Now().Before(cl.nextNick) {
+				if time.Now().Before(cl.nextNick) && cl.CmdLevel == common.CmdlUser {
 					//cl.nextNick = time.Now().Add(time.Second * settings.RateLimitNick)
 					return "", fmt.Errorf("Slow down. You can change your nick in %0.0f seconds.", time.Until(cl.nextNick).Seconds())
 				}
@@ -228,8 +228,8 @@ var commands = &CommandControl{
 
 				// Two arguments to force a name change on another user: `/nick OldName NewName`
 				if len(args) == 2 {
-					if cl.CmdLevel != common.CmdlAdmin {
-						return "", fmt.Errorf("Only admins can do that PeepoSus")
+					if cl.CmdLevel == common.CmdlUser {
+						return "", fmt.Errorf("Only admins and mods can do that PeepoSus")
 					}
 
 					oldName = strings.TrimLeft(args[0], "@")
