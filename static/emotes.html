@@ -1,0 +1,14 @@
+{{define "header"}}
+{{end}}
+
+{{define "body"}}
+<div id="emotesbody">
+    <h2>Available Emotes</h2>
+    {{range $k, $v := .Emotes}}
+    <div class="emotedef">
+        <div><img src="{{$v}}" /></div>
+        <div>{{$k}}</div>
+    </div>
+    {{end}}
+</div>
+{{end}}

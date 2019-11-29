@@ -271,6 +271,23 @@ func handleHelpTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleEmoteTemplate(w http.ResponseWriter, r *http.Request) {
+	type Data struct {
+		Title  string
+		Emotes map[string]string
+	}
+
+	data := Data{
+		Title:  "Available Emotes",
+		Emotes: common.Emotes,
+	}
+
+	err := common.ExecuteServerTemplate(w, "emotes", data)
+	if err != nil {
+		common.LogErrorf("Error executing file, %v", err)
+	}
+}
+
 func handlePin(w http.ResponseWriter, r *http.Request) {
 	session, err := sstore.Get(r, "moviesession")
 	if err != nil {

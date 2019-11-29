@@ -148,6 +148,10 @@ func recieve(v []js.Value) {
 			}
 			appendMessage(d.HTML())
 			global.Get("window").Call("open", url, "_blank", "menubar=0,status=0,toolbar=0,width=300,height=600")
+		case common.CmdEmotes:
+			url := "/emotes"
+			appendMessage(d.HTML())
+			global.Get("window").Call("open", url, "_blank", "menubar=0,status=0,toolbar=0,width=300,height=600")
 		}
 	}
 }

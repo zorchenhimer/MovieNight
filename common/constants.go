@@ -34,6 +34,7 @@ const (
 	CmdRefreshPlayer
 	CmdPurgeChat
 	CmdHelp
+	CmdEmotes
 )
 
 type CommandLevel int

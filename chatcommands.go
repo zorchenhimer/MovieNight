@@ -40,6 +40,14 @@ var commands = &CommandControl{
 			Function: cmdHelp,
 		},
 
+		common.CNEmotes.String(): Command{
+			HelpText: "Display a list of available emotes.",
+			Function: func(client *Client, args []string) (string, error) {
+				client.SendChatData(common.NewChatCommand(common.CmdEmotes, []string{"/emotes"}))
+				return "Opening emote list in new window.", nil
+			},
+		},
+
 		common.CNCount.String(): Command{
 			HelpText: "Display number of users in chat.",
 			Function: func(client *Client, args []string) (string, error) {

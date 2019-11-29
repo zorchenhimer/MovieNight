@@ -23,6 +23,7 @@ var (
 	CNNick   ChatCommandNames = []string{"nick", "name"}
 	CNStats  ChatCommandNames = []string{"stats"}
 	CNPin    ChatCommandNames = []string{"pin", "password"}
+	CNEmotes ChatCommandNames = []string{"emotes"}
 	// Mod Commands
 	CNSv      ChatCommandNames = []string{"sv"}
 	CNPlaying ChatCommandNames = []string{"playing"}
@@ -53,6 +54,7 @@ var ChatCommands = []ChatCommandNames{
 	CNNick,
 	CNStats,
 	CNPin,
+	CNEmotes,
 
 	// Mod
 	CNSv,

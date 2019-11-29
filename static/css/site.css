@@ -109,6 +109,19 @@ input[type=text] {
     color: white;
 }
 
+#emotesbody {
+    color: var(--var-message-color);
+}
+
+.emotedef {
+    display: flex;
+    flex-direction: row;
+}
+
+.emotedef div {
+    padding: 5px;
+}
+
 .notice {
     color: #595959;
     font-size: 75%;

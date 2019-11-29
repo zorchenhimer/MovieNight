@@ -18,9 +18,10 @@ var isServer bool = false
 
 // keys and files to load for that template
 var serverTemplateDefs map[string][]string = map[string][]string{
-	"pin":  []string{"./static/base.html", "./static/thedoor.html"},
-	"main": []string{"./static/base.html", "./static/main.html"},
-	"help": []string{"./static/base.html", "./static/help.html"},
+	"pin":    []string{"./static/base.html", "./static/thedoor.html"},
+	"main":   []string{"./static/base.html", "./static/main.html"},
+	"help":   []string{"./static/base.html", "./static/help.html"},
+	"emotes": []string{"./static/base.html", "./static/emotes.html"},
 }
 
 var chatTemplateDefs map[string]string = map[string]string{
