@@ -281,7 +281,6 @@ input[type=text] {
 #messages {
     min-height: 15em;
     color: var(--var-message-color);
-    opacity: 0%;
     overflow-y: scroll;
     border: var(--var-border);
 }
