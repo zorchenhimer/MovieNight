@@ -2,6 +2,7 @@
     --var-border: 1px solid #606060;
     --var-border-radius: 5px;
     --var-message-color: #f4f4f4;
+    --var-link-color: #a9c8c3;
     --var-contrast-color: #1bf7ec;
     --var-background-color: #0F0F11;
     --var-popout-color: #393940;
@@ -267,6 +268,15 @@ input[type=text] {
 
 #joinbox div {
     margin: 5px auto;
+}
+
+#joinbox a {
+    text-decoration: none;
+    color: var(--var-link-color);
+}
+
+#joinbox a:hover {
+    text-decoration: underline;
 }
 
 #chat {
