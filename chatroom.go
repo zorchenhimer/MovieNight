@@ -60,7 +60,7 @@ func (cr *ChatRoom) Join(conn *chatConnection, data common.JoinData) (*Client, e
 	}
 
 	if !common.IsValidName(data.Name) {
-		sendHiddenMessage(common.CdNotify, "Invalid name")
+		sendHiddenMessage(common.CdNotify, common.InvalidNameError)
 		return nil, UserFormatError{Name: data.Name}
 	}
 
