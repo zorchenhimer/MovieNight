@@ -59,6 +59,11 @@ func (cr *ChatRoom) Join(conn *chatConnection, data common.JoinData) (*Client, e
 		}
 	}
 
+	if settings.RoomAccess == AccessPin && data.Name == settings.RoomAccessPin {
+		sendHiddenMessage(common.CdNotify, "That's the access pin! Please enter a name.")
+		return nil, UserFormatError{Name: data.Name}
+	}
+
 	if !common.IsValidName(data.Name) {
 		sendHiddenMessage(common.CdNotify, common.InvalidNameError)
 		return nil, UserFormatError{Name: data.Name}
