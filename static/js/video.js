@@ -6,7 +6,10 @@ function initPlayer() {
         var videoElement = document.getElementById("videoElement");
         var flvPlayer = flvjs.createPlayer({
             type: "flv",
-            url: "/live"
+            url: "/live",
+            isLive: true,
+        }, {
+            enableStashBuffer: false,
         });
         flvPlayer.attachMediaElement(videoElement);
         flvPlayer.load();
