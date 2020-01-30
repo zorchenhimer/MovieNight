@@ -1,38 +1,51 @@
+# If a different version of Go is installed (via `go get`) set the GO_VERSION
+# environment variable to that version.  For example, setting it to "1.13.7"
+# will run `go1.13.7 build [...]` instead of `go build [...]`.
+#
+# For info on installing extra versions, see this page:
+# https://golang.org/doc/install#extra_versions
+
 TAGS=
 
-.PHONY: fmt vet get clean dev setdev test
+# Windows needs the .exe extension.
+ifeq ($(OS),Windows_NT)
+EXT=.exe
+endif
 
-all: fmt vet test MovieNight MovieNight.exe MovieNightDarwin static/main.wasm settings.json
+.PHONY: fmt vet get clean dev setdev test ServerMovieNight
+
+all: fmt vet test MovieNight$(EXT) static/main.wasm settings.json
+
+# Build the server deployment
+server: ServerMovieNight static/main.wasm
+
+# Bulid used for deploying to my server.
+ServerMovieNight: *.go common/*.go
+	GOOS=linux GOARCH=386 go$(GO_VERSION) build -o MovieNight $(TAGS)
 
 setdev:
 	$(eval export TAGS=-tags "dev")
 
 dev: setdev all
 
-MovieNight.exe: *.go common/*.go
-	GOOS=windows GOARCH=amd64 go build -o MovieNight.exe $(TAGS)
-
-MovieNight: *.go common/*.go
-	GOOS=linux GOARCH=386 go build -o MovieNight $(TAGS)
-
-MovieNightDarwin: *.go common/*.go
-	GOOS=darwin GOARCH=amd64 go build -o MovieNightDarwin $(TAGS)
+MovieNight$(EXT): *.go common/*.go
+	go$(GO_VERSION) build -o $@ $(TAGS)
 
 static/main.wasm: wasm/*.go common/*.go
-	GOOS=js GOARCH=wasm go build -o ./static/main.wasm $(TAGS) wasm/*.go
+	GOOS=js GOARCH=wasm go$(GO_VERSION) build -o $@ $(TAGS) wasm/*.go
 
 clean:
-	-rm MovieNight.exe MovieNight MovieNightDarwin ./static/main.wasm
+	-rm MovieNight$(EXT) ./static/main.wasm
 
 fmt:
 	gofmt -w .
 
 vet:
-	go vet $(TAGS) ./...
-	GOOS=js GOARCH=wasm go vet $(TAGS) ./...
+	go$(GO_VERSION) vet $(TAGS) ./...
+	GOOS=js GOARCH=wasm go$(GO_VERSION) vet $(TAGS) ./...
 
 test:
-	go test $(TAGS) ./...
+	go$(GO_VERSION) test $(TAGS) ./...
 
 # Do not put settings_example.json here as a prereq to avoid overwriting
 # the settings if the example is updated.
