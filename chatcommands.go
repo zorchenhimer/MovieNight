@@ -533,9 +533,7 @@ var commands = &CommandControl{
 					}
 
 					// If the emotes were able to be downloaded, add the channels to settings
-					settingsMtx.Lock()
-					settings.ApprovedEmotes = append(settings.ApprovedEmotes, args...)
-					settingsMtx.Unlock()
+					settings.AddApprovedEmotes(args)
 
 					// reload emotes now that new ones were added
 					err = loadEmotes()

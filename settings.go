@@ -15,7 +15,6 @@ import (
 )
 
 var settings *Settings
-var settingsMtx sync.Mutex
 var sstore *sessions.CookieStore
 
 type Settings struct {
@@ -49,6 +48,8 @@ type Settings struct {
 
 	// Send the NoCache header?
 	NoCache bool
+
+	lock sync.RWMutex
 }
 
 type AccessMode string
@@ -186,6 +187,14 @@ func generatePass(seed int64) (string, error) {
 }
 
 func (s *Settings) Save() error {
+	defer s.lock.Unlock()
+	s.lock.Lock()
+
+	return s.unlockedSave()
+}
+
+// unlockedSave expects the calling function to lock the RWMutex
+func (s *Settings) unlockedSave() error {
 	marshaled, err := json.MarshalIndent(s, "", "\t")
 	if err != nil {
 		return fmt.Errorf("error marshaling: %s", err)
@@ -199,6 +208,9 @@ func (s *Settings) Save() error {
 }
 
 func (s *Settings) AddBan(host string, names []string) error {
+	defer s.lock.Unlock()
+	s.lock.Lock()
+
 	if host == "127.0.0.1" {
 		return fmt.Errorf("Cannot add a ban for localhost.")
 	}
@@ -212,12 +224,12 @@ func (s *Settings) AddBan(host string, names []string) error {
 
 	common.LogInfof("[BAN] %q (%s) has been banned.\n", strings.Join(names, ", "), host)
 
-	return s.Save()
+	return s.unlockedSave()
 }
 
 func (s *Settings) RemoveBan(name string) error {
-	defer settingsMtx.Unlock()
-	settingsMtx.Lock()
+	defer s.lock.Unlock()
+	s.lock.Lock()
 
 	name = strings.ToLower(name)
 	newBans := []BanInfo{}
@@ -231,12 +243,12 @@ func (s *Settings) RemoveBan(name string) error {
 		}
 	}
 	s.Bans = newBans
-	return s.Save()
+	return s.unlockedSave()
 }
 
 func (s *Settings) IsBanned(host string) (bool, []string) {
-	defer settingsMtx.Unlock()
-	settingsMtx.Lock()
+	defer s.lock.RUnlock()
+	s.lock.RLock()
 
 	for _, b := range s.Bans {
 		if b.IP == host {
@@ -247,15 +259,15 @@ func (s *Settings) IsBanned(host string) (bool, []string) {
 }
 
 func (s *Settings) SetTempKey(key string) {
-	defer settingsMtx.Unlock()
-	settingsMtx.Lock()
+	defer s.lock.Unlock()
+	s.lock.Lock()
 
 	s.cmdLineKey = key
 }
 
 func (s *Settings) GetStreamKey() string {
-	defer settingsMtx.Unlock()
-	settingsMtx.Lock()
+	defer s.lock.RUnlock()
+	s.lock.RLock()
 
 	if len(s.cmdLineKey) > 0 {
 		return s.cmdLineKey
@@ -264,13 +276,38 @@ func (s *Settings) GetStreamKey() string {
 }
 
 func (s *Settings) generateNewPin() (string, error) {
+	defer s.lock.Unlock()
+	s.lock.Lock()
+
 	num, err := rand.Int(rand.Reader, big.NewInt(int64(9999)))
 	if err != nil {
 		return "", err
 	}
 	s.RoomAccessPin = fmt.Sprintf("%04d", num)
-	if err = s.Save(); err != nil {
+	if err = s.unlockedSave(); err != nil {
 		return "", err
 	}
 	return s.RoomAccessPin, nil
+}
+
+func (s *Settings) AddApprovedEmotes(channels []string) error {
+	defer s.lock.Unlock()
+	s.lock.Lock()
+
+	approved := map[string]int{}
+	for _, e := range s.ApprovedEmotes {
+		approved[e] = 1
+	}
+
+	for _, name := range channels {
+		approved[name] = 1
+	}
+
+	filtered := []string{}
+	for key, _ := range approved {
+		filtered = append(filtered, key)
+	}
+
+	s.ApprovedEmotes = filtered
+	return s.unlockedSave()
 }

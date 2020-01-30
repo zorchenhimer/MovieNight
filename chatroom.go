@@ -198,9 +198,6 @@ func (cr *ChatRoom) Ban(name string) error {
 		}
 	}
 
-	defer settingsMtx.Unlock()
-	settingsMtx.Lock()
-
 	err = settings.AddBan(host, names)
 	if err != nil {
 		common.LogErrorf("[BAN] Error banning %q: %s\n", name, err)
