@@ -60,3 +60,41 @@ Usage of .\MovieNight.exe:
   -l string
         host:port of the MovieNight (default ":8089")
 ```
+
+## Docker
+MovieNight provides a Dockerfile and a docker-compose file to run MovieNight using Docker.
+
+### Dockerfile
+#### Building the Container
+Install Docker, clone the repository and build:
+
+```shell
+docker build -t movienight .
+```
+
+#### Running the Container
+Run the image once it's built:
+
+```shell
+docker run -d -p 8089:8089 -p 1935:1935 [-v ./settings.json:/config/settings.json] movienight
+```
+
+Explanation:
+- **-d** runs the container in the background.
+- **-p 8089:8089** maps the MovieNight web interface to port 8089 on the server.
+- **-p 1935:1935** maps the RTMP port for OBS to port 1935 (default RTMP port) on the server.
+- **-v ./settings.json:/config/settings.json** maps the file *settings.json* into the container. [OPTIONAL]
+
+### docker-compose
+docker-compose will automatically build the image, no need to build it manually.
+
+Install Docker and docker-compose, clone the repository and change into the directory *./docker*. Then run:
+
+```shell
+docker-compose up -d
+```
+
+This docker-compose file will create a volume called *movienight-config* and automatically add the standard *settings.json* file to it. It also maps port 8089 and 1935 to the same ports of the host.
+
+#### Notes for Running Using docker-compose
+The container needs to be restarted to apply any changes you make to *settings.json*.
