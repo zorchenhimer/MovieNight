@@ -8,8 +8,17 @@ online.
 
 ## Build requirements
 
-- Go 1.12 or newer
+- Go 1.13 or newer
 - GNU Make
+
+### Older Go Versions
+
+You can install a newer version of Go alongside your OS's distribution by
+following the guide here: [https://golang.org/doc/install#extra_versions](https://golang.org/doc/install#extra_versions)
+
+Once you have that setup add an enviromnent variable named `GO_VERSION` and
+set it to the version you installed (eg, `1.14.1`).  The Makefile will now use
+the newer version.
 
 ## Install
 
