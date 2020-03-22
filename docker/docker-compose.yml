@@ -1,0 +1,16 @@
+version: '2'
+
+services:
+  movienight:
+    image: movienight:latest
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    ports:
+      - 8089:8089
+      - 1935:1935
+    volumes:
+      - movienight-config:/config
+      
+volumes:
+  movienight-config:
