@@ -27,6 +27,9 @@ MovieNight.exe
 # Darwin binary
 MovieNightDarwin
 
+# Go wasm script
+static/js/wasm_exec.js
+
 # Twitch channel info
 static/subscriber.json
 

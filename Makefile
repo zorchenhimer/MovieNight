@@ -31,11 +31,14 @@ dev: setdev all
 MovieNight$(EXT): *.go common/*.go
 	go$(GO_VERSION) build -o $@ $(TAGS)
 
-static/main.wasm: wasm/*.go common/*.go
+static/js/wasm_exec.js:
+	cp $$(go env GOROOT)/misc/wasm/wasm_exec.js $@
+
+static/main.wasm: static/js/wasm_exec.js wasm/*.go common/*.go
 	GOOS=js GOARCH=wasm go$(GO_VERSION) build -o $@ $(TAGS) wasm/*.go
 
 clean:
-	-rm MovieNight$(EXT) ./static/main.wasm
+	-rm MovieNight$(EXT) ./static/main.wasm ./static/js/wasm_exec.js
 
 fmt:
 	gofmt -w .
