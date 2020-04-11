@@ -6,7 +6,6 @@
 	"StreamKey": "ALongStreamKey",
 	"ListenAddress": ":8089",
 	"ApprovedEmotes": null,
-	"Bans": [],
 	"LogLevel": "debug",
 	"LogFile": "thelog.log",
 	"RateLimitChat": 1,
