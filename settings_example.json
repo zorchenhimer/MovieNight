@@ -2,6 +2,7 @@
 	"MaxMessageCount": 300,
 	"TitleLength": 50,
 	"AdminPassword": "",
+	"RegenAdminPass": true,
 	"Bans": [],
 	"StreamKey": "ALongStreamKey",
 	"ListenAddress": ":8089",

@@ -27,6 +27,7 @@ type Settings struct {
 	MaxMessageCount int
 	TitleLength     int // maximum length of the title that can be set with the /playing
 	AdminPassword   string
+	RegenAdminPass  bool // regenerate admin password on start?
 	StreamKey       string
 	ListenAddress   string
 	ApprovedEmotes  []string // list of channels that have been approved for emote use.  Global emotes are always "approved".
@@ -90,9 +91,11 @@ func LoadSettings(filename string) (*Settings, error) {
 		return s, fmt.Errorf("value for MaxMessageCount must be greater than 0, given %d", s.MaxMessageCount)
 	}
 
-	s.AdminPassword, err = generatePass(time.Now().Unix())
-	if err != nil {
-		return nil, fmt.Errorf("unable to generate admin password: %s", err)
+	if s.RegenAdminPass == true || s.AdminPassword == "" {
+		s.AdminPassword, err = generatePass(time.Now().Unix())
+		if err != nil {
+			return nil, fmt.Errorf("unable to generate admin password: %s", err)
+		}
 	}
 
 	if s.RateLimitChat == -1 {

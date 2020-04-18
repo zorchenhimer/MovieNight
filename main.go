@@ -18,6 +18,7 @@ var (
 	addr       string
 	sKey       string
 	stats      = newStreamStats()
+	sAdminPass string
 )
 
 func setupSettings() error {
@@ -28,6 +29,11 @@ func setupSettings() error {
 	}
 	if len(settings.StreamKey) == 0 {
 		return fmt.Errorf("Missing stream key is settings.json")
+	}
+
+	if sAdminPass != "" {
+		fmt.Println("Password provided at runtime; ignoring password in set in settings.")
+		settings.AdminPassword = sAdminPass
 	}
 
 	sstore = sessions.NewCookieStore([]byte(settings.SessionKey))
@@ -43,6 +49,7 @@ func setupSettings() error {
 func main() {
 	flag.StringVar(&addr, "l", "", "host:port of the MovieNight")
 	flag.StringVar(&sKey, "k", "", "Stream key, to protect your stream")
+	flag.StringVar(&sAdminPass, "a", "", "Set admin password.  Overrides configuration in settings.json.  This will not write the password to settings.json.")
 	flag.BoolVar(&pullEmotes, "e", false, "Pull emotes")
 	flag.Parse()
 
