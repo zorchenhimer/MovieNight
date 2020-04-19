@@ -40,6 +40,8 @@ type Settings struct {
 	RoomAccessPin   string // The current pin
 	NewPin          bool   // Auto generate a new pin on start.  Overwrites RoomAccessPin if set.
 
+	WrappedEmotesOnly bool // only allow "wrapped" emotes.  eg :Kappa: and [Kappa] but not Kappa
+
 	// Rate limiting stuff, in seconds
 	RateLimitChat      time.Duration
 	RateLimitNick      time.Duration
@@ -126,6 +128,11 @@ func LoadSettings(filename string) (*Settings, error) {
 		s.RateLimitDuplicate = 0
 	} else if s.RateLimitDuplicate <= 0 {
 		s.RateLimitDuplicate = 30
+	}
+
+	if s.WrappedEmotesOnly {
+		common.LogInfoln("Only allowing wrapped emotes")
+		common.WrappedEmotesOnly = true
 	}
 
 	// Print this stuff before we multiply it by time.Second

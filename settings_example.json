@@ -14,5 +14,6 @@
 	"RateLimitColor": 60,
 	"RateLimitAuth": 5,
 	"RateLimitDuplicate": 30,
-	"NoCache": false
+	"NoCache": false,
+	"WrappedEmotesOnly": false
 }

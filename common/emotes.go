@@ -10,8 +10,12 @@ import (
 type EmotesMap map[string]string
 
 var Emotes EmotesMap
+var WrappedEmotesOnly bool = false
 
-var reStripStatic = regexp.MustCompile(`^(\\|/)?static`)
+var (
+	reStripStatic   = regexp.MustCompile(`^(\\|/)?static`)
+	reWrappedEmotes = regexp.MustCompile(`[:\[][^\s:\/\\\?=#\]\[]+[:\]]`)
+)
 
 func init() {
 	Emotes = NewEmotesMap()
@@ -40,7 +44,6 @@ func (em EmotesMap) Add(fullpath string) EmotesMap {
 	}
 
 	em[code] = fullpath
-	//fmt.Printf("Added emote %s at path %q\n", code, fullpath)
 	return em
 }
 
@@ -48,23 +51,33 @@ func EmoteToHtml(file, title string) string {
 	return fmt.Sprintf(`<img src="%s" height="28px" title="%s" />`, file, title)
 }
 
+// Used with a regexp.ReplaceAllStringFunc() call. Needs to lookup the value as it
+// cannot be passed in with the regex function call.
+func emoteToHmtl2(key string) string {
+	key = strings.Trim(key, ":[]")
+	if val, ok := Emotes[key]; ok {
+		return fmt.Sprintf(`<img src="%s" height="28px" title="%s" />`, val, key)
+	}
+	return key
+}
+
 func ParseEmotesArray(words []string) []string {
 	newWords := []string{}
 	for _, word := range words {
-		// make :emote: and [emote] valid for replacement.
-		wordTrimmed := strings.Trim(word, ":[]")
-
 		found := false
-		for key, val := range Emotes {
-			if key == wordTrimmed {
-				newWords = append(newWords, EmoteToHtml(val, key))
+		if !WrappedEmotesOnly {
+			if val, ok := Emotes[word]; ok {
+				newWords = append(newWords, EmoteToHtml(val, word))
 				found = true
 			}
 		}
+
 		if !found {
+			word = reWrappedEmotes.ReplaceAllStringFunc(word, emoteToHmtl2)
 			newWords = append(newWords, word)
 		}
 	}
+
 	return newWords
 }
 
