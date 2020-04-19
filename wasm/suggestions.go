@@ -81,7 +81,7 @@ func processMessageKey(this js.Value, v []js.Value) interface{} {
 				offset = 1
 			}
 
-			newval = newval[:i+offset] + currentSug
+			newval = newval[:i+offset] + ":" + currentSug + ":"
 		}
 
 		endVal := val[startIdx:]
