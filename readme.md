@@ -1,6 +1,6 @@
 # MovieNight stream server
 
-[![Build status](https://api.travis-ci.org/zorchenhimer/MovieNight.svg?branch=master)](https://travis-ci.org/zorchenhimer/MovieNight)
+[![Build status](https://api.travis-ci.org/clifg/MovieNight.svg?branch=master)](https://travis-ci.org/clifg/MovieNight)
 
 This is a single-instance streaming server with chat.  Originally written to
 replace Rabbit as the platform for watching movies with a group of people
@@ -25,7 +25,7 @@ the newer version.
 To just download and run:
 
 ```bash
-$ git clone https://github.com/zorchenhimer/MovieNight
+$ git clone https://github.com/clifg/MovieNight
 $ cd MovieNight
 $ make
 $ ./MovieNight
