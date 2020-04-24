@@ -15,5 +15,5 @@
 	"RateLimitAuth": 5,
 	"RateLimitDuplicate": 30,
 	"NoCache": false,
-	"WrappedEmotesOnly": false
+	"WrappedEmotesOnly": true
 }
