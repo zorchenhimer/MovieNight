@@ -35,8 +35,8 @@ func TestClient_emoteHighlight(t *testing.T) {
 		{"@Zorchenhimer", `<span class="mention">@Zorchenhimer</span>`},
 		{"hello zorchenhimer", `hello <span class="mention">zorchenhimer</span>`},
 		{"hello zorchenhimer ass", `hello <span class="mention">zorchenhimer</span> ass`},
-		{`<img src="/emotes/twitch/zorchenhimer/zorcheWhat.png" height="28px" title="zorcheWhat">`, `<img src="/emotes/twitch/zorchenhimer/zorcheWhat.png" height="28px" title="zorcheWhat">`},
-		{`zorchenhimer <img src="/emotes/twitch/zorchenhimer/zorcheWhat.png" height="28px" title="zorcheWhat">`, `<span class="mention">zorchenhimer</span> <img src="/emotes/twitch/zorchenhimer/zorcheWhat.png" height="28px" title="zorcheWhat">`},
+		{`<img src="/emotes/twitch/zorchenhimer/zorcheWhat.png" height="40px" title="zorcheWhat">`, `<img src="/emotes/twitch/zorchenhimer/zorcheWhat.png" height="40px" title="zorcheWhat">`},
+		{`zorchenhimer <img src="/emotes/twitch/zorchenhimer/zorcheWhat.png" height="40px" title="zorcheWhat">`, `<span class="mention">zorchenhimer</span> <img src="/emotes/twitch/zorchenhimer/zorcheWhat.png" height="40px" title="zorcheWhat">`},
 	}
 
 	client, err := NewClient(nil, nil, "Zorchenhimer", "#9547ff")
