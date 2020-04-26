@@ -52,4 +52,25 @@ func TestClient_emoteHighlight(t *testing.T) {
 			t.Logf("Passed %s", d[0])
 		}
 	}
+
+	// test highlighting with multiple users
+	// we expect all usernames to highlight for all users
+	chat = &ChatRoom{
+		queue:    make(chan common.ChatData, 1),
+		modqueue: make(chan common.ChatData, 1),
+		clients:  []*Client{},
+	}
+	chat.clients = append(chat.clients, client)
+	client2, err := NewClient(nil, chat, "Irani", "#9547ff")
+	if err != nil {
+		t.Errorf("Client init error: %v", err)
+	}
+	for _, d := range data {
+		chatData := client2.replaceColorizedName(common.NewChatMessage(client.name, client.color, d[0], common.CmdlUser, common.MsgChat))
+		if chatData.Data.(common.DataMessage).Message != d[1] {
+			t.Errorf("\nExpected:\n\t%s\nReceived\n\t%s", d[1], chatData.Data.(common.DataMessage).Message)
+		} else {
+			t.Logf("Passed %s", d[0])
+		}
+	}
 }

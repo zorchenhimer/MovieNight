@@ -272,8 +272,19 @@ func (cl *Client) replaceColorizedName(chatData common.ChatData) common.ChatData
 	words := strings.Split(data.Message, " ")
 	newWords := []string{}
 
+	nameSet := make(map[string]bool) // use map as a set
+	if chat == nil {
+		nameSet[strings.ToLower(cl.name)] = true
+		nameSet[strings.ToLower("@"+cl.name)] = true
+	} else {
+		names := chat.GetNames() // locks
+		for _, name := range names {
+			nameSet[strings.ToLower(name)] = true
+			nameSet[strings.ToLower("@"+name)] = true
+		}
+	}
 	for _, word := range words {
-		if strings.ToLower(word) == strings.ToLower(cl.name) || strings.ToLower(word) == strings.ToLower("@"+cl.name) {
+		if _, ok := nameSet[strings.ToLower(word)]; ok {
 			newWords = append(newWords, `<span class="mention">`+word+`</span>`)
 		} else {
 			newWords = append(newWords, word)
