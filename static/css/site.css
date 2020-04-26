@@ -142,6 +142,13 @@ input[type=text] {
     text-align: center;
 }
 
+.othermention {
+    background:  #f61cc0d9 ;
+    color: var(--var-background-color);
+    padding: 1px 2px;
+    border-radius: 4px;
+}
+
 .mention {
     background: #1cf67ed9;
     color: var(--var-background-color);

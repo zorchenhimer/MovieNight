@@ -273,10 +273,9 @@ func (cl *Client) replaceColorizedName(chatData common.ChatData) common.ChatData
 	newWords := []string{}
 
 	nameSet := make(map[string]bool) // use map as a set
-	if chat == nil {
-		nameSet[strings.ToLower(cl.name)] = true
-		nameSet[strings.ToLower("@"+cl.name)] = true
-	} else {
+	nameSet[strings.ToLower(cl.name)] = true
+	nameSet[strings.ToLower("@"+cl.name)] = true
+	if chat != nil {
 		names := chat.GetNames() // locks
 		for _, name := range names {
 			nameSet[strings.ToLower(name)] = true
@@ -285,7 +284,12 @@ func (cl *Client) replaceColorizedName(chatData common.ChatData) common.ChatData
 	}
 	for _, word := range words {
 		if _, ok := nameSet[strings.ToLower(word)]; ok {
-			newWords = append(newWords, `<span class="mention">`+word+`</span>`)
+			// mention is for the current user
+			if strings.ToLower(word) == strings.ToLower(cl.name) || strings.ToLower(word) == strings.ToLower("@"+cl.name) {
+				newWords = append(newWords, `<span class="mention">`+word+`</span>`)
+			} else { // mention is for another user
+				newWords = append(newWords, `<span class="othermention">`+word+`</span>`)
+			}
 		} else {
 			newWords = append(newWords, word)
 		}

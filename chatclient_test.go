@@ -65,6 +65,18 @@ func TestClient_emoteHighlight(t *testing.T) {
 	if err != nil {
 		t.Errorf("Client init error: %v", err)
 	}
+	data = [][]string{
+		{"zorchenhimer", `<span class="othermention">zorchenhimer</span>`},
+		{"@zorchenhimer", `<span class="othermention">@zorchenhimer</span>`},
+		{"Zorchenhimer", `<span class="othermention">Zorchenhimer</span>`},
+		{"@Zorchenhimer", `<span class="othermention">@Zorchenhimer</span>`},
+		{"hello zorchenhimer", `hello <span class="othermention">zorchenhimer</span>`},
+		{"hello zorchenhimer ass", `hello <span class="othermention">zorchenhimer</span> ass`},
+		{"irani", `<span class="mention">irani</span>`},
+		{"@irani", `<span class="mention">@irani</span>`},
+		{`<img src="/emotes/twitch/zorchenhimer/zorcheWhat.png" height="28px" title="zorcheWhat">`, `<img src="/emotes/twitch/zorchenhimer/zorcheWhat.png" height="28px" title="zorcheWhat">`},
+		{`zorchenhimer <img src="/emotes/twitch/zorchenhimer/zorcheWhat.png" height="28px" title="zorcheWhat">`, `<span class="othermention">zorchenhimer</span> <img src="/emotes/twitch/zorchenhimer/zorcheWhat.png" height="28px" title="zorcheWhat">`},
+	}
 	for _, d := range data {
 		chatData := client2.replaceColorizedName(common.NewChatMessage(client.name, client.color, d[0], common.CmdlUser, common.MsgChat))
 		if chatData.Data.(common.DataMessage).Message != d[1] {
