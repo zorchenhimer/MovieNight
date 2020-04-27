@@ -77,11 +77,14 @@ func processMessageKey(this js.Value, v []js.Value) interface{} {
 
 		if i := strings.LastIndex(newval, string(currentSugType)); i != -1 {
 			var offset int
+			wrapper := ""
 			if currentSugType == suggestionName {
 				offset = 1
+			} else if currentSugType == suggestionEmote {
+				wrapper = ":"
 			}
 
-			newval = newval[:i+offset] + ":" + currentSug + ":"
+			newval = newval[:i+offset] + wrapper + currentSug + wrapper
 		}
 
 		endVal := val[startIdx:]
