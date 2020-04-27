@@ -74,14 +74,16 @@ func processMessageKey(this js.Value, v []js.Value) interface{} {
 		msg := global.Get("msg")
 		val := msg.Get("value").String()
 		newval := val[:startIdx]
+		wrap := string(suggestionEmote)
 
 		if i := strings.LastIndex(newval, string(currentSugType)); i != -1 {
 			var offset int
 			if currentSugType == suggestionName {
 				offset = 1
+				wrap = ""
 			}
 
-			newval = newval[:i+offset] + ":" + currentSug + ":"
+			newval = newval[:i+offset] + wrap + currentSug + wrap
 		}
 
 		endVal := val[startIdx:]
