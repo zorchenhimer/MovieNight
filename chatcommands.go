@@ -213,7 +213,18 @@ var commands = &CommandControl{
 			HelpText: "Show a list of users in chat",
 			Function: func(cl *Client, args []string) (string, error) {
 				names := cl.belongsTo.GetNames()
-				return strings.Join(names, " "), nil
+				formatNames := func(names []string) []string {
+					result := make([]string, len(names))
+					for _, name := range names {
+						if strings.HasPrefix(name, "@") {
+							result = append(result, name)
+						} else {
+							result = append(result, "@"+name)
+						}
+					}
+					return result
+				}
+				return strings.Join(formatNames(names), " "), nil
 			},
 		},
 
