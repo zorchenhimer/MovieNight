@@ -191,10 +191,28 @@ input[type=text] {
     border-bottom-right-radius: 5px;
 }
 
-#videoElement {
+#videoWrapper {
     position: relative;
-    top: 50%;
-    transform: translateY(-50%);
+    display: flex;
+}
+
+#videoOverlay {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    background-color: rgb(200,200,200, 0.5);
+    z-index: 3;
+    text-align: center;
+    vertical-align: middle;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+}
+
+#videoElement {
+    z-index: 1;
+    position: relative;
     width: 100%;
 }
 
