@@ -200,7 +200,7 @@ input[type=text] {
     height: 100%;
     width: 100%;
     position: absolute;
-    background-color: rgb(200,200,200, 0.5);
+    background-color: rgb(0, 0, 0, 0.75);
     z-index: 3;
     text-align: center;
     vertical-align: middle;
