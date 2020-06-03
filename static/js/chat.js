@@ -23,10 +23,10 @@ function deleteCookie(cname) {
 function setPlaying(title, link) {
     if (title !== "") {
         $('#playing').text(title);
-        document.title = "Movie Night | " + title;
+        document.title = pageTitle + " | " + title;
     } else {
         $('#playing').text("");
-        document.title = "Movie Night";
+        document.title = pageTitle;
     }
 
     $('#playing').removeAttr('href');

@@ -1,5 +1,6 @@
 {
 	"MaxMessageCount": 300,
+	"PageTitle": "Movie Night",
 	"TitleLength": 50,
 	"AdminPassword": "",
 	"RegenAdminPass": true,
