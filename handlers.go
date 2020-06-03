@@ -328,7 +328,7 @@ func handleIndexTemplate(w http.ResponseWriter, r *http.Request) {
 		Video:               true,
 		Chat:                true,
 		MessageHistoryCount: settings.MaxMessageCount,
-		Title:               "Movie Night!",
+		Title:               settings.PageTitle,
 	}
 
 	path := strings.Split(strings.TrimLeft(r.URL.Path, "/"), "/")

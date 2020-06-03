@@ -26,6 +26,7 @@ type Settings struct {
 	StreamStats     bool
 	MaxMessageCount int
 	TitleLength     int // maximum length of the title that can be set with the /playing
+	PageTitle       string // primary value for the page <title> element
 	AdminPassword   string
 	RegenAdminPass  bool // regenerate admin password on start?
 	StreamKey       string
