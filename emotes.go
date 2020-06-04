@@ -168,6 +168,7 @@ func getUserIDs(names []string) []TwitchUser {
 		log.Fatalln("Error generating new request:", err)
 	}
 	request.Header.Set("Client-ID", settings.TwitchClientID)
+	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", settings.TwitchClientSecret))
 
 	client := http.Client{}
 	resp, err := client.Do(request)

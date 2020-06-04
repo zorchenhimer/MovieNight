@@ -17,5 +17,7 @@
 	"RegenAdminPass": true,
 	"StreamKey": "ALongStreamKey",
 	"TitleLength": 50,
+	"TwitchClientID": "",
+	"TwitchClientSecret": "",
 	"WrappedEmotesOnly": false
 }
