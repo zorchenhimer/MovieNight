@@ -26,6 +26,7 @@ type Settings struct {
 	AdminPassword   string
 	ApprovedEmotes  []string // list of channels that have been approved for emote use.  Global emotes are always "approved".
 	Bans            []BanInfo
+	LetThemLurk     bool // whether or not to announce users joining/leaving chat
 	ListenAddress   string
 	LogFile         string
 	LogLevel        common.LogLevel

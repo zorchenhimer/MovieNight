@@ -2,6 +2,7 @@
 	"AdminPassword": "",
 	"ApprovedEmotes": null,
 	"Bans": [],
+	"LetThemLurk": false,
 	"ListenAddress": ":8089",
 	"LogFile": "thelog.log",
 	"LogLevel": "debug",
