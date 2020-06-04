@@ -109,8 +109,9 @@ func (cr *ChatRoom) Join(conn *chatConnection, data common.JoinData) (*Client, e
 	} else {
 		client.Send(playingCommand)
 	}
-	cr.AddEventMsg(common.EvJoin, data.Name, data.Color)
-
+	if !settings.LetThemLurk {
+		cr.AddEventMsg(common.EvJoin, data.Name, data.Color)
+	}
 	sendHiddenMessage(common.CdJoin, nil)
 	sendHiddenMessage(common.CdEmote, common.Emotes)
 
@@ -135,7 +136,9 @@ func (cr *ChatRoom) Leave(name, color string) {
 	client.conn.Close()
 	cr.delClient(id)
 
-	cr.AddEventMsg(common.EvLeave, name, color)
+	if !settings.LetThemLurk {
+		cr.AddEventMsg(common.EvLeave, name, color)
+	}
 	common.LogChatf("[leave] %s %s\n", host, name)
 }
 
