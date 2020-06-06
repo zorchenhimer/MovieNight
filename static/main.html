@@ -6,35 +6,26 @@
 <script>
     maxMessageCount = {{.MessageHistoryCount }}
 </script>
-<style>
-    .root {
-        display: grid;
-    }
-</style>
 {{end}}
 
 {{if .Video}}
 <script type="application/javascript" src="/static/js/flv.min.js"></script>
 <script type="application/javascript" src="/static/js/video.js"></script>
-{{if not .Chat}}
-<style>
-    #videoElement {
-        height: 99vh;
-    }
-</style>
-{{end}}
 {{end}}
 
-{{if and .Video .Chat}}
-<style>
-    .root {
-        grid-template-columns: 5fr 1fr;
-    }
-</style>
-{{end}}
+{{/* end define header */}}
 {{end}}
 
 {{define "body"}}
+
+{{ if and .Chat .Video }}
+<div class="grid-root combined">
+{{ else if .Video }}
+<div class="grid-root video-only">
+{{ else }}
+<div class="grid-root">
+{{ end }}
+
 {{if .Video}}
 <div id="videoWrapper">
     <div id="videoOverlay">
