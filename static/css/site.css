@@ -312,6 +312,11 @@ input[type=text] {
     text-decoration: underline;
 }
 
+#joinbox .welcome p {
+  color: #e5e0e5;
+  text-align: center;
+}
+
 #chat {
     display: grid;
     grid-template-rows: 1.5em min-content 1fr 6em 2.5em 1em;

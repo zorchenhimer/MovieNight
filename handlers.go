@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"net/http"
 	"path"
@@ -322,6 +323,7 @@ func handleIndexTemplate(w http.ResponseWriter, r *http.Request) {
 		Video, Chat         bool
 		MessageHistoryCount int
 		Title               string
+		WelcomeMessage      template.HTML
 	}
 
 	data := Data{
@@ -329,6 +331,7 @@ func handleIndexTemplate(w http.ResponseWriter, r *http.Request) {
 		Chat:                true,
 		MessageHistoryCount: settings.MaxMessageCount,
 		Title:               settings.PageTitle,
+		WelcomeMessage:      template.HTML(settings.WelcomeMessage),
 	}
 
 	path := strings.Split(strings.TrimLeft(r.URL.Path, "/"), "/")

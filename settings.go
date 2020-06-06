@@ -43,6 +43,7 @@ type Settings struct {
 	TitleLength        int    // maximum length of the title that can be set with the /playing
 	TwitchClientID     string // client id from twitch developers portal
 	TwitchClientSecret string // OAuth from twitch developers portal: https://dev.twitch.tv/docs/authentication/getting-tokens-oauth#oauth-client-credentials-flow
+	WelcomeMessage     string // Message to appear above the login form; HTML OK
 	WrappedEmotesOnly  bool   // only allow "wrapped" emotes.  eg :Kappa: and [Kappa] but not Kappa
 
 	// Rate limiting stuff, in seconds

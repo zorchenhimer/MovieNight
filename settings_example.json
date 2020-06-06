@@ -20,5 +20,6 @@
 	"TitleLength": 50,
 	"TwitchClientID": "",
 	"TwitchClientSecret": "",
+	"WelcomeMessage": "<p>Please enter your name to join the chat</p>",
 	"WrappedEmotesOnly": false
 }

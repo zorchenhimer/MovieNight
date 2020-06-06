@@ -101,7 +101,9 @@
         </div>
     </div>
     <div id="joinbox">
-        <div style="color: #e5e0e5; text-align: center;">Please enter your name<br />to join the chat</div>
+      <div class="welcome">
+        {{ .WelcomeMessage }}
+      </div>
         <div>
             <input id="name" type="text" maxlength="36">
             <input id="join" type="button" class="button pretty-button" onclick="join();" value="Join" />
