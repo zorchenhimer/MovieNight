@@ -110,16 +110,17 @@ input[type=text] {
 }
 
 #emotesbody {
-    color: var(--var-message-color);
+  color: var(--var-message-color);
 }
 
 .emotedef {
-    display: flex;
-    flex-direction: row;
+  float: left;
+  padding: 5px 5px 15px 5px;
 }
 
-.emotedef div {
-    padding: 5px;
+.emotedef img {
+  height: 112px;
+  width: 112px;
 }
 
 .notice {
