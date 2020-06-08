@@ -56,12 +56,13 @@ input[type=text] {
     font-weight: bold;
 }
 
-.root {
-    max-width: var(--var-max-width);
-    max-height: var(--var-max-height);
-    height: var(--var-max-height);
-    width: var(--var-max-width);
-    margin: 0px 1vw;
+.grid-root {
+  display: grid;
+  height: var(--var-max-height);
+  margin: 0px 1vw;
+  max-height: var(--var-max-height);
+  max-width: var(--var-max-width);
+  width: var(--var-max-width);
 }
 
 .pretty-button {
@@ -200,7 +201,7 @@ input[type=text] {
     height: 100%;
     width: 100%;
     position: absolute;
-    background-color: rgb(0, 0, 0, 0.75);
+    background-color: rgba(0, 0, 0, 0.75);
     z-index: 3;
     text-align: center;
     vertical-align: middle;
@@ -399,4 +400,22 @@ input[type=text] {
     position: absolute;
     z-index: 99;
     color: var(--var-contrast-color);
+}
+
+/* ------------------- */
+/* CONDITIONAL CLASSES */
+/* ------------------- */
+
+/* ------------- */
+/* COMBINED MODE */
+/* ------------- */
+.combined {
+  grid-template-columns: 5fr 1fr;
+}
+
+/* --------------- */
+/* VIDEO ONLY MODE */
+/* --------------- */
+.video-only #videoElement {
+  height: 99vh;
 }
