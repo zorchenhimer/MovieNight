@@ -1,3 +1,19 @@
+<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
+**Table of Contents**
+
+- [MovieNight stream server](#movienight-stream-server)
+    - [Build requirements](#build-requirements)
+        - [Older Go Versions](#older-go-versions)
+        - [Compile and install](#compile-and-install)
+        - [Docker build](#docker-build)
+            - [Building the Container](#building-the-container)
+            - [Running the Container](#running-the-container)
+            - [docker-compose](#docker-compose)
+            - [Notes for Running Using docker-compose](#notes-for-running-using-docker-compose)
+    - [Usage](#usage)
+    - [Configuration](#configuration)
+
+<!-- markdown-toc end -->
 # MovieNight stream server
 
 [![Build status](https://api.travis-ci.org/zorchenhimer/MovieNight.svg?branch=master)](https://travis-ci.org/zorchenhimer/MovieNight)
