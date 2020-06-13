@@ -36,6 +36,7 @@ type Settings struct {
 	RegenAdminPass     bool   // regenerate admin password on start?
 	RoomAccess         AccessMode
 	RoomAccessPin      string // The current pin
+	RtmpListenAddress  string // host:port that the RTMP server listens on
 	SessionKey         string // key for session data
 	StreamKey          string
 	StreamStats        bool

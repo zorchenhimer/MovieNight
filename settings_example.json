@@ -15,6 +15,7 @@
 	"RateLimitDuplicate": 30,
 	"RateLimitNick": 300,
 	"RegenAdminPass": true,
+	"RtmpListenAddress": ":1935",
 	"StreamKey": "ALongStreamKey",
 	"TitleLength": 50,
 	"TwitchClientID": "",

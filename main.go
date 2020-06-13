@@ -16,6 +16,7 @@ import (
 var (
 	pullEmotes bool
 	addr       string
+	rtmpAddr   string
 	sKey       string
 	stats      = newStreamStats()
 	sAdminPass string
@@ -47,7 +48,8 @@ func setupSettings() error {
 }
 
 func main() {
-	flag.StringVar(&addr, "l", "", "host:port of the MovieNight")
+	flag.StringVar(&addr, "l", "", "host:port of the HTTP server")
+	flag.StringVar(&rtmpAddr, "r", "", "host:port of the RTMP server")
 	flag.StringVar(&sKey, "k", "", "Stream key, to protect your stream")
 	flag.StringVar(&sAdminPass, "a", "", "Set admin password.  Overrides configuration in settings.json.  This will not write the password to settings.json.")
 	flag.BoolVar(&pullEmotes, "e", false, "Pull emotes")
@@ -90,8 +92,8 @@ func main() {
 		addr = settings.ListenAddress
 	}
 
-	if addr[0] != ':' {
-		addr = ":" + addr
+	if rtmpAddr == "" {
+		rtmpAddr = settings.RtmpListenAddress
 	}
 
 	// A stream key was passed on the command line.  Use it, but don't save
@@ -102,7 +104,8 @@ func main() {
 
 	common.LogInfoln("Stream key: ", settings.GetStreamKey())
 	common.LogInfoln("Admin password: ", settings.AdminPassword)
-	common.LogInfoln("Listen and serve ", addr)
+	common.LogInfoln("HTTP server listening on: ", addr)
+	common.LogInfoln("RTMP server listening on: ", rtmpAddr)
 	common.LogInfoln("RoomAccess: ", settings.RoomAccess)
 	common.LogInfoln("RoomAccessPin: ", settings.RoomAccessPin)
 
@@ -116,6 +119,7 @@ func startRmtpServer() {
 	server := &rtmp.Server{
 		HandlePlay:    handlePlay,
 		HandlePublish: handlePublish,
+		Addr:          rtmpAddr,
 	}
 	err := server.ListenAndServe()
 	if err != nil {
