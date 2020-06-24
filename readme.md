@@ -139,26 +139,36 @@ MovieNight’s configuration is controlled by `settings.json`:
 - `LogLevel`: the log level, defaults to `debug`.
 - `MaxMessageCount`: the number of messages displayed in the chat window.
 - `NewPin`: if true, regenerates `RoomAccessPin` when the server starts.
+- `NoCache`: if true, set `Cache-Control: no-cache, must-revalidate` in the HTTP
+  header, to prevent caching responses.
 - `PageTitle`: The base string used in the `<title>` element of the page.  When
-  the stream title is set with `/playing`, it is appended; e.g., `Movie Night | The Man Who Killed Hitler and Then the Bigfoot`
+  the stream title is set with `/playing`, it is appended; e.g., `Movie Night |
+  The Man Who Killed Hitler and Then the Bigfoot`
+- `RakeLimitColor`: the number of seconds before a user can change their color
+  again.
+- `RateLimitAuth`: the number of seconds between each allowed auth attempt
+- `RateLimitChat`: the number of seconds between each message a non-privileged
+  user can post in chat.
+- `RateLimitDuplicate`: the numeber of seconds before a user can post a
+  duplicate message.
+- `RateLimitNick`: the number of seconds before a user can change their nick
+  again.
 - `RegenAdminPass`: if true, regenerates `AdminPassword` when the server starts.
+- `RoomAccessPin`: if set, serves as the password required to enter the
+  chatroom.
 - `RoomAccess`: the access policy of the chat room; this is managed by the
   application and should not be edited manually.
-- `RoomAccessPin`: if set, serves as the password required to enter the chatroom.
+- `RtmpListenAddress`: the port to listen on for RTMP connections, formatted as
+  `:1935`.
 - `SessionKey`: key used for storing session data (cookies etc.)
 - `StreamKey`: the key that OBS will use to connect to MovieNight.
 - `StreamStats`: if true, prints statistics for the stream on server shutdown.
-- `TitleLength`: the maximum allowed length for the stream title (set with `/playing`).
+- `TitleLength`: the maximum allowed length for the stream title (set with
+  `/playing`).
 - `TwitchClientID`: OAuth client ID for the Twitch API, used for fetching emotes
-- `TwitchClientSecret`: OAuth client secret for the Twitch API; [can be generated locally with curl](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth#oauth-client-credentials-flow).
+- `TwitchClientSecret`: OAuth client secret for the Twitch API; [can be
+  generated locally with
+  curl](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth#oauth-client-credentials-flow).
+- `WelcomeMessage`: The text displayed above the chat login.
 - `WrappedEmotesOnly`: if true, requires that emote codes be wrapped in colons
   or brackets; e.g., `:PogChamp:`
-- `RateLimitChat`: the number of seconds between each message a non-privileged
-  user can post in chat.
-- `RateLimitNick`: the number of seconds before a user can change their nick again.
-- `RakeLimitColor`: the number of seconds before a user can change their color again.
-- `RateLimitAuth`: the number of seconds between each allowed auth attempt
-- `RateLimitDuplicate`: the numeber of seconds before a user can post a
-  duplicate message.
-- `NoCache`: if true, set `Cache-Control: no-cache, must-revalidate` in the HTTP
-  header, to prevent caching responses.
