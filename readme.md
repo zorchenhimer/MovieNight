@@ -117,10 +117,14 @@ at startup:
 
 ```text
 Usage of .\MovieNight.exe:
+  -e bool
+        Whether or not to download approved emotes on startup (default "false")
   -k string
-        Stream key, to protect your stream
+        Stream key, to protect your stream (default: "")
   -l string
         host:port of the MovieNight (default ":8089")
+  -r string
+        host:port of the RTMP server (default ":1935")
 ```
 
 ## Configuration
