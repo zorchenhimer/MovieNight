@@ -166,3 +166,7 @@ MovieNight’s configuration is controlled by `settings.json`:
   duplicate message.
 - `NoCache`: if true, set `Cache-Control: no-cache, must-revalidate` in the HTTP
   header, to prevent caching responses.
+
+## License
+
+`flv.js` is Licensed under the Apache 2.0 license.  This project is licened under the MIT license.
