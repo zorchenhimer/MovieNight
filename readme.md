@@ -1,9 +1,6 @@
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
 **Table of Contents**
-<<<<<<< HEAD
 
-=======
->>>>>>> Changed EOL into readme.md
 - [MovieNight stream server](#movienight-stream-server)
     - [Build requirements](#build-requirements)
         - [Older Go Versions](#older-go-versions)
@@ -19,10 +16,7 @@
 
 <!-- markdown-toc end -->
 # MovieNight stream server
-<<<<<<< HEAD
 
-=======
->>>>>>> Changed EOL into readme.md
 [![Build status](https://api.travis-ci.org/zorchenhimer/MovieNight.svg?branch=master)](https://travis-ci.org/zorchenhimer/MovieNight)
 
 This is a single-instance streaming server with chat.  Originally written to
@@ -30,18 +24,11 @@ replace Rabbit as the platform for watching movies with a group of people
 online.
 
 ## Build requirements
-<<<<<<< HEAD
 
-=======
->>>>>>> Changed EOL into readme.md
 - Go 1.13 or newer
 - GNU Make
 
 ### Older Go Versions
-<<<<<<< HEAD
-
-=======
->>>>>>> Changed EOL into readme.md
 You can install a newer version of Go alongside your OS's distribution by
 following the guide here: [https://golang.org/doc/install#extra_versions](https://golang.org/doc/install#extra_versions)
 
@@ -57,11 +44,7 @@ You have to :
 - build **make TARGET=windows ARCH=386**;
 - and run **./MovieNight**;
 
-<<<<<<< HEAD
 Example :
-=======
-Example : 
->>>>>>> Changed EOL into readme.md
 ```bash
 $ git clone https://github.com/zorchenhimer/MovieNight
 $ cd MovieNight
@@ -107,13 +90,11 @@ This docker-compose file will create a volume called *movienight-config* and aut
 The container needs to be restarted to apply any changes you make to *settings.json*.
 
 ### FreeNAS - FreeBSD build and run
+
 An script wich setup an Jail and build and run MovieNight into that Jail as been writen, you'll find it here [freenas-iocage-movienight] (https://github.com/zorglube/freenas-iocage-movienight)
 
 ## Usage
-<<<<<<< HEAD
 
-=======
->>>>>>> Changed EOL into readme.md
 Now you can use OBS to push a stream to the server.  Set the stream URL to
 
 ```text
@@ -158,10 +139,7 @@ Usage of .\MovieNight.exe:
 ```
 
 ## Configuration
-<<<<<<< HEAD
 
-=======
->>>>>>> Changed EOL into readme.md
 MovieNight’s configuration is controlled by `settings.json`:
 
 - `AdminPassword`: users can enter `/auth <value>` into chat to grant themselves
@@ -201,8 +179,5 @@ MovieNight’s configuration is controlled by `settings.json`:
   header, to prevent caching responses.
 
 ## License
-<<<<<<< HEAD
 
-=======
->>>>>>> Changed EOL into readme.md
 `flv.js` is Licensed under the Apache 2.0 license.  This project is licened under the MIT license.
