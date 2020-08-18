@@ -29,6 +29,7 @@ online.
 - GNU Make
 
 ### Older Go Versions
+
 You can install a newer version of Go alongside your OS's distribution by
 following the guide here: [https://golang.org/doc/install#extra_versions](https://golang.org/doc/install#extra_versions)
 
