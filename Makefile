@@ -5,10 +5,13 @@
 # For info on installing extra versions, see this page:
 # https://golang.org/doc/install#extra_versions
 
+# goosList = "android darwin dragonfly freebsd linux nacl netbsd openbsd plan9 solaris windows"
+# goarchList = "386 amd64 amd64p32 arm arm64 ppc64 ppc64le mips mipsle mips64 mips64le mips64p32 mips64p32leppc s390 s390x sparc sparc64"
+
 TAGS=
 
 # Windows needs the .exe extension.
-ifeq ($(OS),Windows_NT)
+ifeq ($(TARGET),windows)
 EXT=.exe
 endif
 
@@ -19,9 +22,9 @@ all: fmt vet test MovieNight$(EXT) static/main.wasm settings.json
 # Build the server deployment
 server: ServerMovieNight static/main.wasm
 
-# Build used for deploying to my server.
+# Bulid used for deploying to my server.
 ServerMovieNight: *.go common/*.go
-	GOOS=${OS} GOARCH=${ARCH} go$(GO_VERSION) build -o MovieNight $(TAGS)
+	GOOS=${TARGET} GOARCH=${ARCH} go$(GO_VERSION) build -o MovieNight $(TAGS)
 
 setdev:
 	$(eval export TAGS=-tags "dev")
@@ -29,7 +32,7 @@ setdev:
 dev: setdev all
 
 MovieNight$(EXT): *.go common/*.go
-	GOOS=${OS} GOARCH=${ARCH} go$(GO_VERSION) build -o $@ $(TAGS)
+	go$(GO_VERSION) build -o $@ $(TAGS)
 
 static/js/wasm_exec.js:
 	cp $$(go env GOROOT)/misc/wasm/wasm_exec.js $@
