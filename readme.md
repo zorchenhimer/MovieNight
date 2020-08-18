@@ -41,7 +41,7 @@ You have to :
     - download ; 
     - choose your `TARGET` "android darwin dragonfly freebsd linux nacl netbsd openbsd plan9 solaris windows" 
       ;
-    - choose your `ARCH` "386 amd64 amd64p32 arm arm64 ppc64 ppc64le mips mipsle mips64 mips64le mips64p32 mips64p32leppc s390 s390x sparc sparc64" 
+    - choose you `ARCH` "386 amd64 amd64p32 arm arm64 ppc64 ppc64le mips mipsle mips64 mips64le mips64p32 mips64p32leppc s390 s390x sparc sparc64" 
       ;
     - and run ;
 
