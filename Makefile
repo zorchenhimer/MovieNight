@@ -10,14 +10,14 @@
 include make/Makefile.common
 
 # Windows needs the .exe extension.
-ifeq ($(OS),Windows_NT) 
+ifeq ($(OS),Windows_NT)
 EXT=.exe 
 endif 
 
-ifeq ($(GOOS),) 
-GOOS=windows 
+ifeq ($(GOOS),)
+GOOS=windows
 endif
 
-ifeq ($(ARCH),) 
-ARCH=386 
-endif 
+ifeq ($(ARCH),)
+ARCH=386
+endif
