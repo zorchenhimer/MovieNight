@@ -53,7 +53,7 @@ $ git clone https://github.com/zorchenhimer/MovieNight
 $ cd MovieNight
 $ make TARGET=windows ARCH=386
 $ ./MovieNight
-```
+``` 
 
 ### Docker build
 MovieNight provides a Dockerfile and a docker-compose file to run MovieNight using Docker.
