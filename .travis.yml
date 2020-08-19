@@ -8,5 +8,3 @@ go:
 
 env:
     - GO111MODULE=on
-    - ARCH=amd64
-    - TARGET=FreeBSD
