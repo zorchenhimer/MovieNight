@@ -1,7 +1,0 @@
-{
-	"deploy": {
-		"appIsGoPath": false,
-		"main": "MovieNight",
-		"execDir": "./"
-	}
-}
