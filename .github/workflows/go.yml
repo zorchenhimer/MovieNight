@@ -5,6 +5,8 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  release:
+    types: [created]
 
 jobs:
 
@@ -35,3 +37,15 @@ jobs:
 
     - name: Test
       run: go test -v .
+
+  release-freebsd-amd64:
+    name: release freebsd/amd64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: wangyoucao577/go-release-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: FreeBSD
+          goarch: amd64
+  
