@@ -1,6 +1,6 @@
 {
 	"deploy": {
-		"appIsGoPath": false,
+		"appIsGoPath": true,
 		"main": "MovieNight",
 		"execDir": "./"
 	}
