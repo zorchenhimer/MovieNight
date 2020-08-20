@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 
 	"github.com/gorilla/sessions"
 	"github.com/nareix/joy4/format"
@@ -21,6 +22,7 @@ var (
 	stats      = newStreamStats()
 	sAdminPass string
 	confFile   string
+	path       string
 )
 
 func setupSettings() error {
@@ -49,6 +51,7 @@ func setupSettings() error {
 }
 
 func main() {
+	&path, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	flag.StringVar(&addr, "l", "", "host:port of the HTTP server")
 	flag.StringVar(&rtmpAddr, "r", "", "host:port of the RTMP server")
 	flag.StringVar(&sKey, "k", "", "Stream key, to protect your stream")
@@ -132,20 +135,20 @@ func startRmtpServer() {
 
 func startServer() {
 	// Chat websocket
-	http.HandleFunc("/ws", wsHandler)
-	http.HandleFunc("/static/js/", wsStaticFiles)
-	http.HandleFunc("/static/css/", wsStaticFiles)
-	http.HandleFunc("/static/img/", wsImages)
-	http.HandleFunc("/static/main.wasm", wsWasmFile)
-	http.HandleFunc("/emotes/", wsEmotes)
-	http.HandleFunc("/favicon.ico", wsStaticFiles)
-	http.HandleFunc("/chat", handleIndexTemplate)
-	http.HandleFunc("/video", handleIndexTemplate)
-	http.HandleFunc("/help", handleHelpTemplate)
-	http.HandleFunc("/pin", handlePin)
-	http.HandleFunc("/emotes", handleEmoteTemplate)
+	http.HandleFunc(path+"/ws", wsHandler)
+	http.HandleFunc(path+"/static/js/", wsStaticFiles)
+	http.HandleFunc(path+"/static/css/", wsStaticFiles)
+	http.HandleFunc(path+"/static/img/", wsImages)
+	http.HandleFunc(path+"/static/main.wasm", wsWasmFile)
+	http.HandleFunc(path+"/emotes/", wsEmotes)
+	http.HandleFunc(path+"/favicon.ico", wsStaticFiles)
+	http.HandleFunc(path+"/chat", handleIndexTemplate)
+	http.HandleFunc(path+"/video", handleIndexTemplate)
+	http.HandleFunc(path+"/help", handleHelpTemplate)
+	http.HandleFunc(path+"/pin", handlePin)
+	http.HandleFunc(path+"/emotes", handleEmoteTemplate)
 
-	http.HandleFunc("/", handleDefault)
+	http.HandleFunc(path+"/", handleDefault)
 
 	err := http.ListenAndServe(addr, nil)
 	if err != nil {
