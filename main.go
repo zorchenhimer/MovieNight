@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	//	"path/filepath"
 
 	"github.com/gorilla/sessions"
 	"github.com/nareix/joy4/format"
