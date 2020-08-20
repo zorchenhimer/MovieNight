@@ -22,7 +22,7 @@ var (
 	stats      = newStreamStats()
 	sAdminPass string
 	confFile   string
-	path       string
+	runPath    string
 )
 
 func setupSettings() error {
@@ -51,11 +51,12 @@ func setupSettings() error {
 }
 
 func main() {
-	&path, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-            log.Fatal(err)
-    	}
-	fmt.Println(path)
+	ex, er := os.Executable()
+	if er != nil {
+		panic(er)
+	}
+	runPath := filepath.Dir(ex)
+	fmt.Println(runPath)
 
 	flag.StringVar(&addr, "l", "", "host:port of the HTTP server")
 	flag.StringVar(&rtmpAddr, "r", "", "host:port of the RTMP server")
