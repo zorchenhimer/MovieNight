@@ -52,6 +52,11 @@ func setupSettings() error {
 
 func main() {
 	&path, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+            log.Fatal(err)
+    	}
+	fmt.Println(path)
+
 	flag.StringVar(&addr, "l", "", "host:port of the HTTP server")
 	flag.StringVar(&rtmpAddr, "r", "", "host:port of the RTMP server")
 	flag.StringVar(&sKey, "k", "", "Stream key, to protect your stream")
