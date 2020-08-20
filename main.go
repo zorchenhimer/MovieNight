@@ -20,11 +20,12 @@ var (
 	sKey       string
 	stats      = newStreamStats()
 	sAdminPass string
+	confFile   string
 )
 
 func setupSettings() error {
 	var err error
-	settings, err = LoadSettings("settings.json")
+	settings, err = LoadSettings(confFile)
 	if err != nil {
 		return fmt.Errorf("Unable to load settings: %s", err)
 	}
@@ -53,6 +54,7 @@ func main() {
 	flag.StringVar(&sKey, "k", "", "Stream key, to protect your stream")
 	flag.StringVar(&sAdminPass, "a", "", "Set admin password.  Overrides configuration in settings.json.  This will not write the password to settings.json.")
 	flag.BoolVar(&pullEmotes, "e", false, "Pull emotes")
+	flag.StringVar(&confFile, "f", "", "URI of the conf file")
 	flag.Parse()
 
 	format.RegisterAll()
