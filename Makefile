@@ -12,7 +12,7 @@ include make/Makefile.common
 # Windows needs the .exe extension.
 ifeq ($(OS),Windows_NT)
 EXT=.exe 
-endif 
+endif
 
 ifeq ($(GOOS),)
 GOOS=windows
