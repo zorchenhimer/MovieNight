@@ -22,7 +22,7 @@ var (
 	stats      = newStreamStats()
 	sAdminPass string
 	confFile   string
-	path       string
+	runPath    string
 )
 
 func setupSettings() error {
@@ -51,11 +51,12 @@ func setupSettings() error {
 }
 
 func main() {
-	&path, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-            log.Fatal(err)
-    	}
-	fmt.Println(path)
+	ex, er := os.Executable()
+	if er != nil {
+		panic(er)
+	}
+	runPath := filepath.Dir(ex)
+	fmt.Println(runPath)
 
 	flag.StringVar(&addr, "l", "", "host:port of the HTTP server")
 	flag.StringVar(&rtmpAddr, "r", "", "host:port of the RTMP server")
@@ -140,20 +141,20 @@ func startRmtpServer() {
 
 func startServer() {
 	// Chat websocket
-	http.HandleFunc(path+"/ws", wsHandler)
-	http.HandleFunc(path+"/static/js/", wsStaticFiles)
-	http.HandleFunc(path+"/static/css/", wsStaticFiles)
-	http.HandleFunc(path+"/static/img/", wsImages)
-	http.HandleFunc(path+"/static/main.wasm", wsWasmFile)
-	http.HandleFunc(path+"/emotes/", wsEmotes)
-	http.HandleFunc(path+"/favicon.ico", wsStaticFiles)
-	http.HandleFunc(path+"/chat", handleIndexTemplate)
-	http.HandleFunc(path+"/video", handleIndexTemplate)
-	http.HandleFunc(path+"/help", handleHelpTemplate)
-	http.HandleFunc(path+"/pin", handlePin)
-	http.HandleFunc(path+"/emotes", handleEmoteTemplate)
+	http.HandleFunc(runPath+"/ws", wsHandler)
+	http.HandleFunc(runPath+"/static/js/", wsStaticFiles)
+	http.HandleFunc(runPath+"/static/css/", wsStaticFiles)
+	http.HandleFunc(runPath+"/static/img/", wsImages)
+	http.HandleFunc(runPath+"/static/main.wasm", wsWasmFile)
+	http.HandleFunc(runPath+"/emotes/", wsEmotes)
+	http.HandleFunc(runPath+"/favicon.ico", wsStaticFiles)
+	http.HandleFunc(runPath+"/chat", handleIndexTemplate)
+	http.HandleFunc(runPath+"/video", handleIndexTemplate)
+	http.HandleFunc(runPath+"/help", handleHelpTemplate)
+	http.HandleFunc(runPath+"/pin", handlePin)
+	http.HandleFunc(runPath+"/emotes", handleEmoteTemplate)
 
-	http.HandleFunc(path+"/", handleDefault)
+	http.HandleFunc(runPath+"/", handleDefault)
 
 	err := http.ListenAndServe(addr, nil)
 	if err != nil {
