@@ -10,9 +10,14 @@
 
 TAGS=
 
+# Windows needs the .exe extension.
+#.if ${TARGET} == "windows"
+#EXT=.exe
+#.endif
+
 .PHONY: fmt vet get clean dev setdev test ServerMovieNight
 
-all: fmt vet test MovieNight static/main.wasm settings.json
+all: fmt vet test MovieNight$(EXT) static/main.wasm settings.json
 
 # Build the server deployment
 server: ServerMovieNight static/main.wasm
@@ -36,7 +41,7 @@ static/main.wasm: static/js/wasm_exec.js wasm/*.go common/*.go
 	GOOS=js GOARCH=wasm go$(GO_VERSION) build -o $@ $(TAGS) wasm/*.go
 
 clean:
-	-rm MovieNight ./static/main.wasm ./static/js/wasm_exec.js
+	-rm MovieNight$(EXT) ./static/main.wasm ./static/js/wasm_exec.js
 
 fmt:
 	gofmt -w .
