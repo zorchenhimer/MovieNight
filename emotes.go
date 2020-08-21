@@ -27,13 +27,16 @@ type EmoteInfo struct {
 	Code string
 }
 
-func loadEmotes() error {
+func runPath() string {
 	ex, er := os.Executable()
 	if er != nil {
 		panic(er)
 	}
-	runPath := filepath.Dir(ex)
-	newEmotes, err := processEmoteDir(runPath + emoteDir)
+	return filepath.Dir(ex)
+}
+
+func loadEmotes() error {
+	newEmotes, err := processEmoteDir(runPath() + emoteDir)
 	if err != nil {
 		return err
 	}
@@ -92,7 +95,7 @@ func processEmoteDir(path string) (common.EmotesMap, error) {
 func findEmotes(dir string, em common.EmotesMap) (common.EmotesMap, error) {
 	//em := NewEmotesMap()
 
-	fmt.Printf("finding emotes in %q\n", dir)
+	//fmt.Printf("finding emotes in %q\n", dir)
 	emotePNGs, err := filepath.Glob(filepath.Join(dir, "*.png"))
 	if err != nil {
 		return em, fmt.Errorf("unable to glob emote directory: %s\n", err)
