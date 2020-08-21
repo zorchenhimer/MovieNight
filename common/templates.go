@@ -4,6 +4,8 @@ import (
 	"fmt"
 	html "html/template"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	text "text/template"
 )
@@ -15,14 +17,6 @@ var serverTemplates map[string]*html.Template
 var chatTemplates map[string]*text.Template
 
 var isServer bool = false
-
-// keys and files to load for that template
-var serverTemplateDefs map[string][]string = map[string][]string{
-	"pin":    []string{"./static/base.html", "./static/thedoor.html"},
-	"main":   []string{"./static/base.html", "./static/main.html"},
-	"help":   []string{"./static/base.html", "./static/help.html"},
-	"emotes": []string{"./static/base.html", "./static/emotes.html"},
-}
 
 var chatTemplateDefs map[string]string = map[string]string{
 	fmt.Sprint(DTInvalid, 0): "wot",
@@ -38,6 +32,20 @@ func InitTemplates() error {
 	isServer = true
 	serverTemplates = make(map[string]*html.Template)
 	chatTemplates = make(map[string]*text.Template)
+	ex, er := os.Executable()
+	if er != nil {
+		panic(er)
+	}
+	runPath := filepath.Dir(ex)
+	fmt.Println(runPath)
+
+	// keys and files to load for that template
+	var serverTemplateDefs map[string][]string = map[string][]string{
+		"pin":    []string{runPath + "/static/base.html", runPath + "/static/thedoor.html"},
+		"main":   []string{runPath + "/static/base.html", runPath + "/static/main.html"},
+		"help":   []string{runPath + "/static/base.html", runPath + "/static/help.html"},
+		"emotes": []string{runPath + "/static/base.html", runPath + "/static/emotes.html"},
+	}
 
 	// Parse server templates
 	for key, files := range serverTemplateDefs {
