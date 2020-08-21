@@ -55,7 +55,7 @@ func main() {
 	flag.StringVar(&sKey, "k", "", "Stream key, to protect your stream")
 	flag.StringVar(&sAdminPass, "a", "", "Set admin password.  Overrides configuration in settings.json.  This will not write the password to settings.json.")
 	flag.BoolVar(&pullEmotes, "e", false, "Pull emotes")
-	flag.StringVar(&confFile, "f", "", "URI of the conf file")
+	flag.StringVar(&confFile, "f", "./settings.json", "URI of the conf file")
 	flag.Parse()
 
 	format.RegisterAll()
