@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -43,14 +42,6 @@ type writeFlusher struct {
 func (self writeFlusher) Flush() error {
 	self.httpflusher.Flush()
 	return nil
-}
-
-func runPath() string {
-	ex, er := os.Executable()
-	if er != nil {
-		panic(er)
-	}
-	return filepath.Dir(ex)
 }
 
 // Serving static files
