@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
+	//	"path/filepath"
 
 	"github.com/gorilla/sessions"
 	"github.com/nareix/joy4/format"
@@ -22,7 +22,6 @@ var (
 	stats      = newStreamStats()
 	sAdminPass string
 	confFile   string
-	runPath    string
 )
 
 func setupSettings() error {
@@ -51,13 +50,6 @@ func setupSettings() error {
 }
 
 func main() {
-	ex, er := os.Executable()
-	if er != nil {
-		panic(er)
-	}
-	runPath := filepath.Dir(ex)
-	fmt.Println(runPath)
-
 	flag.StringVar(&addr, "l", "", "host:port of the HTTP server")
 	flag.StringVar(&rtmpAddr, "r", "", "host:port of the RTMP server")
 	flag.StringVar(&sKey, "k", "", "Stream key, to protect your stream")
@@ -141,20 +133,20 @@ func startRmtpServer() {
 
 func startServer() {
 	// Chat websocket
-	http.HandleFunc(runPath+"/ws", wsHandler)
-	http.HandleFunc(runPath+"/static/js/", wsStaticFiles)
-	http.HandleFunc(runPath+"/static/css/", wsStaticFiles)
-	http.HandleFunc(runPath+"/static/img/", wsImages)
-	http.HandleFunc(runPath+"/static/main.wasm", wsWasmFile)
-	http.HandleFunc(runPath+"/emotes/", wsEmotes)
-	http.HandleFunc(runPath+"/favicon.ico", wsStaticFiles)
-	http.HandleFunc(runPath+"/chat", handleIndexTemplate)
-	http.HandleFunc(runPath+"/video", handleIndexTemplate)
-	http.HandleFunc(runPath+"/help", handleHelpTemplate)
-	http.HandleFunc(runPath+"/pin", handlePin)
-	http.HandleFunc(runPath+"/emotes", handleEmoteTemplate)
+	http.HandleFunc("/ws", wsHandler)
+	http.HandleFunc("/static/js/", wsStaticFiles)
+	http.HandleFunc("/static/css/", wsStaticFiles)
+	http.HandleFunc("/static/img/", wsImages)
+	http.HandleFunc("/static/main.wasm", wsWasmFile)
+	http.HandleFunc("/emotes/", wsEmotes)
+	http.HandleFunc("/favicon.ico", wsStaticFiles)
+	http.HandleFunc("/chat", handleIndexTemplate)
+	http.HandleFunc("/video", handleIndexTemplate)
+	http.HandleFunc("/help", handleHelpTemplate)
+	http.HandleFunc("/pin", handlePin)
+	http.HandleFunc("/emotes", handleEmoteTemplate)
 
-	http.HandleFunc(runPath+"/", handleDefault)
+	http.HandleFunc("/", handleDefault)
 
 	err := http.ListenAndServe(addr, nil)
 	if err != nil {
