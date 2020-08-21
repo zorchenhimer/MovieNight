@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
+	//	"path/filepath"
 
 	"github.com/gorilla/sessions"
 	"github.com/nareix/joy4/format"
@@ -22,7 +22,6 @@ var (
 	stats      = newStreamStats()
 	sAdminPass string
 	confFile   string
-	runPath    string
 )
 
 func setupSettings() error {
@@ -51,13 +50,6 @@ func setupSettings() error {
 }
 
 func main() {
-	ex, er := os.Executable()
-	if er != nil {
-		panic(er)
-	}
-	runPath := filepath.Dir(ex)
-	fmt.Println(runPath)
-
 	flag.StringVar(&addr, "l", "", "host:port of the HTTP server")
 	flag.StringVar(&rtmpAddr, "r", "", "host:port of the RTMP server")
 	flag.StringVar(&sKey, "k", "", "Stream key, to protect your stream")
