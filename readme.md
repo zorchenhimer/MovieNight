@@ -130,6 +130,8 @@ Usage of .\MovieNight.exe:
         host:port of the MovieNight (default ":8089")
   -r string
         host:port of the RTMP server (default ":1935")
+  -f string
+        the settings file you want to use (default "./settings.json")
 ```
 
 ## Configuration
