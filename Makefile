@@ -11,9 +11,9 @@
 TAGS=
 
 # Windows needs the .exe extension.
-.if ${TARGET} == "windows"
-EXT=.exe
-.endif
+#.if ${TARGET} == "windows"
+#EXT=.exe
+#.endif
 
 .PHONY: fmt vet get clean dev setdev test ServerMovieNight
 
