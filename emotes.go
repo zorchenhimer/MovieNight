@@ -15,7 +15,7 @@ import (
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
-const emoteDir = "./static/emotes/"
+const emoteDir = "/static/emotes/"
 
 type TwitchUser struct {
 	ID    string
@@ -28,8 +28,12 @@ type EmoteInfo struct {
 }
 
 func loadEmotes() error {
-	//fmt.Println(processEmoteDir(emoteDir))
-	newEmotes, err := processEmoteDir(emoteDir)
+	ex, er := os.Executable()
+	if er != nil {
+		panic(er)
+	}
+	runPath := filepath.Dir(ex)
+	newEmotes, err := processEmoteDir(runPath + emoteDir)
 	if err != nil {
 		return err
 	}
