@@ -27,17 +27,20 @@ var chatTemplateDefs map[string]string = map[string]string{
 		`</span> <span class="cmdme">{{.Message}}</span></span>`,
 }
 
+func runPath() string {
+	ex, er := os.Executable()
+	if er != nil {
+		panic(er)
+	}
+	return filepath.Dir(ex)
+}
+
 // Called from the server
 func InitTemplates() error {
 	isServer = true
 	serverTemplates = make(map[string]*html.Template)
 	chatTemplates = make(map[string]*text.Template)
-	ex, er := os.Executable()
-	if er != nil {
-		panic(er)
-	}
-	runPath := filepath.Dir(ex)
-	fmt.Println(runPath)
+	var runPath string = runPath()
 
 	// keys and files to load for that template
 	var serverTemplateDefs map[string][]string = map[string][]string{
