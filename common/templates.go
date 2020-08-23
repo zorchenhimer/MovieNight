@@ -4,8 +4,6 @@ import (
 	"fmt"
 	html "html/template"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	text "text/template"
 )
