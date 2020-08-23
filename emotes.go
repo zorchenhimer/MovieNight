@@ -27,16 +27,8 @@ type EmoteInfo struct {
 	Code string
 }
 
-func runPath() string {
-	ex, er := os.Executable()
-	if er != nil {
-		panic(er)
-	}
-	return filepath.Dir(ex)
-}
-
 func loadEmotes() error {
-	newEmotes, err := processEmoteDir(runPath() + emoteDir)
+	newEmotes, err := processEmoteDir(common.RunPath() + emoteDir)
 	if err != nil {
 		return err
 	}
