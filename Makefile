@@ -5,15 +5,12 @@
 # For info on installing extra versions, see this page:
 # https://golang.org/doc/install#extra_versions
 
-# goosList = "android darwin dragonfly freebsd linux nacl netbsd openbsd plan9 solaris windows"
-# goarchList = "386 amd64 amd64p32 arm arm64 ppc64 ppc64le mips mipsle mips64 mips64le mips64p32 mips64p32leppc s390 s390x sparc sparc64"
-
 TAGS=
 
 # Windows needs the .exe extension.
-#.if ${TARGET} == "windows"
-#EXT=.exe
-#.endif
+ifeq ($(OS),Windows_NT)
+EXT=.exe
+endif
 
 .PHONY: fmt vet get clean dev setdev test ServerMovieNight
 
@@ -24,7 +21,7 @@ server: ServerMovieNight static/main.wasm
 
 # Bulid used for deploying to my server.
 ServerMovieNight: *.go common/*.go
-	GOOS=${TARGET} GOARCH=${ARCH} go$(GO_VERSION) build -o MovieNight $(TAGS)
+	GOOS=linux GOARCH=386 go$(GO_VERSION) build -o MovieNight $(TAGS)
 
 setdev:
 	$(eval export TAGS=-tags "dev")
