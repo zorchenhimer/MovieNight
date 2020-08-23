@@ -10,6 +10,7 @@
             - [Running the Container](#running-the-container)
             - [docker-compose](#docker-compose)
             - [Notes for Running Using docker-compose](#notes-for-running-using-docker-compose)
+        - [FreeNAS / FreeBSD build and run](#FreeNAS-FreeBSD)
     - [Usage](#usage)
     - [Configuration](#configuration)
 
@@ -88,6 +89,9 @@ This docker-compose file will create a volume called *movienight-config* and aut
 
 #### Notes for Running Using docker-compose
 The container needs to be restarted to apply any changes you make to *settings.json*.
+
+### FreeNAS - FreeBSD build and run
+An script wich setup an Jail and build and run MovieNight into that Jail as been writen, you'll find it here [freenas-iocage-movienight] (https://github.com/zorglube/freenas-iocage-movienight)
 
 ## Usage
 
