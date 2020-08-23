@@ -45,7 +45,7 @@ You have to :
 - build **make TARGET=windows ARCH=386**;
 - and run **./MovieNight**;
 
-Example : 
+Example :
 ```bash
 $ git clone https://github.com/zorchenhimer/MovieNight
 $ cd MovieNight
