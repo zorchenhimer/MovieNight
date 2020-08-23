@@ -1,6 +1,5 @@
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
 **Table of Contents**
-
 - [MovieNight stream server](#movienight-stream-server)
     - [Build requirements](#build-requirements)
         - [Older Go Versions](#older-go-versions)
@@ -16,7 +15,6 @@
 
 <!-- markdown-toc end -->
 # MovieNight stream server
-
 [![Build status](https://api.travis-ci.org/zorchenhimer/MovieNight.svg?branch=master)](https://travis-ci.org/zorchenhimer/MovieNight)
 
 This is a single-instance streaming server with chat.  Originally written to
@@ -24,12 +22,10 @@ replace Rabbit as the platform for watching movies with a group of people
 online.
 
 ## Build requirements
-
 - Go 1.13 or newer
 - GNU Make
 
 ### Older Go Versions
-
 You can install a newer version of Go alongside your OS's distribution by
 following the guide here: [https://golang.org/doc/manage-install](https://golang.org/doc/manage-install)
 
@@ -94,7 +90,6 @@ The container needs to be restarted to apply any changes you make to *settings.j
 An script wich setup an Jail and build and run MovieNight into that Jail as been writen, you'll find it here [freenas-iocage-movienight] (https://github.com/zorglube/freenas-iocage-movienight)
 
 ## Usage
-
 Now you can use OBS to push a stream to the server.  Set the stream URL to
 
 ```text
@@ -139,7 +134,6 @@ Usage of .\MovieNight.exe:
 ```
 
 ## Configuration
-
 MovieNight’s configuration is controlled by `settings.json`:
 
 - `AdminPassword`: users can enter `/auth <value>` into chat to grant themselves
@@ -179,5 +173,4 @@ MovieNight’s configuration is controlled by `settings.json`:
   header, to prevent caching responses.
 
 ## License
-
 `flv.js` is Licensed under the Apache 2.0 license.  This project is licened under the MIT license.
