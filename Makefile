@@ -19,9 +19,9 @@ all: fmt vet test MovieNight$(EXT) static/main.wasm settings.json
 # Build the server deployment
 server: ServerMovieNight static/main.wasm
 
-# Bulid used for deploying to my server.
+# Build used for deploying to my server.
 ServerMovieNight: *.go common/*.go
-	GOOS=linux GOARCH=386 go$(GO_VERSION) build -o MovieNight $(TAGS)
+	GOOS=${OS} GOARCH=${ARCH} go$(GO_VERSION) build -o MovieNight $(TAGS)
 
 setdev:
 	$(eval export TAGS=-tags "dev")
@@ -29,7 +29,7 @@ setdev:
 dev: setdev all
 
 MovieNight$(EXT): *.go common/*.go
-	go$(GO_VERSION) build -o $@ $(TAGS)
+	GOOS=${OS} GOARCH=${ARCH} go$(GO_VERSION) build -o $@ $(TAGS)
 
 static/js/wasm_exec.js:
 	cp $$(go env GOROOT)/misc/wasm/wasm_exec.js $@
