@@ -17,7 +17,7 @@ all: fmt vet test MovieNight static/main.wasm settings.json
 # Build the server deployment
 server: ServerMovieNight static/main.wasm
 
-# Bulid used for deploying to my server.
+# Build used for deploying to my server.
 ServerMovieNight: *.go common/*.go
 	GOOS=${TARGET} GOARCH=${ARCH} go$(GO_VERSION) build -o MovieNight $(TAGS)
 
