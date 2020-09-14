@@ -5,52 +5,19 @@
 # For info on installing extra versions, see this page:
 # https://golang.org/doc/install#extra_versions
 
-TAGS=
+# goosList = "android darwin dragonfly freebsd linux nacl netbsd openbsd plan9 solaris windows"
+# goarchList = "386 amd64 amd64p32 arm arm64 ppc64 ppc64le mips mipsle mips64 mips64le mips64p32 mips64p32leppc s390 s390x sparc sparc64"
+include make/Makefile.common
 
 # Windows needs the .exe extension.
-ifeq ($(OS),Windows_NT)
-EXT=.exe
+ifeq ($(OS),Windows_NT) 
+EXT=.exe 
+endif 
+
+ifeq ($(GOOS),) 
+GOOS=windows 
 endif
-
-.PHONY: fmt vet get clean dev setdev test ServerMovieNight
-
-all: fmt vet test MovieNight$(EXT) static/main.wasm settings.json
-
-# Build the server deployment
-server: ServerMovieNight static/main.wasm
-
-# Build used for deploying to my server.
-ServerMovieNight: *.go common/*.go
-	GOOS=${OS} GOARCH=${ARCH} go$(GO_VERSION) build -o MovieNight $(TAGS)
-
-setdev:
-	$(eval export TAGS=-tags "dev")
-
-dev: setdev all
-
-MovieNight$(EXT): *.go common/*.go
-	GOOS=${OS} GOARCH=${ARCH} go$(GO_VERSION) build -o $@ $(TAGS)
-
-static/js/wasm_exec.js:
-	cp $$(go env GOROOT)/misc/wasm/wasm_exec.js $@
-
-static/main.wasm: static/js/wasm_exec.js wasm/*.go common/*.go
-	GOOS=js GOARCH=wasm go$(GO_VERSION) build -o $@ $(TAGS) wasm/*.go
-
-clean:
-	-rm MovieNight$(EXT) ./static/main.wasm ./static/js/wasm_exec.js
-
-fmt:
-	gofmt -w .
-
-vet:
-	go$(GO_VERSION) vet $(TAGS) ./...
-	GOOS=js GOARCH=wasm go$(GO_VERSION) vet $(TAGS) ./...
-
-test:
-	go$(GO_VERSION) test $(TAGS) ./...
-
-# Do not put settings_example.json here as a prereq to avoid overwriting
-# the settings if the example is updated.
-settings.json:
-	cp settings_example.json settings.json
+l
+ifeq ($(ARCH),) 
+ARCH=386 
+endif 
