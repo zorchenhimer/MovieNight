@@ -420,3 +420,13 @@ input[type=text] {
 .video-only #videoElement {
   height: 99vh;
 }
+
+/* ---------------------- */
+/* COMBINED MODE (MOBILE) */
+/* ---------------------- */
+@media screen and (max-width: 768px) {
+    .combined {
+        grid-template-columns: 1fr;
+        grid-template-rows: 50vw 1fr;
+    }
+}
