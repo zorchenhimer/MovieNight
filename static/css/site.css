@@ -424,9 +424,13 @@ input[type=text] {
 /* ---------------------- */
 /* COMBINED MODE (MOBILE) */
 /* ---------------------- */
-@media screen and (max-width: 768px) {
-    .combined {
-        grid-template-columns: 1fr;
-        grid-template-rows: 50vw 1fr;
-    }
+@media screen and (max-width: 480px) {
+  .combined {
+    grid-template-columns: 1fr;
+    grid-template-rows: 56.25vw 1fr;
+  }
+
+  .combined #chatwindow {
+    max-height: calc(var(--var-max-height) - 56.25vw);
+  }
 }
