@@ -420,3 +420,17 @@ input[type=text] {
 .video-only #videoElement {
   height: 99vh;
 }
+
+/* ---------------------- */
+/* COMBINED MODE (MOBILE) */
+/* ---------------------- */
+@media screen and (max-width: 480px) {
+  .combined {
+    grid-template-columns: 1fr;
+    grid-template-rows: 56.25vw 1fr;
+  }
+
+  .combined #chatwindow {
+    max-height: calc(var(--var-max-height) - 56.25vw);
+  }
+}
