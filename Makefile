@@ -17,7 +17,7 @@ endif
 ifeq ($(GOOS),) 
 GOOS=windows 
 endif
-l
+
 ifeq ($(ARCH),) 
 ARCH=386 
 endif 
