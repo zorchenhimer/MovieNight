@@ -283,6 +283,7 @@ func handleEmoteTemplate(w http.ResponseWriter, r *http.Request) {
 		Emotes: common.Emotes,
 	}
 
+	common.LogDebugf("Emotes Data: %s", data)
 	err := common.ExecuteServerTemplate(w, "emotes", data)
 	if err != nil {
 		common.LogErrorf("Error executing file, %v", err)
