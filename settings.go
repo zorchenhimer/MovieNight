@@ -85,7 +85,7 @@ func LoadSettings(filename string) (*Settings, error) {
 	}
 	s.filename = filename
 
-	var logFileDir string = common.RunPath() + "/" + s.LogFile
+	var logFileDir string = s.LogFile
 	fmt.Printf("Log file: %s\n", logFileDir)
 	if err = common.SetupLogging(s.LogLevel, logFileDir); err != nil {
 		return nil, fmt.Errorf("Unable to setup logger: %s", err)
