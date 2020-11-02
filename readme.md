@@ -35,11 +35,11 @@ the newer version.
 
 ### Compile and install
 You have to : 
-- download **git clone https://github.com/zorchenhimer/MovieNight**, go into the source directory **cd MovieNight**;
+- download `git clone https://github.com/zorchenhimer/MovieNight`, go into the source directory `cd MovieNight`;
 - choose your `TARGET` oneof "android darwin dragonfly freebsd linux nacl netbsd openbsd plan9 solaris windows";
 - choose your `ARCH` oneof "386 amd64 amd64p32 arm arm64 ppc64 ppc64le mips mipsle mips64 mips64le mips64p32 mips64p32leppc s390 s390x sparc sparc64";
-- build **make TARGET=windows ARCH=386**;
-- and run **./MovieNight**;
+- build `make TARGET=windows ARCH=386`;
+- and run `./MovieNight`;
 
 Example :
 ```bash
@@ -87,7 +87,7 @@ This docker-compose file will create a volume called *movienight-config* and aut
 The container needs to be restarted to apply any changes you make to *settings.json*.
 
 ### FreeNAS - FreeBSD build and run
-An script wich setup an Jail and build and run MovieNight into that Jail as been writen, you'll find it here [freenas-iocage-movienight] (https://github.com/zorglube/freenas-iocage-movienight)
+An script wich setup an Jail and build and run MovieNight into that Jail as been writen, you'll find it here [freenas-iocage-movienight](https://github.com/zorglube/freenas-iocage-movienight)
 
 ## Usage
 Now you can use OBS to push a stream to the server.  Set the stream URL to
