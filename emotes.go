@@ -15,7 +15,7 @@ import (
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
-const emoteDir = "/static/emotes/"
+const emoteDir = "./static/emotes/"
 
 type TwitchUser struct {
 	ID    string
@@ -28,7 +28,8 @@ type EmoteInfo struct {
 }
 
 func loadEmotes() error {
-	newEmotes, err := processEmoteDir(common.RunPath() + emoteDir)
+	//fmt.Println(processEmoteDir(emoteDir))
+	newEmotes, err := processEmoteDir(emoteDir)
 	if err != nil {
 		return err
 	}
@@ -70,7 +71,7 @@ func processEmoteDir(path string) (common.EmotesMap, error) {
 		}
 		for _, d := range subd {
 			if d.IsDir() {
-				// emotes = append(emotes, findEmotes(filepath.Join(path, dir, d.Name()))...)
+				//emotes = append(emotes, findEmotes(filepath.Join(path, dir, d.Name()))...)
 				p := filepath.Join(path, dir, d.Name())
 				em, err = findEmotes(p, em)
 				if err != nil {
@@ -80,50 +81,33 @@ func processEmoteDir(path string) (common.EmotesMap, error) {
 		}
 	}
 
-	common.LogInfof("processEmoteDir: %d\n", len(em))
+	fmt.Printf("processEmoteDir: %d\n", len(em))
 	return em, nil
 }
 
-func substr(input string, start int, length int) string {
-	asRunes := []rune(input)
-
-	if start >= len(asRunes) {
-		return ""
-	}
-
-	if start+length > len(asRunes) {
-		length = len(asRunes) - start
-	}
-
-	return string(asRunes[start : start+length])
-}
-
 func findEmotes(dir string, em common.EmotesMap) (common.EmotesMap, error) {
-	var runPathLength = len(common.RunPath() + "/static/")
+	//em := NewEmotesMap()
 
-	common.LogDebugf("finding emotes in %q\n", dir)
+	fmt.Printf("finding emotes in %q\n", dir)
 	emotePNGs, err := filepath.Glob(filepath.Join(dir, "*.png"))
 	if err != nil {
 		return em, fmt.Errorf("unable to glob emote directory: %s\n", err)
 	}
-	common.LogInfof("Found %d emotePNGs\n", len(emotePNGs))
+	fmt.Printf("%d emotePNGs\n", len(emotePNGs))
 
 	emoteGIFs, err := filepath.Glob(filepath.Join(dir, "*.gif"))
 	if err != nil {
 		return em, errors.Wrap(err, "unable to glob emote directory:")
 	}
-	common.LogInfof("Found %d emoteGIFs\n", len(emoteGIFs))
+	fmt.Printf("%d emoteGIFs\n", len(emoteGIFs))
 
 	for _, file := range emotePNGs {
-		png := strings.ReplaceAll(common.Substr(file, runPathLength, len(file)), "\\", "/")
-		//common.LogDebugf("Emote PNG: %s", png)
-		em = em.Add(png)
+		em = em.Add(file)
+		//emotes = append(emotes, common.Emote{FullPath: dir, Code: file})
 	}
 
 	for _, file := range emoteGIFs {
-		gif := strings.ReplaceAll(common.Substr(file, runPathLength, len(file)), "\\", "/")
-		//common.LogDebugf("Emote GIF: %s", gif)
-		em = em.Add(gif)
+		em = em.Add(file)
 	}
 
 	return em, nil
@@ -139,7 +123,7 @@ func getEmotes(names []string) error {
 			return errors.Wrapf(err, "could not get emote data for \"%s\"", user.ID)
 		}
 
-		emoteUserDir := filepath.Join(common.RunPath()+emoteDir, "twitch", user.Login)
+		emoteUserDir := filepath.Join(emoteDir, "twitch", user.Login)
 		if _, err := os.Stat(emoteUserDir); os.IsNotExist(err) {
 			os.MkdirAll(emoteUserDir, os.ModePerm)
 		}
