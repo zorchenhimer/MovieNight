@@ -46,23 +46,22 @@ func (self writeFlusher) Flush() error {
 
 // Serving static files
 func wsStaticFiles(w http.ResponseWriter, r *http.Request) {
-	var runPath string = common.RunPath()
 	switch r.URL.Path {
 	case "/favicon.ico":
-		http.ServeFile(w, r, runPath+"/favicon.png")
+		http.ServeFile(w, r, "./favicon.png")
 		return
 	case "/justchat":
-		http.ServeFile(w, r, runPath+"/static/justchat.html")
+		http.ServeFile(w, r, "./static/justchat.html")
 		return
 	case "/justvideo":
-		http.ServeFile(w, r, runPath+"/static/justvideo.html")
+		http.ServeFile(w, r, "./static/justvideo.html")
 		return
 	}
 
 	goodPath := r.URL.Path[8:len(r.URL.Path)]
-	common.LogDebugf("[static] serving %q from folder %s\n", goodPath, runPath)
+	common.LogDebugf("[static] serving %q from folder ./static/\n", goodPath)
 
-	http.ServeFile(w, r, runPath+"/static/"+goodPath)
+	http.ServeFile(w, r, "./static/"+goodPath)
 }
 
 func wsWasmFile(w http.ResponseWriter, r *http.Request) {
@@ -70,17 +69,17 @@ func wsWasmFile(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-cache, must-revalidate")
 	}
 	common.LogDebugln("[static] serving wasm file")
-	http.ServeFile(w, r, common.RunPath()+"/static/main.wasm")
+	http.ServeFile(w, r, "./static/main.wasm")
 }
 
 func wsImages(w http.ResponseWriter, r *http.Request) {
 	base := filepath.Base(r.URL.Path)
 	common.LogDebugln("[img] ", base)
-	http.ServeFile(w, r, common.RunPath()+"/static/img/"+base)
+	http.ServeFile(w, r, "./static/img/"+base)
 }
 
 func wsEmotes(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, path.Join(common.RunPath()+"/static/", r.URL.Path))
+	http.ServeFile(w, r, path.Join("./static/", r.URL.Path))
 }
 
 // Handling the websocket
@@ -283,7 +282,6 @@ func handleEmoteTemplate(w http.ResponseWriter, r *http.Request) {
 		Emotes: common.Emotes,
 	}
 
-	common.LogDebugf("Emotes Data: %s", data)
 	err := common.ExecuteServerTemplate(w, "emotes", data)
 	if err != nil {
 		common.LogErrorf("Error executing file, %v", err)
