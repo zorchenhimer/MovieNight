@@ -1,6 +1,5 @@
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
 **Table of Contents**
-
 - [MovieNight stream server](#movienight-stream-server)
     - [Build requirements](#build-requirements)
         - [Older Go Versions](#older-go-versions)
@@ -10,12 +9,12 @@
             - [Running the Container](#running-the-container)
             - [docker-compose](#docker-compose)
             - [Notes for Running Using docker-compose](#notes-for-running-using-docker-compose)
+        - [FreeNAS / FreeBSD build and run](#FreeNAS-FreeBSD)
     - [Usage](#usage)
     - [Configuration](#configuration)
 
 <!-- markdown-toc end -->
 # MovieNight stream server
-
 [![Build status](https://api.travis-ci.org/zorchenhimer/MovieNight.svg?branch=master)](https://travis-ci.org/zorchenhimer/MovieNight)
 
 This is a single-instance streaming server with chat.  Originally written to
@@ -23,12 +22,10 @@ replace Rabbit as the platform for watching movies with a group of people
 online.
 
 ## Build requirements
-
 - Go 1.13 or newer
 - GNU Make
 
 ### Older Go Versions
-
 You can install a newer version of Go alongside your OS's distribution by
 following the guide here: [https://golang.org/doc/manage-install](https://golang.org/doc/manage-install)
 
@@ -37,13 +34,18 @@ set it to the version you installed (eg, `1.14.1`).  The Makefile will now use
 the newer version.
 
 ### Compile and install
+You have to : 
+- download `git clone https://github.com/zorchenhimer/MovieNight`, go into the source directory `cd MovieNight`;
+- choose your `TARGET` oneof "android darwin dragonfly freebsd linux nacl netbsd openbsd plan9 solaris windows";
+- choose your `ARCH` oneof "386 amd64 amd64p32 arm arm64 ppc64 ppc64le mips mipsle mips64 mips64le mips64p32 mips64p32leppc s390 s390x sparc sparc64";
+- build `make TARGET=windows ARCH=386`;
+- and run `./MovieNight`;
 
-To just download and run:
-
+Example :
 ```bash
 $ git clone https://github.com/zorchenhimer/MovieNight
 $ cd MovieNight
-$ make
+$ make TARGET=windows ARCH=386
 $ ./MovieNight
 ```
 
@@ -84,8 +86,10 @@ This docker-compose file will create a volume called *movienight-config* and aut
 #### Notes for Running Using docker-compose
 The container needs to be restarted to apply any changes you make to *settings.json*.
 
-## Usage
+### FreeNAS - FreeBSD build and run
+An script wich setup an Jail and build and run MovieNight into that Jail as been writen, you'll find it here [freenas-iocage-movienight](https://github.com/zorglube/freenas-iocage-movienight)
 
+## Usage
 Now you can use OBS to push a stream to the server.  Set the stream URL to
 
 ```text
@@ -125,10 +129,11 @@ Usage of .\MovieNight.exe:
         host:port of the MovieNight (default ":8089")
   -r string
         host:port of the RTMP server (default ":1935")
+  -f string
+        the settings file you want to use (default "./settings.json")
 ```
 
 ## Configuration
-
 MovieNight’s configuration is controlled by `settings.json`:
 
 - `AdminPassword`: users can enter `/auth <value>` into chat to grant themselves
@@ -168,5 +173,4 @@ MovieNight’s configuration is controlled by `settings.json`:
   header, to prevent caching responses.
 
 ## License
-
 `flv.js` is Licensed under the Apache 2.0 license.  This project is licened under the MIT license.

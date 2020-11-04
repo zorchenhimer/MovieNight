@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	//	"path/filepath"
 
 	"github.com/gorilla/sessions"
 	"github.com/nareix/joy4/format"
@@ -20,11 +21,12 @@ var (
 	sKey       string
 	stats      = newStreamStats()
 	sAdminPass string
+	confFile   string
 )
 
 func setupSettings() error {
 	var err error
-	settings, err = LoadSettings("settings.json")
+	settings, err = LoadSettings(confFile)
 	if err != nil {
 		return fmt.Errorf("Unable to load settings: %s", err)
 	}
@@ -53,6 +55,7 @@ func main() {
 	flag.StringVar(&sKey, "k", "", "Stream key, to protect your stream")
 	flag.StringVar(&sAdminPass, "a", "", "Set admin password.  Overrides configuration in settings.json.  This will not write the password to settings.json.")
 	flag.BoolVar(&pullEmotes, "e", false, "Pull emotes")
+	flag.StringVar(&confFile, "f", "./settings.json", "URI of the conf file")
 	flag.Parse()
 
 	format.RegisterAll()
