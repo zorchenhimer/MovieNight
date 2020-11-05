@@ -13,11 +13,3 @@ include make/Makefile.common
 ifeq ($(OS),Windows_NT) 
 EXT=.exe 
 endif 
-
-ifeq ($(GOOS),) 
-GOOS=windows 
-endif
-
-ifeq ($(ARCH),) 
-ARCH=386 
-endif 
