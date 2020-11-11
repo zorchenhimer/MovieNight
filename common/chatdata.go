@@ -1,10 +1,12 @@
 package common
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
+	"text/template"
 )
 
 type DataInterface interface {
@@ -89,38 +91,51 @@ type DataMessage struct {
 	Type    MessageType
 }
 
+var (
+	cmdme        = template.Must(template.New("cmdme").Parse(`<span style="color:{{.Color}}"><span class="name">{{.From}}</span> <span class="cmdme">{{.Message}}</span></span>`))
+	announcement = template.Must(template.New("announcement").Parse(`<span class="announcement">{{.Message}}</span>`))
+	errormsg     = template.Must(template.New("error").Parse(`<span class="error">{{.Message}}</span>`))
+	notice       = template.Must(template.New("notice").Parse(`<span class="notice">{{.Message}}</span>`))
+	command      = template.Must(template.New("command").Parse(`<span class="command">{{.Message}}</span>`))
+	commanderror = template.Must(template.New("commanderror").Parse(`<span class="commanderror">{{.Message}}</span>`))
+	cmdlMod      = template.Must(template.New("cmdlMod").Parse(`<span><img src="/static/img/mod.png" class="badge" /><span class="name" style="color:{{.Color}}">{{.From}}</span><b>:</b> <span class="msg">{{.Message}}</span></span>`))
+	cmdlAdmin    = template.Must(template.New("CmdlAdmin").Parse(`<span><img src="/static/img/admin.png" class="badge" /><span class="name" style="color:{{.Color}}">{{.From}}</span><b>:</b> <span class="msg">{{.Message}}</span></span>`))
+	defaultMsg   = template.Must(template.New("defaultMsg").Parse(`<span><span class="name" style="color:{{.Color}}">{{.From}}</span><b>:</b> <span class="msg">{{.Message}}</span></span>`))
+)
+
 // TODO: Read this HTML from a template somewhere
 func (dc DataMessage) HTML() string {
+	buf := &bytes.Buffer{}
 	switch dc.Type {
 	case MsgAction:
-		return `<span style="color:` + dc.Color + `"><span class="name">` + dc.From +
-			`</span> <span class="cmdme">` + dc.Message + `</span></span>`
-
+		cmdme.Execute(buf, dc)
+		return buf.String()
 	case MsgServer:
-		return `<span class="announcement">` + dc.Message + `</span>`
-
+		announcement.Execute(buf, dc)
+		return buf.String()
 	case MsgError:
-		return `<span class="error">` + dc.Message + `</span>`
-
+		errormsg.Execute(buf, dc)
+		return buf.String()
 	case MsgNotice:
-		return `<span class="notice">` + dc.Message + `</span>`
-
+		notice.Execute(buf, dc)
+		return buf.String()
 	case MsgCommandResponse:
-		return `<span class="command">` + dc.Message + `</span>`
-
+		command.Execute(buf, dc)
+		return buf.String()
 	case MsgCommandError:
-		return `<span class="commanderror">` + dc.Message + `</span>`
+		commanderror.Execute(buf, dc)
+		return buf.String()
 
 	default:
-		badge := ""
 		switch dc.Level {
 		case CmdlMod:
-			badge = `<img src="/static/img/mod.png" class="badge" />`
+			cmdlMod.Execute(buf, dc)
 		case CmdlAdmin:
-			badge = `<img src="/static/img/admin.png" class="badge" />`
+			cmdlAdmin.Execute(buf, dc)
+		default:
+			defaultMsg.Execute(buf, dc)
 		}
-		return `<span>` + badge + `<span class="name" style="color:` + dc.Color + `">` + dc.From +
-			`</span><b>:</b> <span class="msg">` + dc.Message + `</span></span>`
+		return buf.String()
 	}
 }
 
@@ -165,42 +180,51 @@ type DataEvent struct {
 	Event EventType
 	User  string
 	Color string
+	Users []string
 }
 
+var (
+	evKick               = template.Must(template.New("evKick").Parse(`<span class="event"><span class="name" style="color:{{.Color}}">{{.User}}</span> has been kicked.</span>`))
+	evLeave              = template.Must(template.New("evLeave").Parse(`<span class="event"><span class="name" style="color:{{.Color}}">{{.User}}</span> has left the chat.</span>`))
+	evBan                = template.Must(template.New("evBan").Parse(`<span class="event"><span class="name" style="color:{{.Color}}">{{.User}}</span> has been banned.</span>`))
+	evJoin               = template.Must(template.New("evJoin").Parse(`<span class="event"><span class="name" style="color:{{.Color}}">{{.User}}</span> has joined the chat.</span>`))
+	evNameChangeWC       = template.Must(template.New("evNameChangeWC").Parse(`<span class="event">Somebody changed their name, but IDK who {{.}}.</span>`))
+	evNameChange         = template.Must(template.New("evNameChange").Parse(`<span class="event"><span class="name" style="color:{{.Color}}">{{index .Users 0}}</span> has changed their name to <span class="name" style="color:{{.Color}}">{{index .Users 1}}</span>.</span>`))
+	evNameChangeForced   = template.Must(template.New("evNameChangeForced").Parse(`<span class="event"><span class="name" style="color:{{.Color}}">{{index .Users 0}}</span> has had their name changed to <span class="name" style="color:{{.Color}}">{{index .Users 1}}</span> by an admin.</span>`))
+	evNameChangeForcedWC = template.Must(template.New("evNameChangeForcedWC").Parse(`<span class="event">An admin changed somebody's name, but IDK who {{.}}.</span>`))
+)
+
 func (de DataEvent) HTML() string {
+	buf := &bytes.Buffer{}
 	switch de.Event {
 	case EvKick:
-		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</span> has been kicked.</span>`
+		evKick.Execute(buf, de)
+		return buf.String()
 	case EvLeave:
-		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</span> has left the chat.</span>`
+		evLeave.Execute(buf, de)
+		return buf.String()
 	case EvBan:
-		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</span> has been banned.</span>`
+		evBan.Execute(buf, de)
+		return buf.String()
 	case EvJoin:
-		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
-			de.User + `</span> has joined the chat.</span>`
+		evJoin.Execute(buf, de)
+		return buf.String()
 	case EvNameChange:
-		names := strings.Split(de.User, ":")
-		if len(names) != 2 {
-			return `<span class="event">Somebody changed their name, but IDK who ` +
-				ParseEmotes("Jebaited") + `.</span>`
+		de.Users = strings.Split(de.User, ":")
+		if len(de.Users) < 2 {
+			evNameChangeWC.Execute(buf, ParseEmotes("Jebaited"))
+		} else {
+			evNameChange.Execute(buf, de)
 		}
-
-		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
-			names[0] + `</span> has changed their name to <span class="name" style="color:` +
-			de.Color + `">` + names[1] + `</span>.</span>`
+		return buf.String()
 	case EvNameChangeForced:
-		names := strings.Split(de.User, ":")
-		if len(names) != 2 {
-			return `<span class="event">An admin changed somebody's name, but IDK who ` +
-				ParseEmotes("Jebaited") + `.</span>`
+		de.Users = strings.Split(de.User, ":")
+		if len(de.Users) < 2 {
+			evNameChangeForcedWC.Execute(buf, ParseEmotes("Jebaited"))
+		} else {
+			evNameChangeForced.Execute(buf, de)
 		}
-
-		return `<span class="event"><span class="name" style="color:` + de.Color + `">` +
-			names[0] + `</span> has had their name changed to <span class="name" style="color:` +
-			de.Color + `">` + names[1] + `</span> by an admin.</span>`
+		return buf.String()
 	}
 	return ""
 }
