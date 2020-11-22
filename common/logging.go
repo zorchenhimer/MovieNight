@@ -42,6 +42,7 @@ func SetupLogging(level LogLevel, file string) error {
 			logInfo = log.New(os.Stdout, logPrefixInfo, log.LstdFlags)
 		} else {
 			f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			defer f.Close()
 			if err != nil {
 				return fmt.Errorf("Unable to open log file for writing: %s", err)
 			}
@@ -58,6 +59,7 @@ func SetupLogging(level LogLevel, file string) error {
 			logInfo = log.New(os.Stdout, logPrefixInfo, log.LstdFlags)
 		} else {
 			f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			defer f.Close()
 			if err != nil {
 				return fmt.Errorf("Unable to open log file for writing: %s", err)
 			}
@@ -74,6 +76,7 @@ func SetupLogging(level LogLevel, file string) error {
 			logInfo = log.New(os.Stdout, logPrefixInfo, log.LstdFlags)
 		} else {
 			f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			defer f.Close()
 			if err != nil {
 				return fmt.Errorf("Unable to open log file for writing: %s", err)
 			}
@@ -90,6 +93,7 @@ func SetupLogging(level LogLevel, file string) error {
 			logError = log.New(os.Stderr, logPrefixError, log.LstdFlags)
 		} else {
 			f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			defer f.Close()
 			if err != nil {
 				return fmt.Errorf("Unable to open log file for writing: %s", err)
 			}
