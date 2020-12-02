@@ -363,16 +363,19 @@ func handlePublish(conn *rtmp.Conn) {
 
 	if len(urlParts) > 2 {
 		common.LogErrorln("Extra garbage after stream key")
+		l.Unlock()
 		return
 	}
 
 	if len(urlParts) != 2 {
 		common.LogErrorln("Missing stream key")
+		l.Unlock()
 		return
 	}
 
 	if urlParts[1] != settings.GetStreamKey() {
 		common.LogErrorln("Stream key is incorrect.  Denying stream.")
+		l.Unlock()
 		return //If key not match, deny stream
 	}
 
