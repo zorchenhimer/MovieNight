@@ -364,36 +364,38 @@ func handlePublish(conn *rtmp.Conn) {
 	if len(urlParts) > 2 {
 		common.LogErrorln("Extra garbage after stream key")
 		l.Unlock()
+		conn.Close()
 		return
 	}
 
 	if len(urlParts) != 2 {
 		common.LogErrorln("Missing stream key")
 		l.Unlock()
+		conn.Close()
 		return
 	}
 
 	if urlParts[1] != settings.GetStreamKey() {
 		common.LogErrorln("Stream key is incorrect.  Denying stream.")
 		l.Unlock()
+		conn.Close()
 		return //If key not match, deny stream
 	}
 
 	streamPath := urlParts[0]
-	ch := channels[streamPath]
-	if ch == nil {
-		ch = &Channel{}
-		ch.que = pubsub.NewQueue()
-		ch.que.WriteHeader(streams)
-		channels[streamPath] = ch
-	} else {
-		ch = nil
-	}
-	l.Unlock()
-	if ch == nil {
-		common.LogErrorln("Unable to start stream, channel is nil.")
+	ch, exists := channels[streamPath]
+	if exists {
+		common.LogErrorln("Stream already running.  Denying publish.")
+		conn.Close()
+		l.Unlock()
 		return
 	}
+
+	ch = &Channel{}
+	ch.que = pubsub.NewQueue()
+	ch.que.WriteHeader(streams)
+	channels[streamPath] = ch
+	l.Unlock()
 
 	stats.startStream()
 
