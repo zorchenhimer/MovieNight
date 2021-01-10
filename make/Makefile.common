@@ -7,7 +7,7 @@ all: fmt vet test MovieNight static/main.wasm settings.json
 server: ServerMovieNight static/main.wasm 
 
 ServerMovieNight: *.go common/*.go 
-	GOOS=${GOOS} GOARCH=${ARCH} go$(GO_VERSION) build -o MovieNight $(TAGS) 
+	GOOS=${TARGET} GOARCH=${ARCH} go$(GO_VERSION) build -o MovieNight $(TAGS) 
 
 setdev: 
 	$(eval export TAGS=-tags "dev") 
@@ -15,7 +15,7 @@ setdev:
 dev: setdev all 
 
 MovieNight: *.go common/*.go 
-	GOOS=${GOOS} GOARCH=${ARCH} go$(GO_VERSION) build -o MovieNight${EXT} $(TAGS) 
+	GOOS=${TARGET} GOARCH=${ARCH} go$(GO_VERSION) build -o MovieNight${EXT} $(TAGS) 
 
 static/js/wasm_exec.js: 
 	cp $$(go$(GO_VERSION) env GOROOT)/misc/wasm/wasm_exec.js $@
