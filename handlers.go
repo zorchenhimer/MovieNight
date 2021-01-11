@@ -190,6 +190,14 @@ func checkRoomAccess(w http.ResponseWriter, r *http.Request) bool {
 				// Pin is incorrect.
 				handlePinTemplate(w, r, "Incorrect PIN")
 				return false
+			} else {
+				qpin := r.URL.Query().Get("pin")
+				if qpin != "" && qpin == settings.RoomAccessPin {
+					// Pin is correct.  Save it to session and return true.
+					session.Values["pin"] = settings.RoomAccessPin
+					session.Save(r, w)
+					return true
+				}
 			}
 			// nope.  display pin entry and return
 			handlePinTemplate(w, r, "")
