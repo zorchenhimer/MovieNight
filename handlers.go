@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"path"
@@ -287,27 +286,6 @@ func handleEmoteTemplate(w http.ResponseWriter, r *http.Request) {
 	err := common.ExecuteServerTemplate(w, "emotes", data)
 	if err != nil {
 		common.LogErrorf("Error executing file, %v", err)
-	}
-}
-
-func handlePin(w http.ResponseWriter, r *http.Request) {
-	session, err := sstore.Get(r, "moviesession")
-	if err != nil {
-		common.LogDebugf("Unable to get session: %v\n", err)
-	}
-
-	val := session.Values["pin"]
-	if val == nil {
-		session.Values["pin"] = "1234"
-		err := session.Save(r, w)
-		if err != nil {
-			fmt.Fprintf(w, "unable to save session: %v", err)
-		}
-		fmt.Fprint(w, "Pin was not set")
-		common.LogDebugln("pin was not set")
-	} else {
-		fmt.Fprintf(w, "pin set: %v", val)
-		common.LogDebugf("pin is set: %v\n", val)
 	}
 }
 

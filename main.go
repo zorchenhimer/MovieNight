@@ -143,7 +143,6 @@ func startServer() {
 	http.HandleFunc("/chat", handleIndexTemplate)
 	http.HandleFunc("/video", handleIndexTemplate)
 	http.HandleFunc("/help", handleHelpTemplate)
-	http.HandleFunc("/pin", handlePin)
 	http.HandleFunc("/emotes", handleEmoteTemplate)
 
 	http.HandleFunc("/", handleDefault)
