@@ -145,6 +145,7 @@ func startServer() {
 	http.HandleFunc("/help", handleHelpTemplate)
 	http.HandleFunc("/emotes", handleEmoteTemplate)
 
+	http.HandleFunc("/live", handleLive)
 	http.HandleFunc("/", handleDefault)
 
 	err := http.ListenAndServe(addr, nil)

@@ -408,7 +408,7 @@ func handlePlay(conn *rtmp.Conn) {
 	}
 }
 
-func handleDefault(w http.ResponseWriter, r *http.Request) {
+func handleLive(w http.ResponseWriter, r *http.Request) {
 	l.RLock()
 	ch := channels[strings.Trim(r.URL.Path, "/")]
 	l.RUnlock()
@@ -426,12 +426,16 @@ func handleDefault(w http.ResponseWriter, r *http.Request) {
 
 		avutil.CopyFile(muxer, cursor)
 	} else {
-		if r.URL.Path != "/" {
-			// not really an error for the server, but for the client.
-			common.LogInfoln("[http 404] ", r.URL.Path)
-			http.NotFound(w, r)
-		} else {
-			handleIndexTemplate(w, r)
-		}
+
+	}
+}
+
+func handleDefault(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		// not really an error for the server, but for the client.
+		common.LogInfoln("[http 404] ", r.URL.Path)
+		http.NotFound(w, r)
+	} else {
+		handleIndexTemplate(w, r)
 	}
 }
