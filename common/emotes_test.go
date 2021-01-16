@@ -6,31 +6,31 @@ import (
 )
 
 var data_good = map[string]string{
-	"one":   `<img src="/emotes/one.png" height="28px" title="one" />`,
-	"two":   `<img src="/emotes/two.png" height="28px" title="two" />`,
-	"three": `<img src="/emotes/three.gif" height="28px" title="three" />`,
+	"one":   `<img src="/emotes/one.png" class="emote" title="one" />`,
+	"two":   `<img src="/emotes/two.png" class="emote" title="two" />`,
+	"three": `<img src="/emotes/three.gif" class="emote" title="three" />`,
 
-	":one:":   `<img src="/emotes/one.png" height="28px" title="one" />`,
-	":two:":   `<img src="/emotes/two.png" height="28px" title="two" />`,
-	":three:": `<img src="/emotes/three.gif" height="28px" title="three" />`,
+	":one:":   `<img src="/emotes/one.png" class="emote" title="one" />`,
+	":two:":   `<img src="/emotes/two.png" class="emote" title="two" />`,
+	":three:": `<img src="/emotes/three.gif" class="emote" title="three" />`,
 
-	":one::one:": `<img src="/emotes/one.png" height="28px" title="one" /><img src="/emotes/one.png" height="28px" title="one" />`,
-	":one:one:":  `<img src="/emotes/one.png" height="28px" title="one" />one:`,
+	":one::one:": `<img src="/emotes/one.png" class="emote" title="one" /><img src="/emotes/one.png" class="emote" title="one" />`,
+	":one:one:":  `<img src="/emotes/one.png" class="emote" title="one" />one:`,
 	"oneone":     "oneone",
-	"one:one:":   `one<img src="/emotes/one.png" height="28px" title="one" />`,
+	"one:one:":   `one<img src="/emotes/one.png" class="emote" title="one" />`,
 
-	"[one]":   `<img src="/emotes/one.png" height="28px" title="one" />`,
-	"[two]":   `<img src="/emotes/two.png" height="28px" title="two" />`,
-	"[three]": `<img src="/emotes/three.gif" height="28px" title="three" />`,
+	"[one]":   `<img src="/emotes/one.png" class="emote" title="one" />`,
+	"[two]":   `<img src="/emotes/two.png" class="emote" title="two" />`,
+	"[three]": `<img src="/emotes/three.gif" class="emote" title="three" />`,
 
-	"[one][one]": `<img src="/emotes/one.png" height="28px" title="one" /><img src="/emotes/one.png" height="28px" title="one" />`,
-	"[one]one":   `<img src="/emotes/one.png" height="28px" title="one" />one`,
+	"[one][one]": `<img src="/emotes/one.png" class="emote" title="one" /><img src="/emotes/one.png" class="emote" title="one" />`,
+	"[one]one":   `<img src="/emotes/one.png" class="emote" title="one" />one`,
 
-	":one: two [three]": `<img src="/emotes/one.png" height="28px" title="one" /> <img src="/emotes/two.png" height="28px" title="two" /> <img src="/emotes/three.gif" height="28px" title="three" />`,
+	":one: two [three]": `<img src="/emotes/one.png" class="emote" title="one" /> <img src="/emotes/two.png" class="emote" title="two" /> <img src="/emotes/three.gif" class="emote" title="three" />`,
 
-	"nope one what":     `nope <img src="/emotes/one.png" height="28px" title="one" /> what`,
-	"nope :two: what":   `nope <img src="/emotes/two.png" height="28px" title="two" /> what`,
-	"nope [three] what": `nope <img src="/emotes/three.gif" height="28px" title="three" /> what`,
+	"nope one what":     `nope <img src="/emotes/one.png" class="emote" title="one" /> what`,
+	"nope :two: what":   `nope <img src="/emotes/two.png" class="emote" title="two" /> what`,
+	"nope [three] what": `nope <img src="/emotes/three.gif" class="emote" title="three" /> what`,
 }
 
 var data_wrapped = map[string]string{

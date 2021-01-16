@@ -48,7 +48,7 @@ func (em EmotesMap) Add(fullpath string) EmotesMap {
 }
 
 func EmoteToHtml(file, title string) string {
-	return fmt.Sprintf(`<img src="%s" height="28px" title="%s" />`, file, title)
+	return fmt.Sprintf(`<img src="%s" class="emote" title="%s" />`, file, title)
 }
 
 // Used with a regexp.ReplaceAllStringFunc() call. Needs to lookup the value as it
@@ -56,7 +56,7 @@ func EmoteToHtml(file, title string) string {
 func emoteToHmtl2(key string) string {
 	key = strings.Trim(key, ":[]")
 	if val, ok := Emotes[key]; ok {
-		return fmt.Sprintf(`<img src="%s" height="28px" title="%s" />`, val, key)
+		return fmt.Sprintf(`<img src="%s" class="emote" title="%s" />`, val, key)
 	}
 	return key
 }

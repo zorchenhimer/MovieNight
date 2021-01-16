@@ -124,6 +124,10 @@ input[type=text] {
   width: 112px;
 }
 
+.emote {
+    height: 28px;
+}
+
 .notice {
     color: #595959;
     font-size: 75%;
