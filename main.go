@@ -1,12 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
-	//	"path/filepath"
+	"time"
 
 	"github.com/gorilla/sessions"
 	"github.com/nareix/joy4/format"
@@ -112,47 +113,64 @@ func main() {
 	common.LogInfoln("RoomAccess: ", settings.RoomAccess)
 	common.LogInfoln("RoomAccessPin: ", settings.RoomAccessPin)
 
-	go startServer()
-	go startRmtpServer()
-
-	<-exit
-}
-
-func startRmtpServer() {
-	server := &rtmp.Server{
+	rtmpServer := &rtmp.Server{
 		HandlePlay:    handlePlay,
 		HandlePublish: handlePublish,
 		Addr:          rtmpAddr,
 	}
-	err := server.ListenAndServe()
-	if err != nil {
-		// If the server cannot start, don't pretend we can continue.
-		panic("Error trying to start rtmp server: " + err.Error())
+
+	router := http.NewServeMux()
+
+	router.HandleFunc("/ws", wsHandler) // Chat websocket
+	router.HandleFunc("/static/js/", wsStaticFiles)
+	router.HandleFunc("/static/css/", wsStaticFiles)
+	router.HandleFunc("/static/img/", wsImages)
+	router.HandleFunc("/static/main.wasm", wsWasmFile)
+	router.HandleFunc("/emotes/", wsEmotes)
+	router.HandleFunc("/favicon.ico", wsStaticFiles)
+	router.HandleFunc("/chat", handleIndexTemplate)
+	router.HandleFunc("/video", handleIndexTemplate)
+	router.HandleFunc("/help", handleHelpTemplate)
+	router.HandleFunc("/emotes", handleEmoteTemplate)
+
+	router.HandleFunc("/live", handleLive)
+	router.HandleFunc("/", handleDefault)
+
+	httpServer := &http.Server{
+		Addr:    addr,
+		Handler: router,
 	}
-}
 
-func startServer() {
-	// Chat websocket
-	http.HandleFunc("/ws", wsHandler)
-	http.HandleFunc("/static/js/", wsStaticFiles)
-	http.HandleFunc("/static/css/", wsStaticFiles)
-	http.HandleFunc("/static/img/", wsImages)
-	http.HandleFunc("/static/main.wasm", wsWasmFile)
-	http.HandleFunc("/emotes/", wsEmotes)
-	http.HandleFunc("/favicon.ico", wsStaticFiles)
-	http.HandleFunc("/chat", handleIndexTemplate)
-	http.HandleFunc("/video", handleIndexTemplate)
-	http.HandleFunc("/help", handleHelpTemplate)
-	http.HandleFunc("/emotes", handleEmoteTemplate)
+	// RTMP Server
+	go func() {
+		err := rtmpServer.ListenAndServe()
+		if err != nil {
+			// If the server cannot start, don't pretend we can continue.
+			panic("Error trying to start rtmp server: " + err.Error())
+		}
+	}()
 
-	http.HandleFunc("/live", handleLive)
-	http.HandleFunc("/", handleDefault)
+	// HTTP Server
+	go func() {
+		err := httpServer.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			// If the server cannot start, don't pretend we can continue.
+			panic("Error trying to start chat/http server: " + err.Error())
+		}
+	}()
 
-	err := http.ListenAndServe(addr, nil)
-	if err != nil {
-		// If the server cannot start, don't pretend we can continue.
-		panic("Error trying to start chat/http server: " + err.Error())
+	<-exit
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := httpServer.Shutdown(ctx); err != nil && err != http.ErrServerClosed {
+		panic("Gracefull HTTP server shutdown failed: " + err.Error())
 	}
+
+	// I don't think the RTMP server can be shutdown cleanly.  Apparently the author
+	// of joy4 want's everyone to use joy5, but that one doesn't seem to allow clean
+	// shutdowns either? Idk, the documentation on joy4 and joy5 are non-existent.
 }
 
 func handleInterrupt(exit chan bool) {
