@@ -409,8 +409,10 @@ func handlePlay(conn *rtmp.Conn) {
 }
 
 func handleLive(w http.ResponseWriter, r *http.Request) {
+	uri := strings.Trim(r.URL.Path, "/")
+
 	l.RLock()
-	ch := channels[strings.Trim(r.URL.Path, "/")]
+	ch := channels[uri]
 	l.RUnlock()
 
 	if ch != nil {
@@ -424,9 +426,14 @@ func handleLive(w http.ResponseWriter, r *http.Request) {
 		muxer := flv.NewMuxerWriteFlusher(writeFlusher{httpflusher: flusher, Writer: w})
 		cursor := ch.que.Latest()
 
+		ip := extractIp(r)
+		stats.addViewer(ip)
 		avutil.CopyFile(muxer, cursor)
+		stats.removeViewer(ip)
 	} else {
-
+		// Maybe HTTP_204 is better than HTTP_404
+		w.WriteHeader(http.StatusNoContent)
+		stats.resetViewers()
 	}
 }
 
@@ -438,4 +445,17 @@ func handleDefault(w http.ResponseWriter, r *http.Request) {
 	} else {
 		handleIndexTemplate(w, r)
 	}
+}
+
+func extractIp(r *http.Request) string {
+	ip := r.Host
+	f := r.Header.Get("Forwarded")
+	xff := r.Header.Get("X-Forwarded-For")
+	if !(xff == "") {
+		ip = xff
+	}
+	if !(f == "") {
+		ip = f
+	}
+	return ip
 }
