@@ -277,11 +277,13 @@ var commands = &CommandControl{
 				cl.belongsTo.clientsMtx.Unlock()
 
 				// Just print max users and time alive here
-				return fmt.Sprintf("Current users in chat: <b>%d</b><br />Max users in chat: <b>%d</b><br />Server uptime: <b>%s</b><br />Stream uptime: <b>%s</b>",
+				return fmt.Sprintf("Current users in chat: <b>%d</b><br />Max users in chat: <b>%d</b><br />Server uptime: <b>%s</b><br />Stream uptime: <b>%s</b><br />Viewers: <b>%d</b><br />Max Viewers: <b>%d</b>",
 					users,
 					stats.getMaxUsers(),
 					time.Since(stats.start),
 					stats.getStreamLength(),
+					stats.getViewerCount(),
+					stats.getMaxViewerCount(),
 				), nil
 			},
 		},

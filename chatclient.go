@@ -91,17 +91,20 @@ func (cl *Client) NewMsg(data common.ClientData) {
 		// because the /me command outputs to the messages
 		msg = addSpoilerTags(msg)
 
+		msgLen := len(msg)
+
 		// Don't send zero-length messages
-		if len(msg) == 0 {
+		if msgLen == 0 {
 			return
 		}
 
 		if strings.HasPrefix(msg, "/") {
 			// is a command
-			msg = msg[1:len(msg)]
+			msg = msg[1:msgLen]
 			fullcmd := strings.Split(msg, " ")
 			cmd := strings.ToLower(fullcmd[0])
-			args := fullcmd[1:len(fullcmd)]
+			fullcmdLen := len(fullcmd)
+			args := fullcmd[1:fullcmdLen]
 
 			response, err := commands.RunCommand(cmd, args, cl)
 			if response != "" || err != nil {
@@ -136,7 +139,7 @@ func (cl *Client) NewMsg(data common.ClientData) {
 			}
 
 			// Trim long messages
-			if len(msg) > 400 {
+			if msgLen > 400 {
 				msg = msg[0:400]
 			}
 
