@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gorilla/sessions"
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
@@ -15,24 +16,25 @@ type streamStats struct {
 	mutex       sync.Mutex
 	streamStart time.Time
 	streamLive  bool // True if live
-	viewers     map[string]string
+	viewers     map[*sessions.Session]int
 	maxViewers  int
 }
 
-func (s *streamStats) addViewer(ip string) {
+func (s *streamStats) addViewer(session *sessions.Session) {
 	s.mutex.Lock()
-	s.viewers[ip] = ip
-	s.updateMaxViewers(len(s.viewers))
+	s.viewers[session] = len(s.viewers)
+	size := len(s.viewers)
+	s.updateMaxViewers(size)
 	s.mutex.Unlock()
 
-	common.LogDebugf("Viewer connect from: %s\n", ip)
+	common.LogDebugf("[stats] %d viewer(s) connected\n", size)
 }
-func (s *streamStats) removeViewer(ip string) {
+func (s *streamStats) removeViewer(session *sessions.Session) {
 	s.mutex.Lock()
-	delete(s.viewers, ip)
+	delete(s.viewers, session)
 	s.mutex.Unlock()
 
-	common.LogDebugf("Viewer left from: %s\n", ip)
+	common.LogDebugf("[stats] One viewer left the stream\n")
 }
 
 func (s *streamStats) updateMaxViewers(size int) {
@@ -42,11 +44,15 @@ func (s *streamStats) updateMaxViewers(size int) {
 }
 
 func (s *streamStats) resetViewers() {
-	s.viewers = make(map[string]string)
+	s.viewers = sessionsMapNew()
+}
+
+func sessionsMapNew() map[*sessions.Session]int {
+	return make(map[*sessions.Session]int)
 }
 
 func newStreamStats() streamStats {
-	return streamStats{start: time.Now(), streamLive: false, viewers: make(map[string]string)}
+	return streamStats{start: time.Now(), streamLive: false, viewers: sessionsMapNew()}
 }
 
 func (s *streamStats) msgInInc() {
@@ -80,11 +86,11 @@ func (s *streamStats) Print() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	common.LogInfof("Messages In: %d\n", s.messageIn)
-	common.LogInfof("Messages Out: %d\n", s.messageOut)
-	common.LogInfof("Max users in chat: %d\n", s.maxUsers)
-	common.LogInfof("Total Time: %s\n", time.Since(s.start))
-	common.LogInfof("Max Stream Viewer: %d\n", s.maxViewers)
+	common.LogInfof("[stats] Messages In: %d\n", s.messageIn)
+	common.LogInfof("[stats] Messages Out: %d\n", s.messageOut)
+	common.LogInfof("[stats] Max users in chat: %d\n", s.maxUsers)
+	common.LogInfof("[stats] Total Time: %s\n", time.Since(s.start))
+	common.LogInfof("[stats] Max Stream Viewer: %d\n", s.maxViewers)
 }
 
 func (s *streamStats) startStream() {
@@ -126,7 +132,7 @@ func (s *streamStats) getMaxViewerCount() int {
 	return s.maxViewers
 }
 
-func (s *streamStats) getViewers() map[string]string {
+func (s *streamStats) getViewers() map[*sessions.Session]int {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 

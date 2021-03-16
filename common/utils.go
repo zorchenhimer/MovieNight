@@ -3,6 +3,7 @@ package common
 // Misc utils
 
 import (
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -40,4 +41,21 @@ func Substr(input string, start int, length int) string {
 	}
 
 	return string(asRunes[start : start+length])
+}
+
+// Return the value of "Forwarded" or "X-Forwarded-For",
+// if "Forwarded" & "X-Forwarded-For" are present then "Forwarded" value is returned.
+// Return "" if "Forwarded" and "X-Forwarded-For" are absent.
+func ExtractForwarded(r *http.Request) string {
+	f := r.Header.Get("Forwarded")
+	if f != "" {
+		return f
+	}
+
+	xff := r.Header.Get("X-Forwarded-For")
+	if xff != "" {
+		return xff
+	}
+
+	return ""
 }

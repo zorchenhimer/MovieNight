@@ -104,7 +104,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 		Conn: conn,
 		// If the server is behind a reverse proxy (eg, Nginx), look
 		// for this header to get the real IP address of the client.
-		forwardedFor: r.Header.Get("X-Forwarded-For"),
+		forwardedFor: common.ExtractForwarded(r), // r.Header.Get("X-Forwarded-For"),
 	}
 
 	go func() {
@@ -409,10 +409,8 @@ func handlePlay(conn *rtmp.Conn) {
 }
 
 func handleLive(w http.ResponseWriter, r *http.Request) {
-	uri := strings.Trim(r.URL.Path, "/")
-
 	l.RLock()
-	ch := channels[uri]
+	ch := channels[strings.Trim(r.URL.Path, "/")]
 	l.RUnlock()
 
 	if ch != nil {
@@ -426,10 +424,10 @@ func handleLive(w http.ResponseWriter, r *http.Request) {
 		muxer := flv.NewMuxerWriteFlusher(writeFlusher{httpflusher: flusher, Writer: w})
 		cursor := ch.que.Latest()
 
-		ip := extractIp(r)
-		stats.addViewer(ip)
+		session, _ := sstore.Get(r, "moviesession")
+		stats.addViewer(session)
 		avutil.CopyFile(muxer, cursor)
-		stats.removeViewer(ip)
+		stats.removeViewer(session)
 	} else {
 		// Maybe HTTP_204 is better than HTTP_404
 		w.WriteHeader(http.StatusNoContent)
@@ -445,17 +443,4 @@ func handleDefault(w http.ResponseWriter, r *http.Request) {
 	} else {
 		handleIndexTemplate(w, r)
 	}
-}
-
-func extractIp(r *http.Request) string {
-	ip := r.Host
-	f := r.Header.Get("Forwarded")
-	xff := r.Header.Get("X-Forwarded-For")
-	if !(xff == "") {
-		ip = xff
-	}
-	if !(f == "") {
-		ip = f
-	}
-	return ip
 }
