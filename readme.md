@@ -42,7 +42,7 @@ You have to :
 - and run `./MovieNight`;
 
 Example :
-```bash
+```shell
 $ git clone https://github.com/zorchenhimer/MovieNight
 $ cd MovieNight
 $ (make|gmake) TARGET=windows ARCH=386
