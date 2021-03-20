@@ -4,7 +4,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gorilla/sessions"
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
@@ -16,22 +15,22 @@ type streamStats struct {
 	mutex       sync.Mutex
 	streamStart time.Time
 	streamLive  bool // True if live
-	viewers     map[*sessions.Session]int
+	viewers     map[string]int
 	maxViewers  int
 }
 
-func (s *streamStats) addViewer(session *sessions.Session) {
+func (s *streamStats) addViewer(id string) {
 	s.mutex.Lock()
-	s.viewers[session] = len(s.viewers)
+	s.viewers[id] = len(s.viewers)
 	size := len(s.viewers)
 	s.updateMaxViewers(size)
 	s.mutex.Unlock()
 
 	common.LogDebugf("[stats] %d viewer(s) connected\n", size)
 }
-func (s *streamStats) removeViewer(session *sessions.Session) {
+func (s *streamStats) removeViewer(id string) {
 	s.mutex.Lock()
-	delete(s.viewers, session)
+	delete(s.viewers, id)
 	s.mutex.Unlock()
 
 	common.LogDebugf("[stats] One viewer left the stream\n")
@@ -47,8 +46,8 @@ func (s *streamStats) resetViewers() {
 	s.viewers = sessionsMapNew()
 }
 
-func sessionsMapNew() map[*sessions.Session]int {
-	return make(map[*sessions.Session]int)
+func sessionsMapNew() map[string]int {
+	return make(map[string]int)
 }
 
 func newStreamStats() streamStats {
@@ -132,7 +131,7 @@ func (s *streamStats) getMaxViewerCount() int {
 	return s.maxViewers
 }
 
-func (s *streamStats) getViewers() map[*sessions.Session]int {
+func (s *streamStats) getViewers() map[string]int {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 

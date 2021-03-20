@@ -425,9 +425,9 @@ func handleLive(w http.ResponseWriter, r *http.Request) {
 		cursor := ch.que.Latest()
 
 		session, _ := sstore.Get(r, "moviesession")
-		stats.addViewer(session)
+		stats.addViewer(session.ID)
 		avutil.CopyFile(muxer, cursor)
-		stats.removeViewer(session)
+		stats.removeViewer(session.ID)
 	} else {
 		// Maybe HTTP_204 is better than HTTP_404
 		w.WriteHeader(http.StatusNoContent)
