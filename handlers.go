@@ -104,7 +104,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 		Conn: conn,
 		// If the server is behind a reverse proxy (eg, Nginx), look
 		// for this header to get the real IP address of the client.
-		forwardedFor: r.Header.Get("X-Forwarded-For"),
+		forwardedFor: common.ExtractForwarded(r),
 	}
 
 	go func() {
@@ -424,9 +424,14 @@ func handleLive(w http.ResponseWriter, r *http.Request) {
 		muxer := flv.NewMuxerWriteFlusher(writeFlusher{httpflusher: flusher, Writer: w})
 		cursor := ch.que.Latest()
 
+		session, _ := sstore.Get(r, "moviesession")
+		stats.addViewer(session.ID)
 		avutil.CopyFile(muxer, cursor)
+		stats.removeViewer(session.ID)
 	} else {
-
+		// Maybe HTTP_204 is better than HTTP_404
+		w.WriteHeader(http.StatusNoContent)
+		stats.resetViewers()
 	}
 }
 
