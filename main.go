@@ -174,7 +174,7 @@ func main() {
 }
 
 func handleInterrupt(exit chan bool) {
-	ch := make(chan os.Signal)
+	ch := make(chan os.Signal, 5)
 	signal.Notify(ch, os.Interrupt)
 	<-ch
 	common.LogInfoln("Closing server")
