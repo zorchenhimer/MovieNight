@@ -1,25 +1,69 @@
 /// <reference path="./both.js" />
+/// <reference path="./consts.js" />
 
-function getCookie(cname) {
-    var name = cname + "=";
-    var decodedCookie = decodeURIComponent(document.cookie);
-    var ca = decodedCookie.split(';');
-    for (var i = 0; i < ca.length; i++) {
-        var c = ca[i];
-        while (c.charAt(0) == ' ') {
-            c = c.substring(1);
-        }
-        if (c.indexOf(name) == 0) {
-            return c.substring(name.length, c.length);
-        }
+/*
+processMessageKey
+recieveMessage
+processMessage
+*/
+
+
+let maxMessageCount = 0
+let inChat = false;
+let users = []
+let emotes = {}
+
+function debug() {
+    let color = getCookie("color");
+    let timestamp = getCookie("timestamp");
+
+    Object.entries({
+        maxMessageCount,
+        inChat,
+        users,
+        emotes,
+        color,
+        timestamp,
+    }).forEach(([k, v]) => {
+        console.log(k, v);
+    });
+}
+
+function randomColor() {
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+        const random = Math.random();
+        const bit = (random * 16) | 0;
+        color += (bit).toString(16);
+    };
+    return color;
+}
+
+/**
+ * @param {string} color
+ */
+function isValidColor(color) {
+    color = color.replace(/^#/, "", color).toLowerCase();
+    if (Colors.includes(color)) {
+        return true;
     }
-    return "";
+
+    if (ColorRegex.test(color)) {
+        hex = color.match(/.{1,2}/g);
+        r = parseInt(hex[0], 16);
+        g = parseInt(hex[1], 16);
+        b = parseInt(hex[2], 16);
+        total = r + g + b;
+        return total > 0.7 && b / total < 0.7;
+    }
+
+    return false;
 }
 
-function deleteCookie(cname) {
-    document.cookie = `${cname}=;expires=Thu, 01 Jan 1970 00:00:01 GMT`
-}
-
+/**
+ * @param {string} title
+ * @param {string} link
+ */
 function setPlaying(title, link) {
     if (title !== "") {
         $('#playing').text(title);
@@ -35,25 +79,6 @@ function setPlaying(title, link) {
     }
 }
 
-function startGo() {
-    if (!WebAssembly.instantiateStreaming) { // polyfill
-        WebAssembly.instantiateStreaming = async (resp, importObject) => {
-            const source = await (await resp).arrayBuffer();
-            return await WebAssembly.instantiate(source, importObject);
-        };
-    }
-
-    const go = new Go();
-    WebAssembly.instantiateStreaming(fetch("/static/main.wasm"), go.importObject).then((result) => {
-        go.run(result.instance);
-    }).then(() => {
-        $("#chatwindow").css("display", "grid");
-        $("#loadingFiles").css("display", "none");
-    }).catch((err) => {
-        console.error(err);
-    });
-}
-
 function getWsUri() {
     port = window.location.port;
     if (port != "") {
@@ -66,7 +91,9 @@ function getWsUri() {
     return proto + window.location.hostname + port + "/ws";
 }
 
-let maxMessageCount = 0
+/**
+ * @param {string} msg
+ */
 function appendMessages(msg) {
     let msgs = $("#messages").find('div');
 
@@ -84,7 +111,6 @@ function purgeChat() {
     $('#messages').empty()
 }
 
-inChat = false
 function openChat() {
     console.log("chat opening");
     $("#joinbox").css("display", "none");
@@ -104,13 +130,96 @@ function closeChat() {
     inChat = false;
 }
 
+function handleHiddenMessage(data) {
+    switch (data.Type) {
+        case ClientDataType.CdUsers:
+            users = data.Data;
+            break;
+        case ClientDataType.CdColor:
+            setCookie("color", data.Data);
+            break;
+        case ClientDataType.CdEmote:
+            emotes = data.Data;
+            break;
+        case ClientDataType.CdJoin:
+            setNotifyBox("");
+            openChat();
+            break;
+        case ClientDataType.CdNotify:
+            setNotifyBox(data.Data);
+            break;
+        default:
+            console.warn("unhandled hidden type", data);
+            break;
+    }
+}
+
+function handleChatMessage(data) {
+    console.warn(data);
+    // parse html
+    msg = data.Message;
+    if (getCookie("timestamp") === "true" && (data.Type == MessageType.MsgChat || data.Type == MessageType.MsgAction)) {
+        let now = new Date();
+        let pad = (n) => String(n.toFixed(0)).padStart(2, "0");
+        msg = `<span class="time">${pad(now.getHours())}:${pad(now.getMinutes())}</span> ${msg}`;
+    }
+    appendMessages(`<div>${msg}</div>`);
+}
+
+
+/**
+ * @param {*} message
+ */
+function recieveMessage(message) {
+
+
+    console.info(message);
+    switch (message.Type) {
+        case DataType.DTHidden:
+            handleHiddenMessage(message.Data);
+            break;
+        case DataType.DTEvent:
+            if (message.Data.Event != EventType.EvServerMessage) {
+                sendMessage("", ClientDataType.CdUsers);
+            }
+        case DataType.DTChat:
+            handleChatMessage(message.Data)
+        default:
+            break;
+    }
+}
+
+/**
+ * @param {string} data
+ */
 function websocketSend(data) {
+    console.log(data)
     if (ws.readyState == ws.OPEN) {
         ws.send(data);
     } else {
         console.log("did not send data because websocket is not open", data);
     }
 }
+
+/**
+ * @param {string|any} msg
+ * @param {number} type
+ */
+function sendMessage(msg, type) {
+    if (typeof msg !== "string") {
+        msg = JSON.stringify(msg);
+    }
+
+    if (!type) {
+        type = ClientDataType.CdMessage;
+    }
+
+    websocketSend(JSON.stringify({
+        Type: type,
+        Message: msg,
+    }));
+}
+
 
 function sendChat() {
     sendMessage($("#msg").val());
@@ -133,6 +242,9 @@ function updateSuggestionScroll() {
     }
 }
 
+/**
+ * @param {string} msg
+ */
 function setNotifyBox(msg = "") {
     $("#notifyBox").html(msg);
 }
@@ -202,20 +314,18 @@ function colorSelectChange() {
     }
 }
 
+/**
+ * @param {string} color
+ */
 function sendColor(color) {
     sendMessage("/color " + color);
     showColors(false);
 }
 
-function setTimestamp(v) {
-    showTimestamp(v)
-    document.cookie = "timestamp=" + v + "; expires=Fri, 31 Dec 9999 23:59:59 GMT";
-}
-
 // Get the websocket setup in a function so it can be recalled
 function setupWebSocket() {
     ws = new WebSocket(getWsUri());
-    ws.onmessage = (m) => recieveMessage(m.data);
+    ws.onmessage = (m) => recieveMessage(JSON.parse(m.data));
     ws.onopen = () => console.log("Websocket Open");
     ws.onclose = () => {
         closeChat();
@@ -261,13 +371,20 @@ function setupEvents() {
     ).observe($("#suggestions")[0], { childList: true });
 }
 
-function defaultValues() {
-    setTimeout(() => {
-        let timestamp = getCookie("timestamp")
-        if (timestamp !== "") {
-            showTimestamp(timestamp === "true")
-        }
-    }, 500);
+function join() {
+    color = getCookie("color");
+    if (!color) {
+        // If color is not set then we want to assign a random color to the user
+        color = randomColor();
+    } else if (!isValidColor(color)) {
+        console.info(`${color} is not a valid color, clearing cookie`);
+        deleteCookie("color");
+    }
+
+    sendMessage({
+        Name: $("#name").val(),
+        Color: color,
+    }, ClientDataType.CdJoin);
 }
 
 window.addEventListener("onresize", updateSuggestionCss);
@@ -275,10 +392,9 @@ window.addEventListener("onresize", updateSuggestionCss);
 window.addEventListener("load", () => {
     setNotifyBox();
     setupWebSocket();
-    startGo();
     setupEvents();
-    defaultValues();
 
     // Make sure name is focused on start
     $("#name").focus();
+    $("#timestamp").prop("checked", getCookie("timestamp") === "true");
 });
