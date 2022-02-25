@@ -3,7 +3,6 @@
 
 /*
 processMessageKey
-recieveMessage
 processMessage
 */
 
@@ -103,7 +102,7 @@ function appendMessages(msg) {
         msgs.first().remove();
     }
 
-    $("#messages").append(msg);
+    $("#messages").append(`<div>${msg}</div>`);
     $("#messages").children().last()[0].scrollIntoView({ block: "end" });
 }
 
@@ -154,16 +153,133 @@ function handleHiddenMessage(data) {
     }
 }
 
-function handleChatMessage(data) {
+/**
+ * @param {*} data
+ * @param {bool} isEvent
+ */
+function handleChatMessage(data, isEvent) {
     console.warn(data);
-    // parse html
     msg = data.Message;
+
+    if (isEvent) {
+        function nameChangeMsg(forced) {
+            let users = data.User.split(":");
+
+            if (users.length < 2) {
+                return `<span class="event">Somebody changed their name, but IDK who.</span>`;
+            } else {
+                if (forced) {
+                    return `<span class="event"><span class="name" style="color:${data.Color}">${users[0]}</span> has had their name changed to <span class="name" style="color:${data.Color}">${users[1]}</span> by an admin.</span>`;
+                } else {
+                    return `<span class="event"><span class="name" style="color:${data.Color}">${users[0]}</span> has changed their name to <span class="name" style="color:${data.Color}">${users[1]}</span>.</span>`;
+                }
+            }
+        }
+
+        switch (data.Type) {
+            case EventType.EvKick:
+                msg = `<span class="event"><span class="name" style="color:${data.Color}">${data.User}</span> has been kicked.</span>`;
+                break;
+            case EventType.EvLeave:
+                msg = `<span class="event"><span class="name" style="color:${data.Color}">${data.User}</span> has left the chat.</span>`;
+                break;
+            case EventType.EvBan:
+                msg = `<span class="event"><span class="name" style="color:${data.Color}">${data.User}</span> has been banned.</span>`;
+                break;
+            case EventType.EvJoin:
+                msg = `<span class="event"><span class="name" style="color:${data.Color}">${data.User}</span> has joined the chat.</span>`;
+                break;
+            case EventType.EvNameChange:
+                nameChangeMsg(false);
+                break;
+            case EventType.EvNameChangeForced:
+                nameChangeMsg(true);
+                break;
+        }
+
+    } else {
+        function spanMsg(className, content) {
+            return `<span class="${className}">${content}</span>`;;
+        }
+        switch (data.Type) {
+            case MessageType.MsgAction:
+                msg = `<span style="color:${data.Color}">${spanMsg("name", data.From)} ${wrapMsg("cmdme", msg)}</span>`;
+                break;
+            case MessageType.MsgServer:
+                msg = spanMsg("announcement", msg);
+                break;
+            case MessageType.MsgError:
+                msg = spanMsg("error", msg);
+                break;
+            case MessageType.MsgNotice:
+                msg = spanMsg("notice", msg);
+                break;
+            case MessageType.MsgCommandResponse:
+                msg = spanMsg("command", msg);
+                break;
+            case MessageType.MsgCommandError:
+                msg = spanMsg("commanderror", msg);
+                break;
+            default:
+                msg = spanMsg("msg", msg);
+                switch (data.Level) {
+                    case CommandLevel.CmdlMod:
+                        msg = `<span><img src="/static/img/mod.png" class="badge" /><span class="name" style="color:${data.Color}">${data.From}</span><b>:</b> ${msg}</span>`;
+                        break;
+                    case CommandLevel.CmdlAdmin:
+                        msg = `<span><img src="/static/img/admin.png" class="badge" /><span class="name" style="color:${data.Color}">${data.From}</span><b>:</b> ${msg}</span>`;
+                        break;
+                    default:
+                        msg = `<span><span class="name" style="color:${data.Color}">${data.From}</span><b>:</b> ${msg}</span>`;
+                        break;
+                }
+                break;
+        }
+    }
+
     if (getCookie("timestamp") === "true" && (data.Type == MessageType.MsgChat || data.Type == MessageType.MsgAction)) {
         let now = new Date();
         let pad = (n) => String(n.toFixed(0)).padStart(2, "0");
         msg = `<span class="time">${pad(now.getHours())}:${pad(now.getMinutes())}</span> ${msg}`;
     }
-    appendMessages(`<div>${msg}</div>`);
+    appendMessages(msg);
+}
+
+function handleChatCommand(data) {
+    function openMenu(url) {
+        if (data.Arguments && data.Arguments.length > 0) {
+            url = data.Arguments[0];
+        }
+        window.open(url, "_blank", "menubar=0,status=0,toolbar=0,width=300,height=600")
+    }
+
+    switch (data.Command) {
+        case CommandType.CmdPlaying:
+            if (!data.Arguments) {
+                setPlaying("", "");
+            } else if (data.Arguments.length == 1) {
+                setPlaying(data.Arguments[0], "");
+            } else {
+                setPlaying(data.Arguments[0], data.Arguments[1]);
+            }
+            break;
+        case CommandType.CmdRefreshPlayer:
+            // calling a video function
+            if (typeof initPlayer !== "undefined") {
+                initPlayer();
+            }
+            break;
+        case CommandType.CmdPurgeChat:
+            purgeChat();
+            appendMessages(`<span class="notice">Chat has been purged by a moderator.</span>`);
+            break;
+        case CommandType.CmdHelp:
+            openMenu("/help");
+            break;
+        case CommandType.CmdEmotes:
+            openMenu("/emotes");
+            break;
+    }
 }
 
 
@@ -183,7 +299,7 @@ function recieveMessage(message) {
                 sendMessage("", ClientDataType.CdUsers);
             }
         case DataType.DTChat:
-            handleChatMessage(message.Data)
+            handleChatMessage(message.Data, message.Type == DataType.DTEvent)
         default:
             break;
     }

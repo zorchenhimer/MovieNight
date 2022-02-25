@@ -13,12 +13,12 @@ const ClientDataType = {
 Object.freeze(ClientDataType);
 
 const DataType = {
-	DTInvalid: 0,
-	DTChat: 1,
-	DTCommand: 2,
-	DTEvent: 3,
-	DTClient: 4,
-	DTHidden: 5,
+    DTInvalid: 0,
+    DTChat: 1,
+    DTCommand: 2,
+    DTEvent: 3,
+    DTClient: 4,
+    DTHidden: 5,
 };
 Object.freeze(DataType);
 
@@ -30,6 +30,13 @@ const CommandType = {
     CmdEmotes: 4,
 };
 Object.freeze(CommandType);
+
+const CommandLevel = {
+    CmdlUser: 0,
+    CmdlMod: 1,
+    CmdlAdmin: 2,
+}
+Object.freeze(CommandLevel);
 
 const EventType = {
     EvJoin: 0,
