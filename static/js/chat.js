@@ -7,10 +7,21 @@ processMessage
 */
 
 
-let maxMessageCount = 0
+let maxMessageCount = 0;
 let inChat = false;
-let users = []
-let emotes = {}
+let users = [];
+let emotes = {};
+
+// Suggestions
+const SuggestionType = {
+    None: 0,
+    Name: 1,
+    Emote: 2
+};
+Object.freeze(SuggestionType);
+let currentSuggestionType = SuggestionType.None;
+let currentSuggestion = "";
+let filteredSuggestion = [];
 
 function debug() {
     let color = getCookie("color");
@@ -287,9 +298,6 @@ function handleChatCommand(data) {
  * @param {*} message
  */
 function recieveMessage(message) {
-
-
-    console.info(message);
     switch (message.Type) {
         case DataType.DTHidden:
             handleHiddenMessage(message.Data);
@@ -342,6 +350,10 @@ function sendChat() {
     $("#msg").val("");
 }
 
+function emoteToHtml(file, title) {
+    return `<img src="${file}" class="emote" title="${title}" />`
+}
+
 function updateSuggestionCss(m) {
     if ($("#suggestions").children().length > 0) {
         $("#suggestions").css("bottom", $("#msg").outerHeight(true) - 1 + "px");
@@ -356,6 +368,167 @@ function updateSuggestionScroll() {
     if (item.length !== 0) {
         item[0].scrollIntoView({ block: "center" });
     }
+}
+
+function updateSuggestionDiv() {
+    const selectedClass = ` class="selectedName"`;
+
+    let divs = Array(filteredSuggestion.length);
+    if (filteredSuggestion.length > 0) {
+        if (currentSuggestion == "") {
+            currentSuggestion = filteredSuggestion[filteredSuggestion.length - 1]
+        }
+
+        let hasCurrentSuggestion = false;
+        for (let i = 0; i < filteredSuggestion.length; i++) {
+            divs[i] = "<div";
+            let suggestion = filteredSuggestion[i];
+            if (suggestion == currentSuggestion) {
+                hasCurrentSuggestion = true;
+                divs[i] += selectedClass;
+            }
+            divs[i] += ">";
+
+            if (currentSuggestionType == SuggestionType.Emote) {
+                divs[i] += emoteToHtml(emotes[suggestion], suggestion);
+            }
+
+            divs[i] += suggestion + "</div>";
+        }
+
+        if (!hasCurrentSuggestion) {
+            divs[0] = divs[0].slice(0, 4) + selectedClass + divs[0].slice(4);
+        }
+    }
+    $("#suggestions")[0].innerHTML = divs.join("\n");
+    updateSuggestionScroll();
+}
+
+function processMessageKey(e) {
+    let startIdx = e.target.selectionStart;
+    let keyCode = e.keyCode;
+    let ctrl = e.ctrlKey;
+
+    // ctrl + space
+    if (ctrl && keyCode == 32) {
+        processMessage();
+        return true;
+    }
+
+    if (filteredSuggestion.length == 0 || currentSuggestion == "") {
+        return false;
+    }
+
+    switch (keyCode) {
+        case 27: // esc
+            filteredSuggestion = [];
+            currentSuggestion = "";
+            currentSuggestionType = SuggestionType.None;
+            break;
+        case 38: // up
+        case 40: // down
+            let newIdx = 0;
+            for (let i = 0; i < filteredSuggestion.length; i++) {
+                const n = filteredSuggestion[i];
+                if (n == currentSuggestion) {
+                    newIdx = i;
+                    if(keyCode == 40) {
+                        newIdx = i + 1;
+                        if (newIdx == filteredSuggestion.length) {
+                            newIdx--;
+                        }
+                    } else if(keyCode == 38) {
+                        newIdx = i-1;
+                        if(newIdx < 0) {
+                            newIdx = 0;
+                        }
+                    }
+                    break;
+                }
+            }
+            currentSuggestion = filteredSuggestion[newIdx];
+            break;
+        case 9: // tab
+        case 13: // enter
+            let msg = $("#msg");
+            let val = msg.val();
+            let newVal = val.slice(startIdx);
+            let wrap = ":";
+
+            let lastIdx = newVal.lastIndexOf(":");
+            if (lastIdx != -1) {
+                let offset = 0;
+                if (currentSuggestionType == SuggestionType.Name) {
+                    offset = 1
+                    wrap = "";
+                }
+
+                newVal = newVal.slice(lastIdx + offset) + wrap + currentSuggestion + wrap;
+            }
+
+            let endVal = val.slice(0, startIdx);
+            if (val.length == startIdx || val[startIdx] != " ") {
+                endVal = " " + endVal;
+            }
+            msg.val(newVal + endVal);
+            msg[0].selectionStart = newVal.length+1;
+            msg[0].selectionEnd = newVal.length+1;
+
+            filteredSuggestion = [];
+        break;
+        default:
+            return false;
+    }
+
+    updateSuggestionDiv();
+    return true;
+}
+
+function processMessage() {
+    function handleSuggestion(msg, cmp) {
+        if (msg.length == 1 || cmp.toLowerCase().startsWith(msg.slice(1))) {
+            filteredSuggestion.push(cmp);
+        }
+    }
+
+    let text = $("#msg").val().toLowerCase();
+    let startIdx = $("#msg")[0].selectionStart;
+
+    filteredSuggestion = [];
+    if (text && (users || emotes)) {
+        let parts = text.split(" ")
+
+        let caret = 0;
+        for (let i = 0; i < parts.length; i++) {
+            const word = parts[i];
+            // Increase caret index at beginning if not first word to account for spaces
+            if (i != 0) {
+                caret++;
+            }
+
+            // It is possible to have a double space "  ", which will lead to an
+            // empty string element in the slice. Also check that the index of the
+            // cursor is between the start of the word and the end
+            if (word && caret <= startIdx && startIdx <= caret + word.length) {
+                if (word[0] == "@") {
+                    currentSuggestionType = SuggestionType.Name;
+                    users.forEach(name => handleSuggestion(word, name));
+                } else if (word[0] == ":") {
+                    currentSuggestionType = SuggestionType.Emote;
+                    Object.keys(emotes).forEach(emote => handleSuggestion(word, emote));
+                }
+            }
+
+            if (filteredSuggestion.length > 0) {
+                currentSuggestion = "";
+                break;
+            }
+
+            caret += word.length;
+        }
+    }
+
+    updateSuggestionDiv();
 }
 
 /**

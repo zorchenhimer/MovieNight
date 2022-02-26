@@ -17,9 +17,9 @@ TAGS=
 
 .PHONY: fmt vet get clean dev setdev test ServerMovieNight 
 
-all: fmt vet test MovieNight static/main.wasm settings.json 
+all: fmt vet test MovieNight settings.json 
 
-server: ServerMovieNight static/main.wasm 
+server: ServerMovieNight 
 
 ServerMovieNight: *.go common/*.go 
 	GOOS=${TARGET} GOARCH=${ARCH} go$(GO_VERSION) build -o MovieNight $(TAGS) 
@@ -32,14 +32,8 @@ dev: setdev all
 MovieNight: *.go common/*.go 
 	GOOS=${TARGET} GOARCH=${ARCH} go$(GO_VERSION) build -o MovieNight${EXT} $(TAGS) 
 
-static/js/wasm_exec.js: 
-	cp $$(go$(GO_VERSION) env GOROOT)/misc/wasm/wasm_exec.js $@
-
-static/main.wasm: static/js/wasm_exec.js wasm/*.go common/*.go 
-	GOOS=js GOARCH=wasm go$(GO_VERSION) build -o $@ $(TAGS) wasm/*.go 
-
 clean: 
-	-rm MovieNight${EXT} ./static/main.wasm ./static/js/wasm_exec.js 
+	-rm MovieNight${EXT} 
 
 fmt: 
 	gofmt -w . 
