@@ -1,12 +1,6 @@
 /// <reference path="./both.js" />
 /// <reference path="./consts.js" />
 
-/*
-processMessageKey
-processMessage
-*/
-
-
 let maxMessageCount = 0;
 let inChat = false;
 let users = [];
@@ -169,7 +163,6 @@ function handleHiddenMessage(data) {
  * @param {bool} isEvent
  */
 function handleChatMessage(data, isEvent) {
-    console.warn(data);
     msg = data.Message;
 
     if (isEvent) {
@@ -187,7 +180,7 @@ function handleChatMessage(data, isEvent) {
             }
         }
 
-        switch (data.Type) {
+        switch (data.Event) {
             case EventType.EvKick:
                 msg = `<span class="event"><span class="name" style="color:${data.Color}">${data.User}</span> has been kicked.</span>`;
                 break;
@@ -214,7 +207,7 @@ function handleChatMessage(data, isEvent) {
         }
         switch (data.Type) {
             case MessageType.MsgAction:
-                msg = `<span style="color:${data.Color}">${spanMsg("name", data.From)} ${wrapMsg("cmdme", msg)}</span>`;
+                msg = `<span style="color:${data.Color}">${spanMsg("name", data.From)} ${spanMsg("cmdme", msg)}</span>`;
                 break;
             case MessageType.MsgServer:
                 msg = spanMsg("announcement", msg);
@@ -261,7 +254,7 @@ function handleChatCommand(data) {
         if (data.Arguments && data.Arguments.length > 0) {
             url = data.Arguments[0];
         }
-        window.open(url, "_blank", "menubar=0,status=0,toolbar=0,width=300,height=600")
+        window.open(url, "_blank", "menubar=0,status=0,toolbar=0,width=300,height=600");
     }
 
     switch (data.Command) {
@@ -307,7 +300,11 @@ function recieveMessage(message) {
                 sendMessage("", ClientDataType.CdUsers);
             }
         case DataType.DTChat:
-            handleChatMessage(message.Data, message.Type == DataType.DTEvent)
+            handleChatMessage(message.Data, message.Type == DataType.DTEvent);
+            break;
+        case DataType.DTCommand:
+            handleChatCommand(message.Data);
+            break;
         default:
             break;
     }
