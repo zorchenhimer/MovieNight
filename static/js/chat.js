@@ -194,10 +194,10 @@ function handleChatMessage(data, isEvent) {
                 msg = `<span class="event"><span class="name" style="color:${data.Color}">${data.User}</span> has joined the chat.</span>`;
                 break;
             case EventType.EvNameChange:
-                nameChangeMsg(false);
+                msg = nameChangeMsg(false);
                 break;
             case EventType.EvNameChangeForced:
-                nameChangeMsg(true);
+                msg = nameChangeMsg(true);
                 break;
         }
 
