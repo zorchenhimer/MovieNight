@@ -447,29 +447,30 @@ function processMessageKey(e) {
             break;
         case 9: // tab
         case 13: // enter
+            const re = /[:@]([\w]+)(\s|$)/;
+
             let msg = $("#msg");
             let val = msg.val();
-            let newVal = val.slice(startIdx);
-            let wrap = ":";
 
-            let lastIdx = newVal.lastIndexOf(":");
-            if (lastIdx != -1) {
-                let offset = 0;
-                if (currentSuggestionType == SuggestionType.Name) {
-                    offset = 1
-                    wrap = "";
-                }
-
-                newVal = newVal.slice(lastIdx + offset) + wrap + currentSuggestion + wrap;
+            let match = val.match(re);
+            let endsSpace = match[0].endsWith(" ");
+            let replaceVal = "";
+            if (currentSuggestionType == SuggestionType.Emote) {
+                replaceVal = ":"+currentSuggestion+":";
+            }else {
+                replaceVal = "@"+currentSuggestion;
             }
 
-            let endVal = val.slice(0, startIdx);
-            if (val.length == startIdx || val[startIdx] != " ") {
-                endVal = " " + endVal;
+            if (endsSpace) {
+                replaceVal += " ";
             }
-            msg.val(newVal + endVal);
-            msg[0].selectionStart = newVal.length+1;
-            msg[0].selectionEnd = newVal.length+1;
+
+            let idx = val.indexOf(match[0]) + replaceVal.length;
+            let newVal = val.replace(re, replaceVal);
+
+            msg.val(newVal);
+            msg[0].selectionStart = idx;
+            msg[0].selectionEnd = idx;
 
             filteredSuggestion = [];
         break;
