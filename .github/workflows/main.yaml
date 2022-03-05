@@ -22,14 +22,19 @@ jobs:
             artifact: MovieNight-Linux
             exe: MovieNight
           - os: macos-latest
-            artifact: MovieNight-Mac
+            artifact: MovieNight-Mac-x86
             exe: MovieNight
+            target: amd64
+          - os: macos-latest
+            artifact: MovieNight-Mac-ARM
+            exe: MovieNight
+            target: arm64
 
     steps:
       - uses: actions/checkout@v2
 
       - name: build
-        run: make
+        run: make TARGET=${{ martix.target }}
 
       - name: copy settings
         run: cp settings_example.json settings.json
