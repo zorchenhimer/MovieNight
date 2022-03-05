@@ -18,11 +18,9 @@ jobs:
           - os: windows-latest
             artifact: MovieNight-Windows
             exe: MovieNight.exe
-            target: amd64
           - os: ubuntu-latest
             artifact: MovieNight-Linux
             exe: MovieNight
-            target: amd64
           - os: macos-latest
             artifact: MovieNight-Mac-x86
             exe: MovieNight
@@ -36,7 +34,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: build
-        run: make TARGET=${{ martix.target }}
+        run: make TARGET=${{ matrix.target }}
 
       - name: copy settings
         run: cp settings_example.json settings.json
