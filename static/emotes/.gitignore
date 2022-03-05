@@ -1,2 +1,5 @@
 # No images allowed, but keep the folder
-*
+*.gif
+*.png
+*.jpg
+*.webp
