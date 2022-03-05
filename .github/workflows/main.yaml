@@ -9,28 +9,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  pre-build:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        include:
-          - artifact: MovieNight-Linux
-            target: linux
-            arch: amd64
-          - artifact: MovieNight-Windows
-            target: windows
-            arch: amd64
-          - artifact: MovieNight-Mac-x86_64
-            target: darwin
-            arch: amd64
-          - artifact: MovieNight-Mac-ARM
-            target: darwin
-            arch: arm64
-
-    env:
-      GOOS: ${{ matrix.target }}
-      GOARCH: ${{ matrix.arch }}
 
     steps:
       - uses: actions/checkout@v2
@@ -41,17 +21,47 @@ jobs:
       - name: test
         run: go test ./...
 
+  build:
+    runs-on: ubuntu-latest
+
+    needs: pre-build
+
+    strategy:
+      matrix:
+        include:
+          - target: linux
+            arch: amd64
+          - target: windows
+            arch: amd64
+          - target: darwin
+            arch: amd64
+          - target: darwin
+            arch: arm64
+
+    env:
+      GOOS: ${{ matrix.target }}
+      GOARCH: ${{ matrix.arch }}
+
+    steps:
+      - uses: actions/checkout@v2
+
       - name: build
         run: go build
 
+      - name: create artifacts dir
+        run: mkdir artifacts
+
       - name: copy settings
-        run: cp settings_example.json settings.json
+        run: cp settings_example.json artifacts/settings.json
+
+      - name: copy static
+        run: cp -r static artifacts/
+
+      - name: copy MovieNight
+        run: cp MovieNight* artifacts/
 
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.artifact }}
+          name: MovieNight-${{ matrix.target }}-${{ matrix.arch }}
           if-no-files-found: error
-          path: |
-            MovieNight*
-            static/
-            settings.json
+          path: artifacts/*
