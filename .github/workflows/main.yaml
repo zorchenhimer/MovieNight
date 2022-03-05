@@ -9,8 +9,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ${{ matrix.os }}-latest
+
+    strategy:
+      matrix:
+        os: [ubuntu, windows]
 
     steps:
       - uses: actions/checkout@v2
@@ -18,25 +22,31 @@ jobs:
       - name: build
         run: make
 
+      - name: copy settings
+        run: cp settings_example.json settings.json
+
       - uses: actions/upload-artifact@v3
         with:
-          name: MoveNight-Linux
+          name: MoveNight-${{ matrix.os }}
+          if-no-files-found: error
           path: |
             MovieNight
-            static/main.wasm
+            static/
+            settings.json
 
-  build-windows:
-    runs-on: windows-latest
+  # build-windows:
+  #   runs-on: windows-latest
 
-    steps:
-      - uses: actions/checkout@v2
+  #   steps:
+  #     - uses: actions/checkout@v2
 
-      - name: build
-        run: make
+  #     - name: build
+  #       run: make
 
-      - uses: actions/upload-artifact@v3
-        with:
-          name: MoveNight-Windows
-          path: |
-            MovieNight.exe
-            static/main.wasm
+  #     - uses: actions/upload-artifact@v3
+  #       with:
+  #         name: MoveNight-Windows
+  #         if-no-files-found: error
+  #         path: |
+  #           MovieNight.exe
+  #           static/
