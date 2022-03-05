@@ -20,13 +20,10 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: MoveNight
-          path: MovieNight
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: main.wasm
-          path: static/main.wasm
+          name: MoveNight-Linux
+          path: |
+            MovieNight
+            static/main.wasm
 
   build-windows:
     runs-on: windows-latest
@@ -39,10 +36,7 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: MoveNight.exe
-          path: MovieNight.exe
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: main.wasm
-          path: static/main.wasm
+          name: MoveNight-Windows
+          path: |
+            MovieNight.exe
+            static/main.wasm
