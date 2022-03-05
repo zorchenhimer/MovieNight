@@ -29,7 +29,7 @@ jobs:
             arch: arm64
 
     env:
-      GOOS: ${{ martix.target }}
+      GOOS: ${{ matrix.target }}
       GOARCH: ${{ matrix.arch }}
 
     steps:
