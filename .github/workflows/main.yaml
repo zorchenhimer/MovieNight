@@ -15,6 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: version
+        run: go version
+
       - name: vet
         run: go vet ./...
 
