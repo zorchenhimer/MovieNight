@@ -53,6 +53,9 @@ jobs:
         with:
           go-version: ^1.16
 
+      - name: build wasm
+        run: GOOS=js GOARCH=wasm go build -o static/main.wasm wasm/*.go
+
       - name: build
         run: go build
 
@@ -67,6 +70,9 @@ jobs:
 
       - name: copy MovieNight
         run: cp MovieNight* artifacts/
+
+      - name: copy wasm_exe.js
+        run: cp $(go env GOROOT)/misc/wasm/wasm_exec.js static/js/wasm_exec.js
 
       - uses: actions/upload-artifact@v3
         with:
