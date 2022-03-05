@@ -17,3 +17,16 @@ jobs:
 
       - name: build
         run: make
+
+      - name: build windows
+        run: make TARGET=windows
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: MoveNight
+          path: MovieNight*
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: main.wasm
+          path: static/main.wasm
