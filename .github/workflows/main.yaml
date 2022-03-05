@@ -18,9 +18,11 @@ jobs:
           - os: windows-latest
             artifact: MovieNight-Windows
             exe: MovieNight.exe
+            target: amd64
           - os: ubuntu-latest
             artifact: MovieNight-Linux
             exe: MovieNight
+            target: amd64
           - os: macos-latest
             artifact: MovieNight-Mac-x86
             exe: MovieNight
