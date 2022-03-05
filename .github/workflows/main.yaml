@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: build
-        run: make TARGET=${{ matrix.target }}
+        run: make ARCH=${{ matrix.target }}
 
       - name: copy settings
         run: cp settings_example.json settings.json
