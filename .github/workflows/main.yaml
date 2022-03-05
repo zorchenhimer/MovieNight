@@ -10,31 +10,39 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
         include:
-          - os: windows-latest
-            artifact: MovieNight-Windows
-            exe: MovieNight.exe
-          - os: ubuntu-latest
-            artifact: MovieNight-Linux
-            exe: MovieNight
-          - os: macos-latest
-            artifact: MovieNight-Mac-x86
-            exe: MovieNight
-            target: amd64
-          - os: macos-latest
-            artifact: MovieNight-Mac-ARM
-            exe: MovieNight
-            target: arm64
+          - artifact: MovieNight-Linux
+            target: linux
+            arch: amd64
+          - artifact: MovieNight-Windows
+            target: windows
+            arch: amd64
+          - artifact: MovieNight-Mac-x86_64
+            target: darwin
+            arch: amd64
+          - artifact: MovieNight-Mac-ARM
+            target: darwin
+            arch: arm64
+
+    env:
+      GOOS: ${{ martix.target }}
+      GOARCH: ${{ matrix.arch }}
 
     steps:
       - uses: actions/checkout@v2
 
+      - name: vet
+        run: go vet ./...
+
+      - name: test
+        run: go test ./...
+
       - name: build
-        run: make ARCH=${{ matrix.target }}
+        run: go build
 
       - name: copy settings
         run: cp settings_example.json settings.json
@@ -44,6 +52,6 @@ jobs:
           name: ${{ matrix.artifact }}
           if-no-files-found: error
           path: |
-            ${{ matrix.exe }}
+            MovieNight*
             static/
             settings.json
