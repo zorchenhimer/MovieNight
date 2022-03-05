@@ -24,7 +24,12 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: MoveNight
-          path: MovieNight*
+          path: MovieNight
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: MoveNight.exe
+          path: MovieNight.exe
 
       - uses: actions/upload-artifact@v3
         with:
