@@ -1,0 +1,41 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: []
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: MovieNight-Windows
+            exe: MovieNight.exe
+          - os: ubuntu-latest
+            artifact: MovieNight-Linux
+            exe: MovieNight
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: build
+        run: make
+
+      - name: copy settings
+        run: cp settings_example.json settings.json
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.artifact }}
+          if-no-files-found: error
+          path: |
+            ${{ matrix.exe }}
+            static/
+            settings.json
