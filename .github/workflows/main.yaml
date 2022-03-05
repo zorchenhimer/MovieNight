@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-linux:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,13 +18,24 @@ jobs:
       - name: build
         run: make
 
-      - name: build windows
-        run: make TARGET=windows
-
       - uses: actions/upload-artifact@v3
         with:
           name: MoveNight
           path: MovieNight
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: main.wasm
+          path: static/main.wasm
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: build
+        run: make
 
       - uses: actions/upload-artifact@v3
         with:
