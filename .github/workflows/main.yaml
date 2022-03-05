@@ -10,11 +10,17 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        os: [ubuntu, windows]
+        include:
+          - os: windows-latest
+            artifact: MovieNight-Windows
+            exe: MovieNight.exe
+          - os: ubuntu-latest
+            artifact: MovieNight-Linux
+            exe: MovieNight
 
     steps:
       - uses: actions/checkout@v2
@@ -27,26 +33,9 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: MoveNight-${{ matrix.os }}
+          name: ${{ matrix.artifact }}
           if-no-files-found: error
           path: |
-            MovieNight
+            ${{ matrix.exe }}
             static/
             settings.json
-
-  # build-windows:
-  #   runs-on: windows-latest
-
-  #   steps:
-  #     - uses: actions/checkout@v2
-
-  #     - name: build
-  #       run: make
-
-  #     - uses: actions/upload-artifact@v3
-  #       with:
-  #         name: MoveNight-Windows
-  #         if-no-files-found: error
-  #         path: |
-  #           MovieNight.exe
-  #           static/
