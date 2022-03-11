@@ -25,6 +25,13 @@ jobs:
       - name: test
         run: go test ./...
 
+      - name: build for ui test
+        run: go build
+
+      - name: test ui
+        run: ./MovieNight & cd _uitests && go test
+
+
   build:
     runs-on: ubuntu-latest
 
