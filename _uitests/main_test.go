@@ -182,9 +182,8 @@ func TestCommandMe(t *testing.T) {
 
 func TestCommandColor(t *testing.T) {
 	const (
-		expectedMsg = `<span class="command">Color changed successfully.</span>`
-		name        = "testUser"
-		color       = "red"
+		name  = "testUser"
+		color = "red"
 	)
 
 	browser, err := openBrowser()
@@ -216,5 +215,28 @@ func TestCommandColor(t *testing.T) {
 	_, err = page.WaitForSelector(fmt.Sprintf(nameColorSpan, name, color))
 	if err != nil {
 		t.Errorf("could not find user message with new color: %v", err)
+	}
+}
+
+func TestCommandPin(t *testing.T) {
+	browser, err := openBrowser()
+	if err != nil {
+		t.Error(err)
+	}
+	defer browser.Close()
+
+	page, err := openChat(t, browser, "testUser")
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = sendMessage(page, "/pin")
+	if err != nil {
+		t.Errorf("failed to send /color command: %v", err)
+	}
+
+	_, err = page.WaitForSelector(`//span[contains(@class, "command")]`)
+	if err != nil {
+		t.Errorf("could not find command message: %v", err)
 	}
 }
