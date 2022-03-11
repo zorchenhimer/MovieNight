@@ -18,6 +18,7 @@ const (
 	nameColorSpan    = `//span[contains(@class, "name") and text()="%s" and @style="color:%s"]`
 	msgSpan          = `//span[contains(@class, "msg") and text()="%s"]`
 	meCmdSpan        = `//span[contains(@class, "cmdme") and text()="%s"]`
+	commandSpan      = `//span[contains(@class, "command")]`
 )
 
 func openBrowser() (playwright.Browser, error) {
@@ -218,25 +219,34 @@ func TestCommandColor(t *testing.T) {
 	}
 }
 
-func TestCommandPin(t *testing.T) {
-	browser, err := openBrowser()
-	if err != nil {
-		t.Error(err)
-	}
-	defer browser.Close()
+func TestGenericCommands(t *testing.T) {
+	wrapFunc := func(command string) func(*testing.T) {
+		return func(t *testing.T) {
+			browser, err := openBrowser()
+			if err != nil {
+				t.Error(err)
+			}
+			defer browser.Close()
 
-	page, err := openChat(t, browser, "testUser")
-	if err != nil {
-		t.Error(err)
+			page, err := openChat(t, browser, "testUser")
+			if err != nil {
+				t.Error(err)
+			}
+
+			err = sendMessage(page, command)
+			if err != nil {
+				t.Errorf("failed to send %s command: %v", command, err)
+			}
+
+			_, err = page.WaitForSelector(commandSpan)
+			if err != nil {
+				t.Errorf("could not find command message: %v", err)
+			}
+		}
 	}
 
-	err = sendMessage(page, "/pin")
-	if err != nil {
-		t.Errorf("failed to send /color command: %v", err)
-	}
-
-	_, err = page.WaitForSelector(`//span[contains(@class, "command")]`)
-	if err != nil {
-		t.Errorf("could not find command message: %v", err)
-	}
+	t.Run("pin", wrapFunc("/pin"))
+	t.Run("stats", wrapFunc("/stats"))
+	t.Run("users", wrapFunc("/users"))
+	t.Run("whoami", wrapFunc("/whoami"))
 }
