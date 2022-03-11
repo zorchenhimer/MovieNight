@@ -72,8 +72,33 @@ jobs:
           if-no-files-found: error
           path: artifacts/*
 
-  test-ui:
-    runs-on: ubuntu-latest
+  test-ui-unix:
+    runs-on: ${{ matrix.os }}
+
+    needs: build
+
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: MovieNight-linux-amd64
+          - os: macos-latest
+            artifact: MovieNight-darwin-amd64
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: ${{ matrix.artifact }}
+
+      - name: test
+        run: |
+          chmod +x ./MovieNight
+          ./MovieNight & cd _uitests && go test
+
+  test-ui-windows:
+    runs-on: windows-latest
 
     needs: build
 
@@ -82,9 +107,10 @@ jobs:
 
       - uses: actions/download-artifact@v3
         with:
-          name: MovieNight-linux-amd64
+          name: MovieNight-windows-amd64
 
       - name: test
         run: |
-          chmod +x ./MovieNight
-          ./MovieNight & cd _uitests && go test
+          Start-Job { ./MovieNight.exe }
+          cd _uitests
+          go test
