@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/mxschmitt/playwright-go"
@@ -21,19 +22,7 @@ const (
 	commandSpan      = `//span[contains(@class, "command")]`
 )
 
-func openBrowser() (playwright.Browser, error) {
-	pw, err := playwright.Run()
-	if err != nil {
-		return nil, fmt.Errorf("could not run playwright: %w", err)
-	}
-
-	browser, err := pw.Firefox.Launch()
-	if err != nil {
-		return nil, fmt.Errorf("could not launch browser: %w", err)
-	}
-
-	return browser, nil
-}
+var pw *playwright.Playwright
 
 func openChat(t *testing.T, browser playwright.Browser, username string) (playwright.Page, error) {
 	page, err := browser.NewPage()
@@ -88,10 +77,22 @@ func sendMessage(page playwright.Page, msg string) error {
 	return nil
 }
 
-func TestAccess(t *testing.T) {
-	browser, err := openBrowser()
+func TestMain(m *testing.M) {
+	var err error
+	pw, err = playwright.Run()
 	if err != nil {
-		t.Error(err)
+		fmt.Printf("could not run playwright: %v", err)
+		os.Exit(1)
+	}
+
+	code := m.Run()
+	os.Exit(code)
+}
+
+func TestAccess(t *testing.T) {
+	browser, err := pw.Firefox.Launch()
+	if err != nil {
+		t.Errorf("could not launch browser: %v", err)
 	}
 	defer browser.Close()
 
@@ -104,9 +105,9 @@ func TestAccess(t *testing.T) {
 func TestChatMessage(t *testing.T) {
 	const msg = "testing 1 2 3"
 
-	browser, err := openBrowser()
+	browser, err := pw.Firefox.Launch()
 	if err != nil {
-		t.Error(err)
+		t.Errorf("could not launch browser: %v", err)
 	}
 	defer browser.Close()
 
@@ -134,9 +135,9 @@ func TestChatMessage(t *testing.T) {
 func TestCommandNick(t *testing.T) {
 	const nick = "newNick"
 
-	browser, err := openBrowser()
+	browser, err := pw.Firefox.Launch()
 	if err != nil {
-		t.Error(err)
+		t.Errorf("could not launch browser: %v", err)
 	}
 	defer browser.Close()
 
@@ -159,9 +160,9 @@ func TestCommandNick(t *testing.T) {
 func TestCommandMe(t *testing.T) {
 	const msg = "this is a me message"
 
-	browser, err := openBrowser()
+	browser, err := pw.Firefox.Launch()
 	if err != nil {
-		t.Error(err)
+		t.Errorf("could not launch browser: %v", err)
 	}
 	defer browser.Close()
 
@@ -187,9 +188,9 @@ func TestCommandColor(t *testing.T) {
 		color = "red"
 	)
 
-	browser, err := openBrowser()
+	browser, err := pw.Firefox.Launch()
 	if err != nil {
-		t.Error(err)
+		t.Errorf("could not launch browser: %v", err)
 	}
 	defer browser.Close()
 
@@ -222,9 +223,9 @@ func TestCommandColor(t *testing.T) {
 func TestGenericCommands(t *testing.T) {
 	wrapFunc := func(command string) func(*testing.T) {
 		return func(t *testing.T) {
-			browser, err := openBrowser()
+			browser, err := pw.Firefox.Launch()
 			if err != nil {
-				t.Error(err)
+				t.Errorf("could not launch browser: %v", err)
 			}
 			defer browser.Close()
 
