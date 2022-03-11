@@ -80,9 +80,13 @@ jobs:
     needs: build
 
     steps:
+      - uses: actions/checkout@v2
+
       - uses: actions/download-artifact@v3
         with:
           name: MovieNight-linux-amd64
 
       - name: test
-        run: ./MovieNight & cd _uitests && go test
+        run: |
+          chmod +x ./MovieNight
+          ./MovieNight & cd _uitests && go test
