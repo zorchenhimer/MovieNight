@@ -9,33 +9,73 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        include:
-          - os: windows-latest
-            artifact: MovieNight-Windows
-            exe: MovieNight.exe
-          - os: ubuntu-latest
-            artifact: MovieNight-Linux
-            exe: MovieNight
+  pre-build:
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
 
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+
+      - name: vet
+        run: go vet ./...
+
+      - name: test
+        run: go test ./...
+
+  build:
+    runs-on: ubuntu-latest
+
+    needs: pre-build
+
+    strategy:
+      matrix:
+        include:
+          - target: linux
+            arch: amd64
+          - target: windows
+            arch: amd64
+          - target: darwin
+            arch: amd64
+          - target: darwin
+            arch: arm64
+
+    env:
+      GOOS: ${{ matrix.target }}
+      GOARCH: ${{ matrix.arch }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+
+      - name: build wasm
+        run: GOOS=js GOARCH=wasm go build -o static/main.wasm wasm/*.go
+
       - name: build
-        run: make
+        run: go build
+
+      - name: create artifacts dir
+        run: mkdir artifacts
 
       - name: copy settings
-        run: cp settings_example.json settings.json
+        run: cp settings_example.json artifacts/settings.json
+
+      - name: copy static
+        run: cp -r static artifacts/
+
+      - name: copy MovieNight
+        run: cp MovieNight* artifacts/
+
+      - name: copy wasm_exec.js
+        run: cp $(go env GOROOT)/misc/wasm/wasm_exec.js artifacts/static/js/wasm_exec.js
 
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.artifact }}
+          name: MovieNight-${{ matrix.target }}-${{ matrix.arch }}
           if-no-files-found: error
-          path: |
-            ${{ matrix.exe }}
-            static/
-            settings.json
+          path: artifacts/*
