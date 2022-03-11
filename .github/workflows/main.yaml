@@ -25,13 +25,6 @@ jobs:
       - name: test
         run: go test ./...
 
-      - name: build for ui test
-        run: go build
-
-      - name: test ui
-        run: ./MovieNight & cd _uitests && go test
-
-
   build:
     runs-on: ubuntu-latest
 
@@ -86,3 +79,14 @@ jobs:
           name: MovieNight-${{ matrix.target }}-${{ matrix.arch }}
           if-no-files-found: error
           path: artifacts/*
+
+  test-ui:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: MovieNight-linux-amd64
+
+      - name: test
+        run: ./MovieNight & cd _uitests && go test
