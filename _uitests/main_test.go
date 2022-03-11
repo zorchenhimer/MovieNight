@@ -15,6 +15,7 @@ const (
 	msgInputTextarea = `//textarea[@id="msg"]`
 	sendInput        = `//input[@id="send"]`
 	nameSpan         = `//span[contains(@class, "name") and text()="%s"]`
+	nameColorSpan    = `//span[contains(@class, "name") and text()="%s" and @style="color:%s"]`
 	msgSpan          = `//span[contains(@class, "msg") and text()="%s"]`
 	meCmdSpan        = `//span[contains(@class, "cmdme") and text()="%s"]`
 )
@@ -176,5 +177,44 @@ func TestCommandMe(t *testing.T) {
 	_, err = page.WaitForSelector(fmt.Sprintf(meCmdSpan, msg))
 	if err != nil {
 		t.Errorf("could not find user me message: %v", err)
+	}
+}
+
+func TestCommandColor(t *testing.T) {
+	const (
+		expectedMsg = `<span class="command">Color changed successfully.</span>`
+		name        = "testUser"
+		color       = "red"
+	)
+
+	browser, err := openBrowser()
+	if err != nil {
+		t.Error(err)
+	}
+	defer browser.Close()
+
+	page, err := openChat(t, browser, name)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = sendMessage(page, fmt.Sprintf("/color %s", color))
+	if err != nil {
+		t.Errorf("failed to send /color command: %v", err)
+	}
+
+	_, err = page.WaitForSelector(`//span[contains(@class, "command") and contains(text(),"Color changed successfully")]`)
+	if err != nil {
+		t.Errorf("could not find color change notification: %v", err)
+	}
+
+	err = sendMessage(page, "test")
+	if err != nil {
+		t.Error(err)
+	}
+
+	_, err = page.WaitForSelector(fmt.Sprintf(nameColorSpan, name, color))
+	if err != nil {
+		t.Errorf("could not find user message with new color: %v", err)
 	}
 }
