@@ -130,7 +130,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 
 			client, err = chat.Join(chatConn, joinData)
 			if err != nil {
-				switch err.(type) {
+				switch err.(type) { //nolint:errorlint
 				case UserFormatError, UserTakenError:
 					common.LogInfof("[handler|%s] %v\n", errorName(err), err)
 				case BannedUserError:

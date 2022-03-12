@@ -3,6 +3,7 @@ linters:
     - errcheck
   enable:
     - bodyclose
-    - staticcheck
     - dupl
-    # - errorlint
+    - errorlint
+    - goconst
+    - unconvert
