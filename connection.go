@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"sync"
@@ -31,8 +32,9 @@ func (cc *chatConnection) WriteData(data interface{}) error {
 	stats.msgOutInc()
 	err := cc.WriteJSON(data)
 	if err != nil {
-		if operr, ok := err.(*net.OpError); ok {
-			common.LogDebugln("OpError: " + operr.Err.Error())
+		var opErr *net.OpError
+		if errors.As(err, &opErr) {
+			common.LogDebugf("OpError: %v\n", opErr)
 		}
 		return fmt.Errorf("Error writing data to %s %s: %w", cc.clientName, cc.Host(), err)
 	}
