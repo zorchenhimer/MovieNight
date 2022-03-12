@@ -177,6 +177,7 @@ func getUserIDs(names []string) []TwitchUser {
 	if err != nil {
 		log.Fatalln("Error sending request:", err)
 	}
+	defer resp.Body.Close()
 
 	decoder := json.NewDecoder(resp.Body)
 	type userResponse struct {
@@ -197,6 +198,8 @@ func getChannelEmotes(ID string) ([]EmoteInfo, map[string]map[string]string, err
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "could not get emotes")
 	}
+	defer resp.Body.Close()
+
 	decoder := json.NewDecoder(resp.Body)
 
 	type EmoteResponse struct {

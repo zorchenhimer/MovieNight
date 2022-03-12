@@ -1,0 +1,6 @@
+linters:
+  disable:
+    - errcheck
+  enable:
+    - bodyclose
+    - staticcheck
