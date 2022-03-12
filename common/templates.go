@@ -26,7 +26,7 @@ func InitTemplates() error {
 	for key, files := range serverTemplateDefs {
 		t, err := html.ParseFiles(files...)
 		if err != nil {
-			return fmt.Errorf("unable to parse templates for %s: %v", key, err)
+			return fmt.Errorf("unable to parse templates for %s: %w", key, err)
 		}
 
 		serverTemplates[key] = t

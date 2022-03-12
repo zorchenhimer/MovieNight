@@ -38,7 +38,7 @@ func newChatRoom() (*ChatRoom, error) {
 
 	err := loadEmotes()
 	if err != nil {
-		return nil, fmt.Errorf("error loading emotes: %s", err)
+		return nil, fmt.Errorf("error loading emotes: %w", err)
 	}
 	common.LogInfof("Loaded %d emotes\n", len(common.Emotes))
 
@@ -85,7 +85,7 @@ func (cr *ChatRoom) Join(conn *chatConnection, data common.JoinData) (*Client, e
 	client, err := NewClient(conn, cr, data.Name, data.Color)
 	if err != nil {
 		sendHiddenMessage(common.CdNotify, "Could not join client")
-		return nil, fmt.Errorf("unable to join client: %v", err)
+		return nil, fmt.Errorf("unable to join client: %w", err)
 	}
 
 	// Overwrite to use client instead
@@ -461,7 +461,7 @@ func (cr *ChatRoom) changeName(oldName, newName string, forced bool) error {
 	if currentClient != nil {
 		err := currentClient.setName(newName)
 		if err != nil {
-			return fmt.Errorf("could not set client name to %#v: %v", newName, err)
+			return fmt.Errorf("could not set client name to %#v: %w", newName, err)
 		}
 		common.LogDebugf("%q -> %q\n", oldName, newName)
 

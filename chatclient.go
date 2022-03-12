@@ -45,7 +45,7 @@ func NewClient(connection *chatConnection, room *ChatRoom, name, color string) (
 	}
 
 	if err := c.setName(name); err != nil {
-		return nil, fmt.Errorf("could not set client name to %#v: %v", name, err)
+		return nil, fmt.Errorf("could not set client name to %#v: %w", name, err)
 	}
 
 	// Set initial vaules to their rate limit duration in the past.
@@ -185,13 +185,13 @@ func (cl *Client) SendChatData(data common.ChatData) error {
 		var err error
 		data = cl.replaceColorizedName(data)
 		if err != nil {
-			return fmt.Errorf("could not colorize name: %v", err)
+			return fmt.Errorf("could not colorize name: %w", err)
 		}
 	}
 
 	cd, err := data.ToJSON()
 	if err != nil {
-		return fmt.Errorf("could not create ChatDataJSON of type %d: %v", data.Type, err)
+		return fmt.Errorf("could not create ChatDataJSON of type %d: %w", data.Type, err)
 	}
 	return cl.Send(cd)
 }
@@ -199,7 +199,7 @@ func (cl *Client) SendChatData(data common.ChatData) error {
 func (cl *Client) Send(data common.ChatDataJSON) error {
 	err := cl.conn.WriteData(data)
 	if err != nil {
-		return fmt.Errorf("could not send message: %v", err)
+		return fmt.Errorf("could not send message: %w", err)
 	}
 	return nil
 }
@@ -207,7 +207,7 @@ func (cl *Client) Send(data common.ChatDataJSON) error {
 func (cl *Client) SendServerMessage(s string) error {
 	err := cl.SendChatData(common.NewChatMessage("", ColorServerMessage, s, common.CmdlUser, common.MsgServer))
 	if err != nil {
-		return fmt.Errorf("could send server message to %s: message - %#v: %v", cl.name, s, err)
+		return fmt.Errorf("could send server message to %s: message - %#v: %w", cl.name, s, err)
 	}
 	return nil
 }

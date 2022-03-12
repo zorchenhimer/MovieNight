@@ -34,7 +34,7 @@ func (cc *chatConnection) WriteData(data interface{}) error {
 		if operr, ok := err.(*net.OpError); ok {
 			common.LogDebugln("OpError: " + operr.Err.Error())
 		}
-		return fmt.Errorf("Error writing data to %s %s: %v", cc.clientName, cc.Host(), err)
+		return fmt.Errorf("Error writing data to %s %s: %w", cc.clientName, cc.Host(), err)
 	}
 	return nil
 }

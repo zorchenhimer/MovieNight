@@ -75,20 +75,20 @@ type BanInfo struct {
 func LoadSettings(filename string) (*Settings, error) {
 	raw, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("error reading file: %s", err)
+		return nil, fmt.Errorf("error reading file: %w", err)
 	}
 
 	var s *Settings
 	err = json.Unmarshal(raw, &s)
 	if err != nil {
-		return nil, fmt.Errorf("error unmarshaling: %s", err)
+		return nil, fmt.Errorf("error unmarshaling: %w", err)
 	}
 	s.filename = filename
 
 	var logFileDir string = s.LogFile
 	fmt.Printf("Log file: %s\n", logFileDir)
 	if err = common.SetupLogging(s.LogLevel, logFileDir); err != nil {
-		return nil, fmt.Errorf("unable to setup logger: %s", err)
+		return nil, fmt.Errorf("unable to setup logger: %w", err)
 	}
 
 	// have a default of 200
@@ -101,7 +101,7 @@ func LoadSettings(filename string) (*Settings, error) {
 	if s.RegenAdminPass || s.AdminPassword == "" {
 		s.AdminPassword, err = generatePass(time.Now().Unix())
 		if err != nil {
-			return nil, fmt.Errorf("unable to generate admin password: %s", err)
+			return nil, fmt.Errorf("unable to generate admin password: %w", err)
 		}
 	}
 
@@ -184,7 +184,7 @@ func LoadSettings(filename string) (*Settings, error) {
 
 	// Save admin password to file
 	if err = s.Save(); err != nil {
-		return nil, fmt.Errorf("unable to save settings: %s", err)
+		return nil, fmt.Errorf("unable to save settings: %w", err)
 	}
 
 	return s, nil
@@ -214,12 +214,12 @@ func (s *Settings) Save() error {
 func (s *Settings) unlockedSave() error {
 	marshaled, err := json.MarshalIndent(s, "", "\t")
 	if err != nil {
-		return fmt.Errorf("error marshaling: %s", err)
+		return fmt.Errorf("error marshaling: %w", err)
 	}
 
 	err = ioutil.WriteFile(s.filename, marshaled, 0777)
 	if err != nil {
-		return fmt.Errorf("error saving: %s", err)
+		return fmt.Errorf("error saving: %w", err)
 	}
 	return nil
 }

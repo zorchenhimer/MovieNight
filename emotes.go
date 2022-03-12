@@ -90,7 +90,7 @@ func findEmotes(dir string, em common.EmotesMap) (common.EmotesMap, error) {
 	common.LogDebugf("finding emotes in %q\n", dir)
 	emotePNGs, err := filepath.Glob(filepath.Join(dir, "*.png"))
 	if err != nil {
-		return em, fmt.Errorf("unable to glob emote directory: %s", err)
+		return em, fmt.Errorf("unable to glob emote directory: %w", err)
 	}
 	common.LogInfof("Found %d emotePNGs\n", len(emotePNGs))
 
