@@ -25,7 +25,6 @@ type Client struct {
 	CmdLevel      common.CommandLevel
 	IsColorForced bool
 	IsNameForced  bool
-	regexName     *regexp.Regexp
 
 	// Times since last event.  use time.Duration.Since()
 	nextChat  time.Time // rate limit chat messages
@@ -276,7 +275,7 @@ func (cl *Client) replaceColorizedName(chatData common.ChatData) common.ChatData
 	newWords := []string{}
 
 	for _, word := range words {
-		if strings.ToLower(word) == strings.ToLower(cl.name) || strings.ToLower(word) == strings.ToLower("@"+cl.name) {
+		if strings.EqualFold(word, strings.TrimPrefix(cl.name, "@")) {
 			newWords = append(newWords, `<span class="mention">`+word+`</span>`)
 		} else {
 			newWords = append(newWords, word)

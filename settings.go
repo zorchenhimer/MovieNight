@@ -88,7 +88,7 @@ func LoadSettings(filename string) (*Settings, error) {
 	var logFileDir string = s.LogFile
 	fmt.Printf("Log file: %s\n", logFileDir)
 	if err = common.SetupLogging(s.LogLevel, logFileDir); err != nil {
-		return nil, fmt.Errorf("Unable to setup logger: %s", err)
+		return nil, fmt.Errorf("unable to setup logger: %s", err)
 	}
 
 	// have a default of 200
@@ -98,7 +98,7 @@ func LoadSettings(filename string) (*Settings, error) {
 		return s, fmt.Errorf("value for MaxMessageCount must be greater than 0, given %d", s.MaxMessageCount)
 	}
 
-	if s.RegenAdminPass == true || s.AdminPassword == "" {
+	if s.RegenAdminPass || s.AdminPassword == "" {
 		s.AdminPassword, err = generatePass(time.Now().Unix())
 		if err != nil {
 			return nil, fmt.Errorf("unable to generate admin password: %s", err)
@@ -184,7 +184,7 @@ func LoadSettings(filename string) (*Settings, error) {
 
 	// Save admin password to file
 	if err = s.Save(); err != nil {
-		return nil, fmt.Errorf("Unable to save settings: %s", err)
+		return nil, fmt.Errorf("unable to save settings: %s", err)
 	}
 
 	return s, nil
@@ -229,7 +229,7 @@ func (s *Settings) AddBan(host string, names []string) error {
 	s.lock.Lock()
 
 	if host == "127.0.0.1" {
-		return fmt.Errorf("Cannot add a ban for localhost.")
+		return fmt.Errorf("cannot add a ban for localhost")
 	}
 
 	b := BanInfo{
@@ -321,7 +321,7 @@ func (s *Settings) AddApprovedEmotes(channels []string) error {
 	}
 
 	filtered := []string{}
-	for key, _ := range approved {
+	for key := range approved {
 		filtered = append(filtered, key)
 	}
 

@@ -85,7 +85,7 @@ func (cr *ChatRoom) Join(conn *chatConnection, data common.JoinData) (*Client, e
 	client, err := NewClient(conn, cr, data.Name, data.Color)
 	if err != nil {
 		sendHiddenMessage(common.CdNotify, "Could not join client")
-		return nil, fmt.Errorf("Unable to join client: %v", err)
+		return nil, fmt.Errorf("unable to join client: %v", err)
 	}
 
 	// Overwrite to use client instead
@@ -149,15 +149,15 @@ func (cr *ChatRoom) Kick(name string) error {
 
 	client, id, err := cr.getClient(name)
 	if err != nil {
-		return fmt.Errorf("Unable to get client for name " + name)
+		return newChatError("Unable to get client for name %s", name)
 	}
 
 	if client.CmdLevel == common.CmdlMod {
-		return fmt.Errorf("You cannot kick another mod.")
+		return newChatError("You cannot kick another mod.")
 	}
 
 	if client.CmdLevel == common.CmdlAdmin {
-		return fmt.Errorf("Jebaited No.")
+		return newChatError("Jebaited No.")
 	}
 
 	color := client.color
@@ -177,11 +177,11 @@ func (cr *ChatRoom) Ban(name string) error {
 	client, id, err := cr.getClient(name)
 	if err != nil {
 		common.LogErrorf("[ban] Unable to get client for name %q\n", name)
-		return fmt.Errorf("Cannot find that name")
+		return newChatError("Cannot find that name")
 	}
 
 	if client.CmdLevel == common.CmdlAdmin {
-		return fmt.Errorf("You cannot ban an admin Jebaited")
+		return newChatError("You cannot ban an admin Jebaited")
 	}
 
 	names := []string{}
@@ -449,7 +449,7 @@ func (cr *ChatRoom) changeName(oldName, newName string, forced bool) error {
 	for _, client := range cr.clients {
 		if strings.ToLower(client.name) == newLower {
 			if strings.ToLower(client.name) != oldLower {
-				return fmt.Errorf("%q is already taken.", newName)
+				return fmt.Errorf("%q is already taken", newName)
 			}
 		}
 

@@ -84,27 +84,13 @@ func processEmoteDir(path string) (common.EmotesMap, error) {
 	return em, nil
 }
 
-func substr(input string, start int, length int) string {
-	asRunes := []rune(input)
-
-	if start >= len(asRunes) {
-		return ""
-	}
-
-	if start+length > len(asRunes) {
-		length = len(asRunes) - start
-	}
-
-	return string(asRunes[start : start+length])
-}
-
 func findEmotes(dir string, em common.EmotesMap) (common.EmotesMap, error) {
 	var runPathLength = len(common.RunPath() + "/static/")
 
 	common.LogDebugf("finding emotes in %q\n", dir)
 	emotePNGs, err := filepath.Glob(filepath.Join(dir, "*.png"))
 	if err != nil {
-		return em, fmt.Errorf("unable to glob emote directory: %s\n", err)
+		return em, fmt.Errorf("unable to glob emote directory: %s", err)
 	}
 	common.LogInfof("Found %d emotePNGs\n", len(emotePNGs))
 

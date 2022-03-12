@@ -38,8 +38,8 @@ type writeFlusher struct {
 	io.Writer
 }
 
-func (self writeFlusher) Flush() error {
-	self.httpflusher.Flush()
+func (w writeFlusher) Flush() error {
+	w.httpflusher.Flush()
 	return nil
 }
 
@@ -369,7 +369,7 @@ func handlePublish(conn *rtmp.Conn) {
 	}
 
 	streamPath := urlParts[0]
-	ch, exists := channels[streamPath]
+	_, exists := channels[streamPath]
 	if exists {
 		common.LogErrorln("Stream already running.  Denying publish.")
 		conn.Close()
@@ -377,7 +377,7 @@ func handlePublish(conn *rtmp.Conn) {
 		return
 	}
 
-	ch = &Channel{}
+	ch := &Channel{}
 	ch.que = pubsub.NewQueue()
 	ch.que.WriteHeader(streams)
 	channels[streamPath] = ch

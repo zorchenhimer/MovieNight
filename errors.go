@@ -10,6 +10,18 @@ func errorName(err error) string {
 	return reflect.ValueOf(err).Type().Name()
 }
 
+type ChatError struct {
+	msg string
+}
+
+func (e ChatError) Error() string {
+	return e.msg
+}
+
+func newChatError(s string, a ...interface{}) error {
+	return ChatError{msg: fmt.Sprintf(s, a...)}
+}
+
 // UserNameError is a base error for errors that deal with user names
 type UserNameError struct {
 	Name string
