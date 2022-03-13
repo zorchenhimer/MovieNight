@@ -43,7 +43,10 @@ var commands = &CommandControl{
 		common.CNEmotes.String(): {
 			HelpText: "Display a list of available emotes.",
 			Function: func(client *Client, args []string) (string, error) {
-				client.SendChatData(common.NewChatCommand(common.CmdEmotes, []string{"/emotes"}))
+				err := client.SendChatData(common.NewChatCommand(common.CmdEmotes, []string{"/emotes"}))
+				if err != nil {
+					return "", fmt.Errorf("could not send /emotes command: %w", err)
+				}
 				return "Opening emote list in new window.", nil
 			},
 		},
@@ -141,7 +144,11 @@ var commands = &CommandControl{
 				}
 
 				if len(args) == 0 {
-					cl.setColor(common.RandomColor())
+					err := cl.setColor(common.RandomColor())
+					if err != nil {
+						common.LogInfof("[color] failed to set random color for %s: %v\n", cl.name, err)
+						return "", newChatError("Could not set random color")
+					}
 					return "Random color chosen: " + cl.color, nil
 				}
 
@@ -539,21 +546,26 @@ var commands = &CommandControl{
 					// Pretty sure this breaks on partial downloads (eg, one good channel and one non-existent)
 					err := getEmotes(args)
 					if err != nil {
-						cl.SendChatData(common.NewChatMessage("", "",
-							err.Error(),
-							common.CmdlUser, common.MsgCommandResponse))
+						err = cl.SendChatData(common.NewChatMessage("", "", err.Error(), common.CmdlUser, common.MsgCommandResponse))
+						if err != nil {
+							common.LogErrorln(err)
+						}
 						return
 					}
 
 					// If the emotes were able to be downloaded, add the channels to settings
-					settings.AddApprovedEmotes(args)
+					err = settings.AddApprovedEmotes(args)
+					if err != nil {
+						common.LogErrorf("could not add approved emotes: %v\n", err)
+					}
 
 					// reload emotes now that new ones were added
 					err = loadEmotes()
 					if err != nil {
-						cl.SendChatData(common.NewChatMessage("", "",
-							err.Error(),
-							common.CmdlUser, common.MsgCommandResponse))
+						err = cl.SendChatData(common.NewChatMessage("", "", err.Error(), common.CmdlUser, common.MsgCommandResponse))
+						if err != nil {
+							common.LogErrorln(err)
+						}
 						return
 					}
 
@@ -614,7 +626,11 @@ func cmdHelp(cl *Client, args []string) (string, error) {
 		url += "&admin=1"
 	}
 
-	cl.SendChatData(common.NewChatCommand(common.CmdHelp, []string{url}))
+	err := cl.SendChatData(common.NewChatCommand(common.CmdHelp, []string{url}))
+	if err != nil {
+		common.LogErrorf("Could not send open window command: %v\n", err)
+		return "", newChatError("Could not send open window command")
+	}
 	return `Opening help in new window.`, nil
 }
 
@@ -637,15 +653,20 @@ func getHelp(lvl common.CommandLevel) map[string]string {
 }
 
 func commandReloadEmotes(cl *Client) {
-	cl.SendServerMessage("Reloading emotes")
-	err := loadEmotes()
+	err := cl.SendServerMessage("Reloading emotes")
+	if err != nil {
+		common.LogErrorf("Could not send reloading emotes server message: %v\n", err)
+		return
+	}
+
+	err = loadEmotes()
 	if err != nil {
 		common.LogErrorf("Unbale to reload emotes: %s\n", err)
-		//return "", err
+		err = cl.SendChatData(common.NewChatMessage("", "", err.Error(), common.CmdlUser, common.MsgCommandResponse))
+		if err != nil {
+			common.LogErrorln(err)
+		}
 
-		cl.SendChatData(common.NewChatMessage("", "",
-			err.Error(),
-			common.CmdlUser, common.MsgCommandResponse))
 		return
 	}
 

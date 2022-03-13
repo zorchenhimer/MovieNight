@@ -182,11 +182,7 @@ func (cl *Client) SendChatData(data common.ChatData) error {
 
 	// Colorize name on chat messages
 	if data.Type == common.DTChat {
-		var err error
 		data = cl.replaceColorizedName(data)
-		if err != nil {
-			return fmt.Errorf("could not colorize name: %w", err)
-		}
 	}
 
 	cd, err := data.ToJSON()
