@@ -184,7 +184,11 @@ func checkRoomAccess(w http.ResponseWriter, r *http.Request) bool {
 				if postPin == settings.RoomAccessPin {
 					// Pin is correct.  Save it to session and return true.
 					session.Values["pin"] = settings.RoomAccessPin
-					session.Save(r, w)
+					err = session.Save(r, w)
+					if err != nil {
+						common.LogErrorf("Could not save pin cookie: %v\n", err)
+						return false
+					}
 					return true
 				}
 				// Pin is incorrect.
@@ -195,7 +199,11 @@ func checkRoomAccess(w http.ResponseWriter, r *http.Request) bool {
 				if qpin != "" && qpin == settings.RoomAccessPin {
 					// Pin is correct.  Save it to session and return true.
 					session.Values["pin"] = settings.RoomAccessPin
-					session.Save(r, w)
+					err = session.Save(r, w)
+					if err != nil {
+						common.LogErrorf("Could not save pin cookie: %v\n", err)
+						return false
+					}
 					return true
 				}
 			}
@@ -208,7 +216,10 @@ func checkRoomAccess(w http.ResponseWriter, r *http.Request) bool {
 		if pin.(string) != settings.RoomAccessPin {
 			// Clear out the old pin.
 			session.Values["pin"] = nil
-			session.Save(r, w)
+			err = session.Save(r, w)
+			if err != nil {
+				common.LogErrorf("Could not clear pin cookie: %v\n", err)
+			}
 
 			// Prompt for new one.
 			handlePinTemplate(w, r, "Pin has changed.  Enter new PIN.")
@@ -379,14 +390,20 @@ func handlePublish(conn *rtmp.Conn) {
 
 	ch := &Channel{}
 	ch.que = pubsub.NewQueue()
-	ch.que.WriteHeader(streams)
+	err := ch.que.WriteHeader(streams)
+	if err != nil {
+		common.LogErrorf("Could not write header to streams: %v\n", err)
+	}
 	channels[streamPath] = ch
 	l.Unlock()
 
 	stats.startStream()
 
 	common.LogInfoln("Stream started")
-	avutil.CopyPackets(ch.que, conn)
+	err = avutil.CopyPackets(ch.que, conn)
+	if err != nil {
+		common.LogErrorf("Could not copy packets to connections: %v\n", err)
+	}
 	common.LogInfoln("Stream finished")
 
 	stats.endStream()
@@ -404,7 +421,10 @@ func handlePlay(conn *rtmp.Conn) {
 
 	if ch != nil {
 		cursor := ch.que.Latest()
-		avutil.CopyFile(conn, cursor)
+		err := avutil.CopyFile(conn, cursor)
+		if err != nil {
+			common.LogErrorf("Could not copy video to connection: %v\n", err)
+		}
 	}
 }
 
@@ -426,7 +446,10 @@ func handleLive(w http.ResponseWriter, r *http.Request) {
 
 		session, _ := sstore.Get(r, "moviesession")
 		stats.addViewer(session.ID)
-		avutil.CopyFile(muxer, cursor)
+		err := avutil.CopyFile(muxer, cursor)
+		if err != nil {
+			common.LogErrorf("Could not copy video to connection: %v\n", err)
+		}
 		stats.removeViewer(session.ID)
 	} else {
 		// Maybe HTTP_204 is better than HTTP_404
