@@ -548,7 +548,7 @@ var commands = &CommandControl{
 					if err != nil {
 						err = cl.SendChatData(common.NewChatMessage("", "", err.Error(), common.CmdlUser, common.MsgCommandResponse))
 						if err != nil {
-							common.LogErrorln(err)
+							common.LogErrorf("could not send error message to client: %v\n", err)
 						}
 						return
 					}
@@ -564,7 +564,7 @@ var commands = &CommandControl{
 					if err != nil {
 						err = cl.SendChatData(common.NewChatMessage("", "", err.Error(), common.CmdlUser, common.MsgCommandResponse))
 						if err != nil {
-							common.LogErrorln(err)
+							common.LogErrorf("could not send error message to client: %v\n", err)
 						}
 						return
 					}
@@ -664,9 +664,8 @@ func commandReloadEmotes(cl *Client) {
 		common.LogErrorf("Unbale to reload emotes: %s\n", err)
 		err = cl.SendChatData(common.NewChatMessage("", "", err.Error(), common.CmdlUser, common.MsgCommandResponse))
 		if err != nil {
-			common.LogErrorln(err)
+			common.LogErrorf("could not send error message to client: %v\n", err)
 		}
-
 		return
 	}
 

@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
@@ -41,7 +40,7 @@ func loadEmotes() error {
 func processEmoteDir(path string) (common.EmotesMap, error) {
 	dirInfo, err := ioutil.ReadDir(path)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not open emoteDir:")
+		return nil, fmt.Errorf("could not open emoteDir: %w", err)
 	}
 
 	subDirs := []string{}
@@ -58,7 +57,7 @@ func processEmoteDir(path string) (common.EmotesMap, error) {
 	// Find top level emotes
 	em, err = findEmotes(path, em)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not findEmotes() in top level directory:")
+		return nil, fmt.Errorf("could not findEmotes() in top level directory: %w", err)
 	}
 
 	// Get second level subdirs (eg, "twitch", "zorchenhimer", etc)
@@ -96,7 +95,7 @@ func findEmotes(dir string, em common.EmotesMap) (common.EmotesMap, error) {
 
 	emoteGIFs, err := filepath.Glob(filepath.Join(dir, "*.gif"))
 	if err != nil {
-		return em, errors.Wrap(err, "unable to glob emote directory:")
+		return em, fmt.Errorf("unable to glob emote directory: %w", err)
 	}
 	common.LogInfof("Found %d emoteGIFs\n", len(emoteGIFs))
 
@@ -122,12 +121,15 @@ func getEmotes(names []string) error {
 	for _, user := range users {
 		emotes, cheers, err := getChannelEmotes(user.ID)
 		if err != nil {
-			return errors.Wrapf(err, "could not get emote data for \"%s\"", user.ID)
+			return fmt.Errorf("could not get emote data for %#v: %w", user.ID, err)
 		}
 
 		emoteUserDir := filepath.Join(common.RunPath()+emoteDir, "twitch", user.Login)
 		if _, err := os.Stat(emoteUserDir); os.IsNotExist(err) {
-			os.MkdirAll(emoteUserDir, os.ModePerm)
+			err = os.MkdirAll(emoteUserDir, os.ModePerm)
+			if err != nil {
+				return fmt.Errorf("could not make emote dir %#v: %w", emoteUserDir, err)
+			}
 		}
 
 		for _, emote := range emotes {
@@ -136,12 +138,12 @@ func getEmotes(names []string) error {
 				file, err := os.Create(filePath)
 				if err != nil {
 
-					return errors.Wrapf(err, "could not create emote file in path \"%s\":", filePath)
+					return fmt.Errorf("could not create emote file in path %#v: %w", filePath, err)
 				}
 
 				err = downloadEmote(emote.ID, file)
 				if err != nil {
-					return errors.Wrapf(err, "could not download emote %s:", emote.Code)
+					return fmt.Errorf("could not download emote %s: %w", emote.Code, err)
 				}
 			}
 		}
@@ -151,12 +153,12 @@ func getEmotes(names []string) error {
 			filePath := filepath.Join(emoteUserDir, name)
 			file, err := os.Create(filePath)
 			if err != nil {
-				return errors.Wrapf(err, "could not create emote file in path \"%s\":", filePath)
+				return fmt.Errorf("could not create emote file in path %#v: %w", filePath, err)
 			}
 
 			err = downloadCheerEmote(sizes["4"], file)
 			if err != nil {
-				return errors.Wrapf(err, "could not download emote %s:", name)
+				return fmt.Errorf("could not download emote %s: %w", name, err)
 			}
 		}
 	}
@@ -196,7 +198,7 @@ func getUserIDs(names []string) []TwitchUser {
 func getChannelEmotes(ID string) ([]EmoteInfo, map[string]map[string]string, error) {
 	resp, err := http.Get("https://api.twitchemotes.com/api/v4/channels/" + ID)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "could not get emotes")
+		return nil, nil, fmt.Errorf("could not get emotes %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -210,7 +212,7 @@ func getChannelEmotes(ID string) ([]EmoteInfo, map[string]map[string]string, err
 
 	err = decoder.Decode(&data)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "could not decode emotes")
+		return nil, nil, fmt.Errorf("could not decode emotes %w", err)
 	}
 
 	return data.Emotes, data.Cheermotes, nil
@@ -219,13 +221,13 @@ func getChannelEmotes(ID string) ([]EmoteInfo, map[string]map[string]string, err
 func downloadEmote(ID int, file *os.File) error {
 	resp, err := http.Get(fmt.Sprintf("https://static-cdn.jtvnw.net/emoticons/v1/%d/3.0", ID))
 	if err != nil {
-		return errors.Errorf("could not download emote file %s: %v", file.Name(), err)
+		return fmt.Errorf("could not download emote file %s: %w", file.Name(), err)
 	}
 	defer resp.Body.Close()
 
 	_, err = io.Copy(file, resp.Body)
 	if err != nil {
-		return errors.Errorf("could not save emote: %v", err)
+		return fmt.Errorf("could not save emote: %w", err)
 	}
 	return nil
 }
@@ -233,13 +235,13 @@ func downloadEmote(ID int, file *os.File) error {
 func downloadCheerEmote(url string, file *os.File) error {
 	resp, err := http.Get(url)
 	if err != nil {
-		return errors.Errorf("could not download cheer file %s: %v", file.Name(), err)
+		return fmt.Errorf("could not download cheer file %s: %w", file.Name(), err)
 	}
 	defer resp.Body.Close()
 
 	_, err = io.Copy(file, resp.Body)
 	if err != nil {
-		return errors.Errorf("could not save cheer: %v", err)
+		return fmt.Errorf("could not save cheer: %w", err)
 	}
 	return nil
 }
