@@ -271,7 +271,7 @@ func (cl *Client) replaceColorizedName(chatData common.ChatData) common.ChatData
 	newWords := []string{}
 
 	for _, word := range words {
-		if strings.EqualFold(word, strings.TrimPrefix(cl.name, "@")) {
+		if strings.EqualFold(cl.name, strings.TrimPrefix(word, "@")) {
 			newWords = append(newWords, `<span class="mention">`+word+`</span>`)
 		} else {
 			newWords = append(newWords, word)
