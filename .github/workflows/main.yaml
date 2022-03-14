@@ -108,4 +108,4 @@ jobs:
         run: |
           Start-Job { ./MovieNight.exe }
           cd _uitests
-          go test
+          go test -v

@@ -22,7 +22,10 @@ const (
 	commandSpan      = `//span[contains(@class, "command")]`
 )
 
-var pw *playwright.Playwright
+var (
+	pw       *playwright.Playwright
+	browsers []playwright.BrowserType
+)
 
 func openChat(t *testing.T, browser playwright.Browser, username string) (playwright.Page, error) {
 	page, err := browser.NewPage()
@@ -77,6 +80,25 @@ func sendMessage(page playwright.Page, msg string) error {
 	return nil
 }
 
+func runTests(t *testing.T, f func(t *testing.T, browser playwright.Browser)) {
+	for _, bt := range browsers {
+		browser, err := bt.Launch()
+		if err != nil {
+			t.Errorf("could not launch browser: %v", err)
+		}
+		defer func() {
+			if browser.IsConnected() {
+				browser.Close()
+			}
+		}()
+
+		t.Run(bt.Name(), func(t *testing.T) {
+			f(t, browser)
+			browser.Close()
+		})
+	}
+}
+
 func TestMain(m *testing.M) {
 	var err error
 	pw, err = playwright.Run()
@@ -85,101 +107,87 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
+	browsers = append(browsers, pw.Firefox)
+	browsers = append(browsers, pw.Chromium)
+
 	code := m.Run()
 	os.Exit(code)
 }
 
 func TestAccess(t *testing.T) {
-	browser, err := pw.Firefox.Launch()
-	if err != nil {
-		t.Errorf("could not launch browser: %v", err)
-	}
-	defer browser.Close()
-
-	_, err = openChat(t, browser, "testUser")
-	if err != nil {
-		t.Error(err)
-	}
+	runTests(t, func(t *testing.T, browser playwright.Browser) {
+		_, err := openChat(t, browser, "testUser")
+		if err != nil {
+			t.Error(err)
+		}
+	})
 }
 
 func TestChatMessage(t *testing.T) {
 	const msg = "testing 1 2 3"
+	runTests(t, func(t *testing.T, browser playwright.Browser) {
+		page1, err := openChat(t, browser, "testUser1")
+		if err != nil {
+			t.Errorf("could not open chat for user 1: %v", err)
+		}
 
-	browser, err := pw.Firefox.Launch()
-	if err != nil {
-		t.Errorf("could not launch browser: %v", err)
-	}
-	defer browser.Close()
+		page2, err := openChat(t, browser, "testUser2")
+		if err != nil {
+			t.Errorf("could not open chat for user 2: %v", err)
+		}
 
-	page1, err := openChat(t, browser, "testUser1")
-	if err != nil {
-		t.Errorf("could not open chat for user 1: %v", err)
-	}
+		err = sendMessage(page1, msg)
+		if err != nil {
+			t.Error(err)
+		}
 
-	page2, err := openChat(t, browser, "testUser2")
-	if err != nil {
-		t.Errorf("could not open chat for user 2: %v", err)
-	}
-
-	err = sendMessage(page1, msg)
-	if err != nil {
-		t.Error(err)
-	}
-
-	_, err = page2.WaitForSelector(fmt.Sprintf(msgSpan, msg))
-	if err != nil {
-		t.Errorf("did not find testing msg: %v", err)
-	}
+		_, err = page2.WaitForSelector(fmt.Sprintf(msgSpan, msg))
+		if err != nil {
+			t.Errorf("did not find testing msg: %v", err)
+		}
+	})
 }
 
 func TestCommandNick(t *testing.T) {
 	const nick = "newNick"
 
-	browser, err := pw.Firefox.Launch()
-	if err != nil {
-		t.Errorf("could not launch browser: %v", err)
-	}
-	defer browser.Close()
+	runTests(t, func(t *testing.T, browser playwright.Browser) {
+		page, err := openChat(t, browser, "testUser")
+		if err != nil {
+			t.Error(err)
+		}
 
-	page, err := openChat(t, browser, "testUser")
-	if err != nil {
-		t.Error(err)
-	}
+		err = sendMessage(page, fmt.Sprintf("/nick %s", nick))
+		if err != nil {
+			t.Error(err)
+		}
 
-	err = sendMessage(page, fmt.Sprintf("/nick %s", nick))
-	if err != nil {
-		t.Error(err)
-	}
-
-	_, err = page.WaitForSelector(fmt.Sprintf(nameSpan, nick))
-	if err != nil {
-		t.Errorf("could not find nick change message: %v", err)
-	}
+		_, err = page.WaitForSelector(fmt.Sprintf(nameSpan, nick))
+		if err != nil {
+			t.Errorf("could not find nick change message: %v", err)
+		}
+	})
 }
 
 func TestCommandMe(t *testing.T) {
 	const msg = "this is a me message"
 
-	browser, err := pw.Firefox.Launch()
-	if err != nil {
-		t.Errorf("could not launch browser: %v", err)
-	}
-	defer browser.Close()
+	runTests(t, func(t *testing.T, browser playwright.Browser) {
+		page, err := openChat(t, browser, "testUser")
+		if err != nil {
+			t.Error(err)
+		}
 
-	page, err := openChat(t, browser, "testUser")
-	if err != nil {
-		t.Error(err)
-	}
+		err = sendMessage(page, fmt.Sprintf("/me %s", msg))
+		if err != nil {
+			t.Error(err)
+		}
 
-	err = sendMessage(page, fmt.Sprintf("/me %s", msg))
-	if err != nil {
-		t.Error(err)
-	}
-
-	_, err = page.WaitForSelector(fmt.Sprintf(meCmdSpan, msg))
-	if err != nil {
-		t.Errorf("could not find user me message: %v", err)
-	}
+		_, err = page.WaitForSelector(fmt.Sprintf(meCmdSpan, msg))
+		if err != nil {
+			t.Errorf("could not find user me message: %v", err)
+		}
+	})
 }
 
 func TestCommandColor(t *testing.T) {
@@ -188,61 +196,53 @@ func TestCommandColor(t *testing.T) {
 		color = "red"
 	)
 
-	browser, err := pw.Firefox.Launch()
-	if err != nil {
-		t.Errorf("could not launch browser: %v", err)
-	}
-	defer browser.Close()
+	runTests(t, func(t *testing.T, browser playwright.Browser) {
+		page, err := openChat(t, browser, name)
+		if err != nil {
+			t.Error(err)
+		}
 
-	page, err := openChat(t, browser, name)
-	if err != nil {
-		t.Error(err)
-	}
+		err = sendMessage(page, fmt.Sprintf("/color %s", color))
+		if err != nil {
+			t.Errorf("failed to send /color command: %v", err)
+		}
 
-	err = sendMessage(page, fmt.Sprintf("/color %s", color))
-	if err != nil {
-		t.Errorf("failed to send /color command: %v", err)
-	}
+		_, err = page.WaitForSelector(`//span[contains(@class, "command") and contains(text(),"Color changed successfully")]`)
+		if err != nil {
+			t.Errorf("could not find color change notification: %v", err)
+		}
 
-	_, err = page.WaitForSelector(`//span[contains(@class, "command") and contains(text(),"Color changed successfully")]`)
-	if err != nil {
-		t.Errorf("could not find color change notification: %v", err)
-	}
+		err = sendMessage(page, "test")
+		if err != nil {
+			t.Error(err)
+		}
 
-	err = sendMessage(page, "test")
-	if err != nil {
-		t.Error(err)
-	}
-
-	_, err = page.WaitForSelector(fmt.Sprintf(nameColorSpan, name, color))
-	if err != nil {
-		t.Errorf("could not find user message with new color: %v", err)
-	}
+		_, err = page.WaitForSelector(fmt.Sprintf(nameColorSpan, name, color))
+		if err != nil {
+			t.Errorf("could not find user message with new color: %v", err)
+		}
+	})
 }
 
 func TestGenericCommands(t *testing.T) {
 	wrapFunc := func(command string) func(*testing.T) {
 		return func(t *testing.T) {
-			browser, err := pw.Firefox.Launch()
-			if err != nil {
-				t.Errorf("could not launch browser: %v", err)
-			}
-			defer browser.Close()
+			runTests(t, func(t *testing.T, browser playwright.Browser) {
+				page, err := openChat(t, browser, "testUser")
+				if err != nil {
+					t.Error(err)
+				}
 
-			page, err := openChat(t, browser, "testUser")
-			if err != nil {
-				t.Error(err)
-			}
+				err = sendMessage(page, command)
+				if err != nil {
+					t.Errorf("failed to send %s command: %v", command, err)
+				}
 
-			err = sendMessage(page, command)
-			if err != nil {
-				t.Errorf("failed to send %s command: %v", command, err)
-			}
-
-			_, err = page.WaitForSelector(commandSpan)
-			if err != nil {
-				t.Errorf("could not find command message: %v", err)
-			}
+				_, err = page.WaitForSelector(commandSpan)
+				if err != nil {
+					t.Errorf("could not find command message: %v", err)
+				}
+			})
 		}
 	}
 
