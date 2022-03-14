@@ -3,30 +3,22 @@ package main
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
+	"github.com/alexflint/go-arg"
 	"github.com/gorilla/sessions"
 	"github.com/nareix/joy4/format"
 	"github.com/nareix/joy4/format/rtmp"
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
-var (
-	pullEmotes bool
-	addr       string
-	rtmpAddr   string
-	sKey       string
-	stats      = newStreamStats()
-	sAdminPass string
-	confFile   string
-)
+var stats = newStreamStats()
 
-func setupSettings() error {
+func setupSettings(adminPass string, confFile string) error {
 	var err error
 	settings, err = LoadSettings(confFile)
 	if err != nil {
@@ -36,9 +28,9 @@ func setupSettings() error {
 		return fmt.Errorf("missing stream key is settings.json")
 	}
 
-	if sAdminPass != "" {
+	if adminPass != "" {
 		fmt.Println("Password provided at runtime; ignoring password in set in settings.")
-		settings.AdminPassword = sAdminPass
+		settings.AdminPassword = adminPass
 	}
 
 	sstore = sessions.NewCookieStore([]byte(settings.SessionKey))
@@ -52,22 +44,24 @@ func setupSettings() error {
 }
 
 func main() {
-	flag.StringVar(&addr, "l", "", "host:port of the HTTP server")
-	flag.StringVar(&rtmpAddr, "r", "", "host:port of the RTMP server")
-	flag.StringVar(&sKey, "k", "", "Stream key, to protect your stream")
-	flag.StringVar(&sAdminPass, "a", "", "Set admin password.  Overrides configuration in settings.json.  This will not write the password to settings.json.")
-	flag.BoolVar(&pullEmotes, "e", false, "Pull emotes")
-	flag.StringVar(&confFile, "f", "./settings.json", "URI of the conf file")
-	flag.Parse()
+	var args struct {
+		Addr       string `arg:"-l,--addr" help:"host:port of the HTTP server"`
+		RtmpAddr   string `arg:"-r,--rtmp" help:"host:port of the RTMP server"`
+		StreamKey  string `arg:"-k,--key" help:"Stream key, to protect your stream"`
+		AdminPass  string `arg:"-a,--admin" help:"Set admin password.  Overrides configuration in settings.json.  This will not write the password to settings.json."`
+		PullEmotes bool   `arg:"-e,--pull-emotes" help:"Pull emotes"`
+		ConfigFile string `arg:"-f,--config" default:"./settings.json" help:"URI of the conf file"`
+	}
+	arg.MustParse(&args)
 
 	format.RegisterAll()
 
-	if err := setupSettings(); err != nil {
+	if err := setupSettings(args.AdminPass, args.ConfigFile); err != nil {
 		fmt.Printf("Error loading settings: %v\n", err)
 		os.Exit(1)
 	}
 
-	if pullEmotes {
+	if args.PullEmotes {
 		common.LogInfoln("Pulling emotes")
 		err := getEmotes(settings.ApprovedEmotes)
 		if err != nil {
@@ -93,31 +87,31 @@ func main() {
 		os.Exit(1)
 	}
 
-	if addr == "" {
-		addr = settings.ListenAddress
+	if args.Addr == "" {
+		args.Addr = settings.ListenAddress
 	}
 
-	if rtmpAddr == "" {
-		rtmpAddr = settings.RtmpListenAddress
+	if args.RtmpAddr == "" {
+		args.RtmpAddr = settings.RtmpListenAddress
 	}
 
 	// A stream key was passed on the command line.  Use it, but don't save
 	// it over the stream key in the settings.json file.
-	if sKey != "" {
-		settings.SetTempKey(sKey)
+	if args.StreamKey != "" {
+		settings.SetTempKey(args.StreamKey)
 	}
 
 	common.LogInfoln("Stream key: ", settings.GetStreamKey())
 	common.LogInfoln("Admin password: ", settings.AdminPassword)
-	common.LogInfoln("HTTP server listening on: ", addr)
-	common.LogInfoln("RTMP server listening on: ", rtmpAddr)
+	common.LogInfoln("HTTP server listening on: ", args.Addr)
+	common.LogInfoln("RTMP server listening on: ", args.RtmpAddr)
 	common.LogInfoln("RoomAccess: ", settings.RoomAccess)
 	common.LogInfoln("RoomAccessPin: ", settings.RoomAccessPin)
 
 	rtmpServer := &rtmp.Server{
 		HandlePlay:    handlePlay,
 		HandlePublish: handlePublish,
-		Addr:          rtmpAddr,
+		Addr:          args.RtmpAddr,
 	}
 
 	router := http.NewServeMux()
@@ -138,7 +132,7 @@ func main() {
 	router.HandleFunc("/", handleDefault)
 
 	httpServer := &http.Server{
-		Addr:    addr,
+		Addr:    args.Addr,
 		Handler: router,
 	}
 
