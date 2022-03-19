@@ -120,7 +120,6 @@ func main() {
 	router.HandleFunc("/static/js/", wsStaticFiles)
 	router.HandleFunc("/static/css/", wsStaticFiles)
 	router.HandleFunc("/static/img/", wsImages)
-	router.HandleFunc("/static/main.wasm", wsWasmFile)
 	router.HandleFunc("/emotes/", wsEmotes)
 	router.HandleFunc("/favicon.ico", wsStaticFiles)
 	router.HandleFunc("/chat", handleIndexTemplate)

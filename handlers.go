@@ -64,14 +64,6 @@ func wsStaticFiles(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, runPath+"/static/"+goodPath)
 }
 
-func wsWasmFile(w http.ResponseWriter, r *http.Request) {
-	if settings.NoCache {
-		w.Header().Set("Cache-Control", "no-cache, must-revalidate")
-	}
-	common.LogDebugln("[static] serving wasm file")
-	http.ServeFile(w, r, common.RunPath()+"/static/main.wasm")
-}
-
 func wsImages(w http.ResponseWriter, r *http.Request) {
 	base := filepath.Base(r.URL.Path)
 	common.LogDebugln("[img] ", base)
