@@ -1,25 +1,73 @@
 /// <reference path="./both.js" />
+/// <reference path="./consts.js" />
 
-function getCookie(cname) {
-    var name = cname + "=";
-    var decodedCookie = decodeURIComponent(document.cookie);
-    var ca = decodedCookie.split(';');
-    for (var i = 0; i < ca.length; i++) {
-        var c = ca[i];
-        while (c.charAt(0) == ' ') {
-            c = c.substring(1);
-        }
-        if (c.indexOf(name) == 0) {
-            return c.substring(name.length, c.length);
-        }
+let maxMessageCount = 0;
+let inChat = false;
+let users = [];
+let emotes = {};
+
+// Suggestions
+const SuggestionType = {
+    None: 0,
+    Name: 1,
+    Emote: 2
+};
+Object.freeze(SuggestionType);
+let currentSuggestionType = SuggestionType.None;
+let currentSuggestion = "";
+let filteredSuggestion = [];
+
+function debug() {
+    let color = getCookie("color");
+    let timestamp = getCookie("timestamp");
+
+    Object.entries({
+        maxMessageCount,
+        inChat,
+        users,
+        emotes,
+        color,
+        timestamp,
+    }).forEach(([k, v]) => {
+        console.log(k, v);
+    });
+}
+
+function randomColor() {
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+        const random = Math.random();
+        const bit = (random * 16) | 0;
+        color += (bit).toString(16);
+    };
+    return color;
+}
+
+/**
+ * @param {string} color
+ */
+function isValidColor(color) {
+    color = color.replace(/^#/, "", color).toLowerCase();
+    if (Colors.includes(color)) {
+        return true;
     }
-    return "";
+
+    if (ColorRegex.test(color)) {
+        hex = color.match(/.{1,2}/g);
+        r = parseInt(hex[0], 16);
+        g = parseInt(hex[1], 16);
+        b = parseInt(hex[2], 16);
+        total = r + g + b;
+        return total > 0.7 && b / total < 0.7;
+    }
+
+    return false;
 }
 
-function deleteCookie(cname) {
-    document.cookie = `${cname}=;expires=Thu, 01 Jan 1970 00:00:01 GMT`
-}
-
+/**
+ * @param {string} title
+ * @param {string} link
+ */
 function setPlaying(title, link) {
     if (title !== "") {
         $('#playing').text(title);
@@ -35,25 +83,6 @@ function setPlaying(title, link) {
     }
 }
 
-function startGo() {
-    if (!WebAssembly.instantiateStreaming) { // polyfill
-        WebAssembly.instantiateStreaming = async (resp, importObject) => {
-            const source = await (await resp).arrayBuffer();
-            return await WebAssembly.instantiate(source, importObject);
-        };
-    }
-
-    const go = new Go();
-    WebAssembly.instantiateStreaming(fetch("/static/main.wasm"), go.importObject).then((result) => {
-        go.run(result.instance);
-    }).then(() => {
-        $("#chatwindow").css("display", "grid");
-        $("#loadingFiles").css("display", "none");
-    }).catch((err) => {
-        console.error(err);
-    });
-}
-
 function getWsUri() {
     port = window.location.port;
     if (port != "") {
@@ -66,7 +95,9 @@ function getWsUri() {
     return proto + window.location.hostname + port + "/ws";
 }
 
-let maxMessageCount = 0
+/**
+ * @param {string} msg
+ */
 function appendMessages(msg) {
     let msgs = $("#messages").find('div');
 
@@ -76,7 +107,7 @@ function appendMessages(msg) {
         msgs.first().remove();
     }
 
-    $("#messages").append(msg);
+    $("#messages").append(`<div>${msg}</div>`);
     $("#messages").children().last()[0].scrollIntoView({ block: "end" });
 }
 
@@ -84,7 +115,6 @@ function purgeChat() {
     $('#messages').empty()
 }
 
-inChat = false
 function openChat() {
     console.log("chat opening");
     $("#joinbox").css("display", "none");
@@ -104,7 +134,187 @@ function closeChat() {
     inChat = false;
 }
 
+function handleHiddenMessage(data) {
+    switch (data.Type) {
+        case ClientDataType.CdUsers:
+            users = data.Data;
+            break;
+        case ClientDataType.CdColor:
+            setCookie("color", data.Data);
+            break;
+        case ClientDataType.CdEmote:
+            emotes = data.Data;
+            break;
+        case ClientDataType.CdJoin:
+            setNotifyBox("");
+            openChat();
+            break;
+        case ClientDataType.CdNotify:
+            setNotifyBox(data.Data);
+            break;
+        default:
+            console.warn("unhandled hidden type", data);
+            break;
+    }
+}
+
+/**
+ * @param {*} data
+ * @param {bool} isEvent
+ */
+function handleChatMessage(data, isEvent) {
+    msg = data.Message;
+
+    if (isEvent) {
+        function nameChangeMsg(forced) {
+            let users = data.User.split(":");
+
+            if (users.length < 2) {
+                return `<span class="event">Somebody changed their name, but IDK who.</span>`;
+            } else {
+                if (forced) {
+                    return `<span class="event"><span class="name" style="color:${data.Color}">${users[0]}</span> has had their name changed to <span class="name" style="color:${data.Color}">${users[1]}</span> by an admin.</span>`;
+                } else {
+                    return `<span class="event"><span class="name" style="color:${data.Color}">${users[0]}</span> has changed their name to <span class="name" style="color:${data.Color}">${users[1]}</span>.</span>`;
+                }
+            }
+        }
+
+        switch (data.Event) {
+            case EventType.EvKick:
+                msg = `<span class="event"><span class="name" style="color:${data.Color}">${data.User}</span> has been kicked.</span>`;
+                break;
+            case EventType.EvLeave:
+                msg = `<span class="event"><span class="name" style="color:${data.Color}">${data.User}</span> has left the chat.</span>`;
+                break;
+            case EventType.EvBan:
+                msg = `<span class="event"><span class="name" style="color:${data.Color}">${data.User}</span> has been banned.</span>`;
+                break;
+            case EventType.EvJoin:
+                msg = `<span class="event"><span class="name" style="color:${data.Color}">${data.User}</span> has joined the chat.</span>`;
+                break;
+            case EventType.EvNameChange:
+                msg = nameChangeMsg(false);
+                break;
+            case EventType.EvNameChangeForced:
+                msg = nameChangeMsg(true);
+                break;
+        }
+
+    } else {
+        function spanMsg(className, content) {
+            return `<span class="${className}">${content}</span>`;;
+        }
+        switch (data.Type) {
+            case MessageType.MsgAction:
+                msg = `<span style="color:${data.Color}">${spanMsg("name", data.From)} ${spanMsg("cmdme", msg)}</span>`;
+                break;
+            case MessageType.MsgServer:
+                msg = spanMsg("announcement", msg);
+                break;
+            case MessageType.MsgError:
+                msg = spanMsg("error", msg);
+                break;
+            case MessageType.MsgNotice:
+                msg = spanMsg("notice", msg);
+                break;
+            case MessageType.MsgCommandResponse:
+                msg = spanMsg("command", msg);
+                break;
+            case MessageType.MsgCommandError:
+                msg = spanMsg("commanderror", msg);
+                break;
+            default:
+                msg = spanMsg("msg", msg);
+                switch (data.Level) {
+                    case CommandLevel.CmdlMod:
+                        msg = `<span><img src="/static/img/mod.png" class="badge" /><span class="name" style="color:${data.Color}">${data.From}</span><b>:</b> ${msg}</span>`;
+                        break;
+                    case CommandLevel.CmdlAdmin:
+                        msg = `<span><img src="/static/img/admin.png" class="badge" /><span class="name" style="color:${data.Color}">${data.From}</span><b>:</b> ${msg}</span>`;
+                        break;
+                    default:
+                        msg = `<span><span class="name" style="color:${data.Color}">${data.From}</span><b>:</b> ${msg}</span>`;
+                        break;
+                }
+                break;
+        }
+    }
+
+    if (getCookie("timestamp") === "true" && (data.Type == MessageType.MsgChat || data.Type == MessageType.MsgAction)) {
+        let now = new Date();
+        let pad = (n) => String(n.toFixed(0)).padStart(2, "0");
+        msg = `<span class="time">${pad(now.getHours())}:${pad(now.getMinutes())}</span> ${msg}`;
+    }
+    appendMessages(msg);
+}
+
+function handleChatCommand(data) {
+    function openMenu(url) {
+        if (data.Arguments && data.Arguments.length > 0) {
+            url = data.Arguments[0];
+        }
+        window.open(url, "_blank", "menubar=0,status=0,toolbar=0,width=300,height=600");
+    }
+
+    switch (data.Command) {
+        case CommandType.CmdPlaying:
+            if (!data.Arguments) {
+                setPlaying("", "");
+            } else if (data.Arguments.length == 1) {
+                setPlaying(data.Arguments[0], "");
+            } else {
+                setPlaying(data.Arguments[0], data.Arguments[1]);
+            }
+            break;
+        case CommandType.CmdRefreshPlayer:
+            // calling a video function
+            if (typeof initPlayer !== "undefined") {
+                initPlayer();
+            }
+            break;
+        case CommandType.CmdPurgeChat:
+            purgeChat();
+            appendMessages(`<span class="notice">Chat has been purged by a moderator.</span>`);
+            break;
+        case CommandType.CmdHelp:
+            openMenu("/help");
+            break;
+        case CommandType.CmdEmotes:
+            openMenu("/emotes");
+            break;
+    }
+}
+
+
+/**
+ * @param {*} message
+ */
+function recieveMessage(message) {
+    switch (message.Type) {
+        case DataType.DTHidden:
+            handleHiddenMessage(message.Data);
+            break;
+        case DataType.DTEvent:
+            if (message.Data.Event != EventType.EvServerMessage) {
+                sendMessage("", ClientDataType.CdUsers);
+            }
+        case DataType.DTChat:
+            handleChatMessage(message.Data, message.Type == DataType.DTEvent);
+            break;
+        case DataType.DTCommand:
+            handleChatCommand(message.Data);
+            break;
+        default:
+            break;
+    }
+}
+
+/**
+ * @param {string} data
+ */
 function websocketSend(data) {
+    console.log(data)
     if (ws.readyState == ws.OPEN) {
         ws.send(data);
     } else {
@@ -112,9 +322,33 @@ function websocketSend(data) {
     }
 }
 
+/**
+ * @param {string|any} msg
+ * @param {number} type
+ */
+function sendMessage(msg, type) {
+    if (typeof msg !== "string") {
+        msg = JSON.stringify(msg);
+    }
+
+    if (!type) {
+        type = ClientDataType.CdMessage;
+    }
+
+    websocketSend(JSON.stringify({
+        Type: type,
+        Message: msg,
+    }));
+}
+
+
 function sendChat() {
     sendMessage($("#msg").val());
     $("#msg").val("");
+}
+
+function emoteToHtml(file, title) {
+    return `<img src="${file}" class="emote" title="${title}" />`
 }
 
 function updateSuggestionCss(m) {
@@ -133,6 +367,171 @@ function updateSuggestionScroll() {
     }
 }
 
+function updateSuggestionDiv() {
+    const selectedClass = ` class="selectedName"`;
+
+    let divs = Array(filteredSuggestion.length);
+    if (filteredSuggestion.length > 0) {
+        if (currentSuggestion == "") {
+            currentSuggestion = filteredSuggestion[filteredSuggestion.length - 1]
+        }
+
+        let hasCurrentSuggestion = false;
+        for (let i = 0; i < filteredSuggestion.length; i++) {
+            divs[i] = "<div";
+            let suggestion = filteredSuggestion[i];
+            if (suggestion == currentSuggestion) {
+                hasCurrentSuggestion = true;
+                divs[i] += selectedClass;
+            }
+            divs[i] += ">";
+
+            if (currentSuggestionType == SuggestionType.Emote) {
+                divs[i] += emoteToHtml(emotes[suggestion], suggestion);
+            }
+
+            divs[i] += suggestion + "</div>";
+        }
+
+        if (!hasCurrentSuggestion) {
+            divs[0] = divs[0].slice(0, 4) + selectedClass + divs[0].slice(4);
+        }
+    }
+    $("#suggestions")[0].innerHTML = divs.join("\n");
+    updateSuggestionScroll();
+}
+
+function processMessageKey(e) {
+    let startIdx = e.target.selectionStart;
+    let keyCode = e.keyCode;
+    let ctrl = e.ctrlKey;
+
+    // ctrl + space
+    if (ctrl && keyCode == 32) {
+        processMessage();
+        return true;
+    }
+
+    if (filteredSuggestion.length == 0 || currentSuggestion == "") {
+        return false;
+    }
+
+    switch (keyCode) {
+        case 27: // esc
+            filteredSuggestion = [];
+            currentSuggestion = "";
+            currentSuggestionType = SuggestionType.None;
+            break;
+        case 38: // up
+        case 40: // down
+            let newIdx = 0;
+            for (let i = 0; i < filteredSuggestion.length; i++) {
+                const n = filteredSuggestion[i];
+                if (n == currentSuggestion) {
+                    newIdx = i;
+                    if(keyCode == 40) {
+                        newIdx = i + 1;
+                        if (newIdx == filteredSuggestion.length) {
+                            newIdx--;
+                        }
+                    } else if(keyCode == 38) {
+                        newIdx = i-1;
+                        if(newIdx < 0) {
+                            newIdx = 0;
+                        }
+                    }
+                    break;
+                }
+            }
+            currentSuggestion = filteredSuggestion[newIdx];
+            break;
+        case 9: // tab
+        case 13: // enter
+            const re = /[:@]([\w]+)(\s|$)/;
+
+            let msg = $("#msg");
+            let val = msg.val();
+
+            let match = val.match(re);
+            let endsSpace = match[0].endsWith(" ");
+            let replaceVal = "";
+            if (currentSuggestionType == SuggestionType.Emote) {
+                replaceVal = ":"+currentSuggestion+":";
+            }else {
+                replaceVal = "@"+currentSuggestion;
+            }
+
+            if (endsSpace) {
+                replaceVal += " ";
+            }
+
+            let idx = val.indexOf(match[0]) + replaceVal.length;
+            let newVal = val.replace(re, replaceVal);
+
+            msg.val(newVal);
+            msg[0].selectionStart = idx;
+            msg[0].selectionEnd = idx;
+
+            filteredSuggestion = [];
+        break;
+        default:
+            return false;
+    }
+
+    updateSuggestionDiv();
+    return true;
+}
+
+function processMessage() {
+    function handleSuggestion(msg, cmp) {
+        if (msg.length == 1 || cmp.toLowerCase().startsWith(msg.slice(1))) {
+            filteredSuggestion.push(cmp);
+        }
+    }
+
+    let text = $("#msg").val().toLowerCase();
+    let startIdx = $("#msg")[0].selectionStart;
+
+    filteredSuggestion = [];
+    if (text && (users || emotes)) {
+        let parts = text.split(" ")
+
+        let caret = 0;
+        for (let i = 0; i < parts.length; i++) {
+            const word = parts[i];
+            // Increase caret index at beginning if not first word to account for spaces
+            if (i != 0) {
+                caret++;
+            }
+
+            // It is possible to have a double space "  ", which will lead to an
+            // empty string element in the slice. Also check that the index of the
+            // cursor is between the start of the word and the end
+            if (word && caret <= startIdx && startIdx <= caret + word.length) {
+                if (word[0] == "@") {
+                    currentSuggestionType = SuggestionType.Name;
+                    users.forEach(name => handleSuggestion(word, name));
+                } else if (word[0] == ":") {
+                    currentSuggestionType = SuggestionType.Emote;
+                    Object.keys(emotes).forEach(emote => handleSuggestion(word, emote));
+                }
+            }
+
+            if (filteredSuggestion.length > 0) {
+                currentSuggestion = "";
+                break;
+            }
+
+            caret += word.length;
+        }
+    }
+
+    updateSuggestionDiv();
+}
+
+/**
+ * @param {string} msg
+ */
 function setNotifyBox(msg = "") {
     $("#notifyBox").html(msg);
 }
@@ -202,20 +601,18 @@ function colorSelectChange() {
     }
 }
 
+/**
+ * @param {string} color
+ */
 function sendColor(color) {
     sendMessage("/color " + color);
     showColors(false);
 }
 
-function setTimestamp(v) {
-    showTimestamp(v)
-    document.cookie = "timestamp=" + v + "; expires=Fri, 31 Dec 9999 23:59:59 GMT";
-}
-
 // Get the websocket setup in a function so it can be recalled
 function setupWebSocket() {
     ws = new WebSocket(getWsUri());
-    ws.onmessage = (m) => recieveMessage(m.data);
+    ws.onmessage = (m) => recieveMessage(JSON.parse(m.data));
     ws.onopen = () => console.log("Websocket Open");
     ws.onclose = () => {
         closeChat();
@@ -261,13 +658,20 @@ function setupEvents() {
     ).observe($("#suggestions")[0], { childList: true });
 }
 
-function defaultValues() {
-    setTimeout(() => {
-        let timestamp = getCookie("timestamp")
-        if (timestamp !== "") {
-            showTimestamp(timestamp === "true")
-        }
-    }, 500);
+function join() {
+    color = getCookie("color");
+    if (!color) {
+        // If color is not set then we want to assign a random color to the user
+        color = randomColor();
+    } else if (!isValidColor(color)) {
+        console.info(`${color} is not a valid color, clearing cookie`);
+        deleteCookie("color");
+    }
+
+    sendMessage({
+        Name: $("#name").val(),
+        Color: color,
+    }, ClientDataType.CdJoin);
 }
 
 window.addEventListener("onresize", updateSuggestionCss);
@@ -275,10 +679,9 @@ window.addEventListener("onresize", updateSuggestionCss);
 window.addEventListener("load", () => {
     setNotifyBox();
     setupWebSocket();
-    startGo();
     setupEvents();
-    defaultValues();
 
     // Make sure name is focused on start
     $("#name").focus();
+    $("#timestamp").prop("checked", getCookie("timestamp") === "true");
 });

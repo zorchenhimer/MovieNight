@@ -237,7 +237,7 @@ input[type=text] {
 }
 
 #chatwindow {
-    display: none;
+    display: grid;
     grid-template-rows: auto 1fr;
     position: relative;
     padding-top: 1vh;
