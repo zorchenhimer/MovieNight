@@ -135,7 +135,6 @@ func getEmotes(names []string) error {
 
 	for _, user := range users {
 		emotes, cheers, err := getChannelEmotes(user.ID)
-		fmt.Println(user)
 
 		if err != nil {
 			return errors.Wrapf(err, "could not get emote data for \"%s\"", user.ID)
@@ -233,8 +232,6 @@ func getChannelEmotes(ID string) ([]EmoteInfo, map[string]map[string]string, err
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "could not decode emotes")
 	}
-
-	fmt.Println(Data)
 
 	return Data.Data, nil, nil
 }
