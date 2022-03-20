@@ -23,8 +23,8 @@ type TwitchUser struct {
 }
 
 type EmoteInfo struct {
-	ID   int
-	Code string
+	ID   string
+	Name string
 }
 
 func loadEmotes() error {
@@ -135,6 +135,8 @@ func getEmotes(names []string) error {
 
 	for _, user := range users {
 		emotes, cheers, err := getChannelEmotes(user.ID)
+		fmt.Println(user)
+
 		if err != nil {
 			return errors.Wrapf(err, "could not get emote data for \"%s\"", user.ID)
 		}
@@ -145,8 +147,8 @@ func getEmotes(names []string) error {
 		}
 
 		for _, emote := range emotes {
-			if !strings.ContainsAny(emote.Code, `:;\[]|?&`) {
-				filePath := filepath.Join(emoteUserDir, emote.Code+".png")
+			if !strings.ContainsAny(emote.Name, `:;\[]|?&`) {
+				filePath := filepath.Join(emoteUserDir, emote.Name+".png")
 				file, err := os.Create(filePath)
 				if err != nil {
 
@@ -155,7 +157,7 @@ func getEmotes(names []string) error {
 
 				err = downloadEmote(emote.ID, file)
 				if err != nil {
-					return errors.Wrapf(err, "could not download emote %s:", emote.Code)
+					return errors.Wrapf(err, "could not download emote %s:", emote.Name)
 				}
 			}
 		}
@@ -207,28 +209,38 @@ func getUserIDs(names []string) []TwitchUser {
 }
 
 func getChannelEmotes(ID string) ([]EmoteInfo, map[string]map[string]string, error) {
-	resp, err := http.Get("https://api.twitchemotes.com/api/v4/channels/" + ID)
+	request, err := http.NewRequest("GET", fmt.Sprintf("https://api.twitch.tv/helix/chat/emotes?broadcaster_id=%s", ID), nil)
+	if err != nil {
+		log.Fatalln("Error generating new request:", err)
+	}
+	request.Header.Set("Client-ID", settings.TwitchClientID)
+	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", settings.TwitchClientSecret))
+	client := http.Client{}
+	resp, err := client.Do(request)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "could not get emotes")
 	}
+
 	decoder := json.NewDecoder(resp.Body)
 
 	type EmoteResponse struct {
-		Emotes     []EmoteInfo
-		Cheermotes map[string]map[string]string
+		Data []EmoteInfo
 	}
-	var data EmoteResponse
 
-	err = decoder.Decode(&data)
+	var Data EmoteResponse
+
+	err = decoder.Decode(&Data)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "could not decode emotes")
 	}
 
-	return data.Emotes, data.Cheermotes, nil
+	fmt.Println(Data)
+
+	return Data.Data, nil, nil
 }
 
-func downloadEmote(ID int, file *os.File) error {
-	resp, err := http.Get(fmt.Sprintf("https://static-cdn.jtvnw.net/emoticons/v1/%d/3.0", ID))
+func downloadEmote(ID string, file *os.File) error {
+	resp, err := http.Get(fmt.Sprintf("https://static-cdn.jtvnw.net/emoticons/v2/%s/static/light/3.0", ID))
 	if err != nil {
 		return errors.Errorf("could not download emote file %s: %v", file.Name(), err)
 	}
