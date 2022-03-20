@@ -130,10 +130,3 @@ func (s *streamStats) getMaxViewerCount() int {
 
 	return s.maxViewers
 }
-
-func (s *streamStats) getViewers() map[string]int {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	return s.viewers
-}

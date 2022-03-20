@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"net/http"
@@ -29,10 +30,10 @@ func setupSettings() error {
 	var err error
 	settings, err = LoadSettings(confFile)
 	if err != nil {
-		return fmt.Errorf("Unable to load settings: %s", err)
+		return fmt.Errorf("unable to load settings: %w", err)
 	}
 	if len(settings.StreamKey) == 0 {
-		return fmt.Errorf("Missing stream key is settings.json")
+		return fmt.Errorf("missing stream key is settings.json")
 	}
 
 	if sAdminPass != "" {
@@ -164,7 +165,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if err := httpServer.Shutdown(ctx); err != nil && err != http.ErrServerClosed {
+	if err := httpServer.Shutdown(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		panic("Gracefull HTTP server shutdown failed: " + err.Error())
 	}
 

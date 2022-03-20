@@ -9,6 +9,8 @@ import (
 	"text/template"
 )
 
+const htmlConversionErrSpan = `<span class="error">Could not process %s.</span>`
+
 type DataInterface interface {
 	HTML() string
 }
@@ -105,38 +107,39 @@ var (
 
 // TODO: Read this HTML from a template somewhere
 func (dc DataMessage) HTML() string {
+	var err error
 	buf := &bytes.Buffer{}
 	switch dc.Type {
 	case MsgAction:
-		cmdme.Execute(buf, dc)
-		return buf.String()
+		err = cmdme.Execute(buf, dc)
 	case MsgServer:
-		announcement.Execute(buf, dc)
-		return buf.String()
+		err = announcement.Execute(buf, dc)
 	case MsgError:
-		errormsg.Execute(buf, dc)
-		return buf.String()
+		err = errormsg.Execute(buf, dc)
 	case MsgNotice:
-		notice.Execute(buf, dc)
-		return buf.String()
+		err = notice.Execute(buf, dc)
 	case MsgCommandResponse:
-		command.Execute(buf, dc)
-		return buf.String()
+		err = command.Execute(buf, dc)
 	case MsgCommandError:
-		commanderror.Execute(buf, dc)
-		return buf.String()
+		err = commanderror.Execute(buf, dc)
 
 	default:
 		switch dc.Level {
 		case CmdlMod:
-			cmdlMod.Execute(buf, dc)
+			err = cmdlMod.Execute(buf, dc)
 		case CmdlAdmin:
-			cmdlAdmin.Execute(buf, dc)
+			err = cmdlAdmin.Execute(buf, dc)
 		default:
-			defaultMsg.Execute(buf, dc)
+			err = defaultMsg.Execute(buf, dc)
 		}
-		return buf.String()
 	}
+
+	if err != nil {
+		LogErrorf("Could not convert data message to html: %v\n", err)
+		return fmt.Sprintf(htmlConversionErrSpan, "message")
+	}
+
+	return buf.String()
 }
 
 func NewChatMessage(name, color, msg string, lvl CommandLevel, msgtype MessageType) ChatData {
@@ -195,38 +198,39 @@ var (
 )
 
 func (de DataEvent) HTML() string {
+	var err error
 	buf := &bytes.Buffer{}
 	switch de.Event {
 	case EvKick:
-		evKick.Execute(buf, de)
-		return buf.String()
+		err = evKick.Execute(buf, de)
 	case EvLeave:
-		evLeave.Execute(buf, de)
-		return buf.String()
+		err = evLeave.Execute(buf, de)
 	case EvBan:
-		evBan.Execute(buf, de)
-		return buf.String()
+		err = evBan.Execute(buf, de)
 	case EvJoin:
-		evJoin.Execute(buf, de)
-		return buf.String()
+		err = evJoin.Execute(buf, de)
 	case EvNameChange:
 		de.Users = strings.Split(de.User, ":")
 		if len(de.Users) < 2 {
-			evNameChangeWC.Execute(buf, ParseEmotes("Jebaited"))
+			err = evNameChangeWC.Execute(buf, ParseEmotes("Jebaited"))
 		} else {
-			evNameChange.Execute(buf, de)
+			err = evNameChange.Execute(buf, de)
 		}
-		return buf.String()
 	case EvNameChangeForced:
 		de.Users = strings.Split(de.User, ":")
 		if len(de.Users) < 2 {
-			evNameChangeForcedWC.Execute(buf, ParseEmotes("Jebaited"))
+			err = evNameChangeForcedWC.Execute(buf, ParseEmotes("Jebaited"))
 		} else {
-			evNameChangeForced.Execute(buf, de)
+			err = evNameChangeForced.Execute(buf, de)
 		}
-		return buf.String()
 	}
-	return ""
+
+	if err != nil {
+		LogErrorf("Could not convert event message to html: %v\n", err)
+		return fmt.Sprintf(htmlConversionErrSpan, "event")
+	}
+
+	return buf.String()
 }
 
 func NewChatEvent(event EventType, name, color string) ChatData {

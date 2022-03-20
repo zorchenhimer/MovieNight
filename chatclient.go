@@ -25,7 +25,6 @@ type Client struct {
 	CmdLevel      common.CommandLevel
 	IsColorForced bool
 	IsNameForced  bool
-	regexName     *regexp.Regexp
 
 	// Times since last event.  use time.Duration.Since()
 	nextChat  time.Time // rate limit chat messages
@@ -46,7 +45,7 @@ func NewClient(connection *chatConnection, room *ChatRoom, name, color string) (
 	}
 
 	if err := c.setName(name); err != nil {
-		return nil, fmt.Errorf("could not set client name to %#v: %v", name, err)
+		return nil, fmt.Errorf("could not set client name to %#v: %w", name, err)
 	}
 
 	// Set initial vaules to their rate limit duration in the past.
@@ -183,16 +182,12 @@ func (cl *Client) SendChatData(data common.ChatData) error {
 
 	// Colorize name on chat messages
 	if data.Type == common.DTChat {
-		var err error
 		data = cl.replaceColorizedName(data)
-		if err != nil {
-			return fmt.Errorf("could not colorize name: %v", err)
-		}
 	}
 
 	cd, err := data.ToJSON()
 	if err != nil {
-		return fmt.Errorf("could not create ChatDataJSON of type %d: %v", data.Type, err)
+		return fmt.Errorf("could not create ChatDataJSON of type %d: %w", data.Type, err)
 	}
 	return cl.Send(cd)
 }
@@ -200,7 +195,7 @@ func (cl *Client) SendChatData(data common.ChatData) error {
 func (cl *Client) Send(data common.ChatDataJSON) error {
 	err := cl.conn.WriteData(data)
 	if err != nil {
-		return fmt.Errorf("could not send message: %v", err)
+		return fmt.Errorf("could not send message: %w", err)
 	}
 	return nil
 }
@@ -208,7 +203,7 @@ func (cl *Client) Send(data common.ChatDataJSON) error {
 func (cl *Client) SendServerMessage(s string) error {
 	err := cl.SendChatData(common.NewChatMessage("", ColorServerMessage, s, common.CmdlUser, common.MsgServer))
 	if err != nil {
-		return fmt.Errorf("could send server message to %s: message - %#v: %v", cl.name, s, err)
+		return fmt.Errorf("could send server message to %s: message - %#v: %w", cl.name, s, err)
 	}
 	return nil
 }
@@ -276,7 +271,7 @@ func (cl *Client) replaceColorizedName(chatData common.ChatData) common.ChatData
 	newWords := []string{}
 
 	for _, word := range words {
-		if strings.ToLower(word) == strings.ToLower(cl.name) || strings.ToLower(word) == strings.ToLower("@"+cl.name) {
+		if strings.EqualFold(cl.name, strings.TrimPrefix(word, "@")) {
 			newWords = append(newWords, `<span class="mention">`+word+`</span>`)
 		} else {
 			newWords = append(newWords, word)
