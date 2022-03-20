@@ -146,7 +146,7 @@ func getEmotes(names []string) error {
 		}
 
 		for _, emote := range emotes {
-			if !strings.ContainsAny(emote.Name, `:;\[]|?&`) {
+			if !strings.ContainsAny(emote.Name, `:;\\/[]|?&`) {
 				filePath := filepath.Join(emoteUserDir, emote.Name+".png")
 				file, err := os.Create(filePath)
 				if err != nil {
