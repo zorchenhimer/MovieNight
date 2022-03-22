@@ -79,8 +79,8 @@ type BanInfo struct {
 
 func LoadSettings(filename string) (*Settings, error) {
 	var raw []byte
-	_, err := os.Open(filename)
-	if errors.Is(err, os.ErrNotExist) {
+	var err error
+	if _, err = os.Open(filename); errors.Is(err, os.ErrNotExist) {
 		raw = defaultSettingsRaw
 	} else {
 		raw, err = os.ReadFile(filename)
