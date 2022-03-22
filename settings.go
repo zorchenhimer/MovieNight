@@ -4,8 +4,8 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math/big"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -73,7 +73,7 @@ type BanInfo struct {
 }
 
 func LoadSettings(filename string) (*Settings, error) {
-	raw, err := ioutil.ReadFile(filename)
+	raw, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("error reading file: %w", err)
 	}
@@ -217,7 +217,7 @@ func (s *Settings) unlockedSave() error {
 		return fmt.Errorf("error marshaling: %w", err)
 	}
 
-	err = ioutil.WriteFile(s.filename, marshaled, 0777)
+	err = os.WriteFile(s.filename, marshaled, 0777)
 	if err != nil {
 		return fmt.Errorf("error saving: %w", err)
 	}

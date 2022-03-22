@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -38,7 +37,7 @@ func loadEmotes() error {
 }
 
 func processEmoteDir(path string) (common.EmotesMap, error) {
-	dirInfo, err := ioutil.ReadDir(path)
+	dirInfo, err := os.ReadDir(path)
 	if err != nil {
 		return nil, fmt.Errorf("could not open emoteDir: %w", err)
 	}
@@ -62,7 +61,7 @@ func processEmoteDir(path string) (common.EmotesMap, error) {
 
 	// Get second level subdirs (eg, "twitch", "zorchenhimer", etc)
 	for _, dir := range subDirs {
-		subd, err := ioutil.ReadDir(filepath.Join(path, dir))
+		subd, err := os.ReadDir(filepath.Join(path, dir))
 		if err != nil {
 			fmt.Printf("Error reading dir %q: %v\n", subd, err)
 			continue
