@@ -7,8 +7,6 @@ import (
 	"os"
 )
 
-var loglevel LogLevel
-
 type LogLevel string
 
 const (
@@ -43,7 +41,7 @@ func SetupLogging(level LogLevel, file string) error {
 		} else {
 			f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 			if err != nil {
-				return fmt.Errorf("Unable to open log file for writing: %s", err)
+				return fmt.Errorf("unable to open log file for writing: %w", err)
 			}
 			logError = log.New(io.MultiWriter(os.Stderr, f), logPrefixError, log.LstdFlags)
 			logChat = log.New(io.MultiWriter(os.Stdout, f), logPrefixChat, log.LstdFlags)
@@ -59,7 +57,7 @@ func SetupLogging(level LogLevel, file string) error {
 		} else {
 			f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 			if err != nil {
-				return fmt.Errorf("Unable to open log file for writing: %s", err)
+				return fmt.Errorf("unable to open log file for writing: %w", err)
 			}
 			logError = log.New(io.MultiWriter(os.Stderr, f), logPrefixError, log.LstdFlags)
 			logChat = log.New(io.MultiWriter(os.Stdout, f), logPrefixChat, log.LstdFlags)
@@ -75,7 +73,7 @@ func SetupLogging(level LogLevel, file string) error {
 		} else {
 			f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 			if err != nil {
-				return fmt.Errorf("Unable to open log file for writing: %s", err)
+				return fmt.Errorf("unable to open log file for writing: %w", err)
 			}
 			logError = log.New(io.MultiWriter(os.Stderr, f), logPrefixError, log.LstdFlags)
 			logInfo = log.New(io.MultiWriter(os.Stdout, f), logPrefixInfo, log.LstdFlags)
@@ -91,7 +89,7 @@ func SetupLogging(level LogLevel, file string) error {
 		} else {
 			f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 			if err != nil {
-				return fmt.Errorf("Unable to open log file for writing: %s", err)
+				return fmt.Errorf("unable to open log file for writing: %w", err)
 			}
 			logError = log.New(io.MultiWriter(os.Stderr, f), logPrefixError, log.LstdFlags)
 		}

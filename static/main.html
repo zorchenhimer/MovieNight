@@ -1,7 +1,6 @@
 {{define "header"}}
 <script>pageTitle = {{ .Title }}</script>
 {{if .Chat}}
-<script type="application/javascript" src="/static/js/wasm_exec.js"></script>
 <script type="application/javascript" src="/static/js/chat.js"></script>
 <script>
     maxMessageCount = {{.MessageHistoryCount }}
@@ -39,9 +38,6 @@
 {{end}}
 
 {{if .Chat}}
-<div id="loadingFiles" class="contrast">
-    Files Loading
-</div>
 <div id="chatwindow">
     <div id="notifyBox"></div>
     <div id="chat" style="display: none;">
@@ -58,7 +54,7 @@
             </div>
             <hr />
             <label class="contrast">
-                <input type="checkbox" checked="false" onchange="setTimestamp(this.checked);" />
+                <input id="timestamp" type="checkbox" onchange="setCookie('timestamp', this.checked);" />
                 Show Timestamp
             </label>
             <hr />

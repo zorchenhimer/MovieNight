@@ -15,12 +15,12 @@ func TestColorHexThreeToSix(t *testing.T) {
 func TestHex(t *testing.T) {
 	// The testing data layout is inputer, Expected Red, Exp Green, Exp Blue, expect error
 	data := [][]interface{}{
-		[]interface{}{"010203", 1, 2, 3, false},
-		[]interface{}{"100", 17, 0, 0, false},
-		[]interface{}{"100", 1, 0, 0, true},
-		[]interface{}{"1000", 0, 0, 0, true},
-		[]interface{}{"010203", 1, 2, 4, true},
-		[]interface{}{"0102GG", 1, 2, 4, true},
+		{"010203", 1, 2, 3, false},
+		{"100", 17, 0, 0, false},
+		{"100", 1, 0, 0, true},
+		{"1000", 0, 0, 0, true},
+		{"010203", 1, 2, 4, true},
+		{"0102GG", 1, 2, 4, true},
 	}
 
 	for i := range data {

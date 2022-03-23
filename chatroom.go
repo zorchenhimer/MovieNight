@@ -38,7 +38,7 @@ func newChatRoom() (*ChatRoom, error) {
 
 	err := loadEmotes()
 	if err != nil {
-		return nil, fmt.Errorf("error loading emotes: %s", err)
+		return nil, fmt.Errorf("error loading emotes: %w", err)
 	}
 	common.LogInfof("Loaded %d emotes\n", len(common.Emotes))
 
@@ -55,7 +55,10 @@ func (cr *ChatRoom) Join(conn *chatConnection, data common.JoinData) (*Client, e
 	sendHiddenMessage := func(cd common.ClientDataType, i interface{}) {
 		// If the message cant be converted, then just don't send
 		if d, err := common.NewChatHiddenMessage(cd, i).ToJSON(); err == nil {
-			conn.WriteJSON(d)
+			err = conn.WriteJSON(d)
+			if err != nil {
+				common.LogErrorf("could not write json to the [%d] connection: %v\n", cd, err)
+			}
 		}
 	}
 
@@ -85,12 +88,15 @@ func (cr *ChatRoom) Join(conn *chatConnection, data common.JoinData) (*Client, e
 	client, err := NewClient(conn, cr, data.Name, data.Color)
 	if err != nil {
 		sendHiddenMessage(common.CdNotify, "Could not join client")
-		return nil, fmt.Errorf("Unable to join client: %v", err)
+		return nil, fmt.Errorf("unable to join client: %w", err)
 	}
 
 	// Overwrite to use client instead
 	sendHiddenMessage = func(cd common.ClientDataType, i interface{}) {
-		client.SendChatData(common.NewChatHiddenMessage(cd, i))
+		err := client.SendChatData(common.NewChatHiddenMessage(cd, i))
+		if err != nil {
+			common.LogErrorf("could not send [%d] message on the client: %v\n", cd, err)
+		}
 	}
 
 	host := client.Host()
@@ -107,7 +113,10 @@ func (cr *ChatRoom) Join(conn *chatConnection, data common.JoinData) (*Client, e
 	if err != nil {
 		common.LogErrorf("Unable to encode playing command on join: %s\n", err)
 	} else {
-		client.Send(playingCommand)
+		err = client.Send(playingCommand)
+		if err != nil {
+			common.LogErrorf("could not send playing command on join: %v\n", err)
+		}
 	}
 	if !settings.LetThemLurk {
 		cr.AddEventMsg(common.EvJoin, data.Name, data.Color)
@@ -149,15 +158,15 @@ func (cr *ChatRoom) Kick(name string) error {
 
 	client, id, err := cr.getClient(name)
 	if err != nil {
-		return fmt.Errorf("Unable to get client for name " + name)
+		return newChatError("Unable to get client for name %s", name)
 	}
 
 	if client.CmdLevel == common.CmdlMod {
-		return fmt.Errorf("You cannot kick another mod.")
+		return newChatError("You cannot kick another mod.")
 	}
 
 	if client.CmdLevel == common.CmdlAdmin {
-		return fmt.Errorf("Jebaited No.")
+		return newChatError("Jebaited No.")
 	}
 
 	color := client.color
@@ -177,11 +186,11 @@ func (cr *ChatRoom) Ban(name string) error {
 	client, id, err := cr.getClient(name)
 	if err != nil {
 		common.LogErrorf("[ban] Unable to get client for name %q\n", name)
-		return fmt.Errorf("Cannot find that name")
+		return newChatError("Cannot find that name")
 	}
 
 	if client.CmdLevel == common.CmdlAdmin {
-		return fmt.Errorf("You cannot ban an admin Jebaited")
+		return newChatError("You cannot ban an admin Jebaited")
 	}
 
 	names := []string{}
@@ -269,7 +278,10 @@ func (cr *ChatRoom) Unmod(name string) error {
 	}
 
 	client.Unmod()
-	client.SendServerMessage(`You have been unmodded.`)
+	err = client.SendServerMessage(`You have been unmodded.`)
+	if err != nil {
+		common.LogErrorf("Could not send unmodded server message: %v\n", err)
+	}
 	return nil
 }
 
@@ -284,7 +296,10 @@ func (cr *ChatRoom) Mod(name string) error {
 
 	if client.CmdLevel < common.CmdlMod {
 		client.CmdLevel = common.CmdlMod
-		client.SendServerMessage(`You have been modded.`)
+		err = client.SendServerMessage(`You have been modded.`)
+		if err != nil {
+			common.LogErrorf("Could not send modded server message: %v\n", err)
+		}
 	}
 	return nil
 }
@@ -449,7 +464,7 @@ func (cr *ChatRoom) changeName(oldName, newName string, forced bool) error {
 	for _, client := range cr.clients {
 		if strings.ToLower(client.name) == newLower {
 			if strings.ToLower(client.name) != oldLower {
-				return fmt.Errorf("%q is already taken.", newName)
+				return fmt.Errorf("%q is already taken", newName)
 			}
 		}
 
@@ -461,7 +476,7 @@ func (cr *ChatRoom) changeName(oldName, newName string, forced bool) error {
 	if currentClient != nil {
 		err := currentClient.setName(newName)
 		if err != nil {
-			return fmt.Errorf("could not set client name to %#v: %v", newName, err)
+			return fmt.Errorf("could not set client name to %#v: %w", newName, err)
 		}
 		common.LogDebugf("%q -> %q\n", oldName, newName)
 

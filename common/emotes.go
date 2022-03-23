@@ -35,7 +35,7 @@ func (em EmotesMap) Add(fullpath string) EmotesMap {
 
 	num := 0
 	for exists {
-		num += 1
+		num++
 		_, exists = em[fmt.Sprintf("%s-%d", code, num)]
 	}
 

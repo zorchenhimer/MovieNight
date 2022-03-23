@@ -1,0 +1,7 @@
+linters:
+  enable:
+    - bodyclose
+    - dupl
+    - errorlint
+    - goconst
+    - unconvert
