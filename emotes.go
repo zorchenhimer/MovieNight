@@ -63,7 +63,7 @@ func processEmoteDir(path string) (common.EmotesMap, error) {
 	for _, dir := range subDirs {
 		subd, err := os.ReadDir(filepath.Join(path, dir))
 		if err != nil {
-			fmt.Printf("Error reading dir %q: %v\n", subd, err)
+			common.LogErrorf("Error reading dir %q: %v\n", subd, err)
 			continue
 		}
 		for _, d := range subd {
@@ -71,7 +71,7 @@ func processEmoteDir(path string) (common.EmotesMap, error) {
 				p := filepath.Join(path, dir, d.Name())
 				em, err = findEmotes(p, em)
 				if err != nil {
-					fmt.Printf("Error finding emotes in %q: %v\n", p, err)
+					common.LogErrorf("Error finding emotes in %q: %v\n", p, err)
 				}
 			}
 		}
