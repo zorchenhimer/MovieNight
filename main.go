@@ -2,11 +2,16 @@ package main
 
 import (
 	"context"
+	"embed"
+	_ "embed"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/alexflint/go-arg"
@@ -43,7 +48,61 @@ func setupSettings(adminPass string, confFile string) error {
 	return nil
 }
 
+//go:embed static/*.html static/css static/img static/js
+var staticFs embed.FS
+
+func writeStaticFiles(fileDir, name string) error {
+	items, err := staticFs.ReadDir(name)
+	if err != nil {
+		return fmt.Errorf("could not read staticFs directory %#v: %w", name, err)
+	}
+
+	for _, item := range items {
+		fsPath := path.Join(name, item.Name())
+		filePath := strings.Replace(fsPath, "static", fileDir, 1)
+
+		_, err := os.Open(filePath)
+		notExist := errors.Is(err, os.ErrNotExist)
+
+		if item.IsDir() {
+			if notExist {
+				fmt.Printf("creating dir %q\n", filePath)
+
+				err = os.MkdirAll(filePath, os.ModeDir)
+				if err != nil {
+					return fmt.Errorf("could not make missing directory: %w", err)
+				}
+			}
+
+			err = writeStaticFiles(fileDir, fsPath)
+			if err != nil {
+				return err
+			}
+		} else if notExist {
+			fmt.Printf("creating file %q\n", filePath)
+
+			staticFile, err := staticFs.Open(fsPath)
+			if err != nil {
+				return fmt.Errorf("could not open embeded file %q: %w", fsPath, err)
+			}
+
+			var staticData []byte
+			_, err = staticFile.Read(staticData)
+			if err != nil {
+				return fmt.Errorf("could not read embeded file %q: %w", fsPath, err)
+			}
+
+			err = os.WriteFile(filePath, staticData, 0644)
+			if err != nil {
+				return fmt.Errorf("could not write static data to file %q: %w", filePath, err)
+			}
+		}
+	}
+	return nil
+}
+
 func main() {
+	var err error
 	var args struct {
 		Addr       string `arg:"-l,--addr" help:"host:port of the HTTP server"`
 		RtmpAddr   string `arg:"-r,--rtmp" help:"host:port of the RTMP server"`
@@ -51,13 +110,19 @@ func main() {
 		AdminPass  string `arg:"-a,--admin" help:"Set admin password.  Overrides configuration in settings.json.  This will not write the password to settings.json."`
 		PullEmotes bool   `arg:"-e,--pull-emotes" help:"Pull emotes"`
 		ConfigFile string `arg:"-f,--config" default:"./settings.json" help:"URI of the conf file"`
+		StaticDir  string `arg:"-s,--static" default:"static" help:"The directory MovieNight looks for the static dir"`
 	}
 	arg.MustParse(&args)
 
 	format.RegisterAll()
 
 	if err := setupSettings(args.AdminPass, args.ConfigFile); err != nil {
-		fmt.Printf("Error loading settings: %v\n", err)
+		log.Fatalf("Error loading settings: %v\n", err)
+	}
+
+	err = writeStaticFiles(args.StaticDir, ".")
+	if err != nil {
+		common.LogErrorf("Error writing static files: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -65,7 +130,6 @@ func main() {
 		common.LogInfoln("Pulling emotes")
 		err := getEmotes(settings.ApprovedEmotes)
 		if err != nil {
-			common.LogErrorf("Error downloading emotes: %+v\n", err)
 			common.LogErrorf("Error downloading emotes: %v\n", err)
 			os.Exit(1)
 		}
@@ -80,7 +144,6 @@ func main() {
 	go handleInterrupt(exit)
 
 	// Load emotes before starting server.
-	var err error
 	chat, err = newChatRoom()
 	if err != nil {
 		common.LogErrorln(err)
