@@ -99,18 +99,25 @@ func writeStaticFiles(name string) error {
 	return nil
 }
 
-func main() {
-	var err error
-	var args struct {
-		Addr       string `arg:"-l,--addr" help:"host:port of the HTTP server"`
-		RtmpAddr   string `arg:"-r,--rtmp" help:"host:port of the RTMP server"`
-		StreamKey  string `arg:"-k,--key" help:"Stream key, to protect your stream"`
-		AdminPass  string `arg:"-a,--admin" help:"Set admin password.  Overrides configuration in settings.json.  This will not write the password to settings.json."`
-		PullEmotes bool   `arg:"-e,--pull-emotes" help:"Pull emotes"`
-		ConfigFile string `arg:"-f,--config" default:"./settings.json" help:"URI of the conf file"`
-	}
-	arg.MustParse(&args)
+type args struct {
+	Addr       string `arg:"-l,--addr" help:"host:port of the HTTP server"`
+	RtmpAddr   string `arg:"-r,--rtmp" help:"host:port of the RTMP server"`
+	StreamKey  string `arg:"-k,--key" help:"Stream key, to protect your stream"`
+	AdminPass  string `arg:"-a,--admin" help:"Set admin password.  Overrides configuration in settings.json.  This will not write the password to settings.json."`
+	PullEmotes bool   `arg:"-e,--pull-emotes" help:"Pull emotes"`
+	ConfigFile string `arg:"-f,--config" default:"./settings.json" help:"URI of the conf file"`
+}
 
+func main() {
+	var args args
+	arg.MustParse(&args)
+	run(args)
+}
+
+func run(args args) {
+	start := time.Now()
+
+	var err error
 	format.RegisterAll()
 
 	if err := setupSettings(args.AdminPass, args.ConfigFile); err != nil {
@@ -221,6 +228,8 @@ func main() {
 			panic("Error trying to start chat/http server: " + err.Error())
 		}
 	}()
+
+	common.LogInfof("Startup took %v\n", time.Since(start))
 
 	<-exit
 

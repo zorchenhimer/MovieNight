@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
-	"github.com/mxschmitt/playwright-go"
+	"github.com/playwright-community/playwright-go"
 )
 
 const (
@@ -100,15 +101,27 @@ func runTests(t *testing.T, f func(t *testing.T, browser playwright.Browser)) {
 }
 
 func TestMain(m *testing.M) {
-	var err error
+	// Start running the servers, but sleep for only 500ms
+	// because it should just take a couple ms for startup
+	// and install and run will take longer
+	go run(args{ConfigFile: "./settings.json"})
+	time.Sleep(500 * time.Millisecond)
+
+	err := playwright.Install()
+	if err != nil {
+		fmt.Printf("could not install playwright: %v\n", err)
+		os.Exit(1)
+	}
+
 	pw, err = playwright.Run()
 	if err != nil {
-		fmt.Printf("could not run playwright: %v", err)
+		fmt.Printf("could not run playwright: %v\n", err)
 		os.Exit(1)
 	}
 
 	browsers = append(browsers, pw.Firefox)
 	browsers = append(browsers, pw.Chromium)
+	browsers = append(browsers, pw.WebKit)
 
 	code := m.Run()
 	os.Exit(code)
