@@ -68,7 +68,6 @@ func processEmoteDir(path string) (common.EmotesMap, error) {
 		}
 		for _, d := range subd {
 			if d.IsDir() {
-				// emotes = append(emotes, findEmotes(filepath.Join(path, dir, d.Name()))...)
 				p := filepath.Join(path, dir, d.Name())
 				em, err = findEmotes(p, em)
 				if err != nil {
