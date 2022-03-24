@@ -23,7 +23,7 @@ type TwitchUser struct {
 
 type EmoteInfo struct {
 	ID   string
-	Name string
+	Code string
 }
 
 func loadEmotes() error {
@@ -134,8 +134,8 @@ func getEmotes(names []string) error {
 		}
 
 		for _, emote := range emotes {
-			if !strings.ContainsAny(emote.Name, `:;\\/[]|?&`) {
-				filePath := filepath.Join(emoteUserDir, emote.Name+".png")
+			if !strings.ContainsAny(emote.Code, `:;\\/[]|?&`) {
+				filePath := filepath.Join(emoteUserDir, emote.Code+".png")
 				file, err := os.Create(filePath)
 				if err != nil {
 
