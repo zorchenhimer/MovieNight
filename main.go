@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"embed"
 	"errors"
 	"fmt"
 	"log"
@@ -15,6 +16,7 @@ import (
 	"github.com/nareix/joy4/format"
 	"github.com/nareix/joy4/format/rtmp"
 	"github.com/zorchenhimer/MovieNight/common"
+	"github.com/zorchenhimer/MovieNight/files"
 )
 
 var stats = newStreamStats()
@@ -44,6 +46,9 @@ func setupSettings(adminPass string, confFile string) error {
 	return nil
 }
 
+//go:embed static/*.html static/css static/img static/js
+var staticFs embed.FS
+
 type args struct {
 	Addr       string `arg:"-l,--addr" help:"host:port of the HTTP server"`
 	RtmpAddr   string `arg:"-r,--rtmp" help:"host:port of the RTMP server"`
@@ -61,17 +66,17 @@ func main() {
 func run(args args) {
 	start := time.Now()
 
-	var err error
+	files.DefaultFS.RegisterStaticFS(&staticFs)
+	err := files.SetupStaticFiles()
+	if err != nil {
+		fmt.Printf("Error writing static files: %v\n", err)
+		os.Exit(1)
+	}
+
 	format.RegisterAll()
 
 	if err := setupSettings(args.AdminPass, args.ConfigFile); err != nil {
 		log.Fatalf("Error loading settings: %v\n", err)
-	}
-
-	err = setupStaticFiles()
-	if err != nil {
-		common.LogErrorf("Error writing static files: %v\n", err)
-		os.Exit(1)
 	}
 
 	if err := common.InitTemplates(); err != nil {
