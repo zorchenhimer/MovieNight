@@ -49,7 +49,6 @@ type args struct {
 	RtmpAddr   string `arg:"-r,--rtmp" help:"host:port of the RTMP server"`
 	StreamKey  string `arg:"-k,--key" help:"Stream key, to protect your stream"`
 	AdminPass  string `arg:"-a,--admin" help:"Set admin password.  Overrides configuration in settings.json.  This will not write the password to settings.json."`
-	PullEmotes bool   `arg:"-e,--pull-emotes" help:"Pull emotes"`
 	ConfigFile string `arg:"-f,--config" default:"./settings.json" help:"URI of the conf file"`
 }
 
@@ -73,15 +72,6 @@ func run(args args) {
 	if err != nil {
 		common.LogErrorf("Error writing static files: %v\n", err)
 		os.Exit(1)
-	}
-
-	if args.PullEmotes {
-		common.LogInfoln("Pulling emotes")
-		err := getEmotes(settings.ApprovedEmotes)
-		if err != nil {
-			common.LogErrorf("Error downloading emotes: %v\n", err)
-			os.Exit(1)
-		}
 	}
 
 	if err := common.InitTemplates(); err != nil {
