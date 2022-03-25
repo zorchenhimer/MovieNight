@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"path"
-	"path/filepath"
 	"strings"
 	"sync"
 
@@ -41,32 +40,6 @@ type writeFlusher struct {
 func (w writeFlusher) Flush() error {
 	w.httpflusher.Flush()
 	return nil
-}
-
-// Serving static files
-func wsStaticFiles(w http.ResponseWriter, r *http.Request) {
-	switch r.URL.Path {
-	case "/favicon.ico":
-		http.ServeFile(w, r, "favicon.png")
-		return
-	case "/justchat":
-		http.ServeFile(w, r, "static/justchat.html")
-		return
-	case "/justvideo":
-		http.ServeFile(w, r, "static/justvideo.html")
-		return
-	}
-
-	goodPath := r.URL.Path[8:len(r.URL.Path)]
-	common.LogDebugf("[static] serving %q\n", goodPath)
-
-	http.ServeFile(w, r, "static/"+goodPath)
-}
-
-func wsImages(w http.ResponseWriter, r *http.Request) {
-	base := filepath.Base(r.URL.Path)
-	common.LogDebugln("[img] ", base)
-	http.ServeFile(w, r, "static/img/"+base)
 }
 
 func wsEmotes(w http.ResponseWriter, r *http.Request) {

@@ -3,26 +3,15 @@ package main
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/zorchenhimer/MovieNight/common"
 )
 
-const emoteDir = "/static/emotes/"
-
-type TwitchUser struct {
-	ID    string
-	Login string
-}
-
-type EmoteInfo struct {
-	ID   int
-	Code string
-}
-
 func loadEmotes() error {
-	newEmotes, err := processEmoteDir(common.RunPath() + emoteDir)
+	newEmotes, err := processEmoteDir(path.Join(common.RunPath(), "emotes"))
 	if err != nil {
 		return err
 	}
@@ -36,7 +25,6 @@ func processEmoteDir(path string) (common.EmotesMap, error) {
 	dirInfo, err := os.ReadDir(path)
 	if err != nil {
 		common.LogErrorf("could not open emoteDir: %v\n", err)
-		// return nil, fmt.Errorf("could not open emoteDir: %w", err)
 	}
 
 	subDirs := []string{}
@@ -79,7 +67,7 @@ func processEmoteDir(path string) (common.EmotesMap, error) {
 }
 
 func findEmotes(dir string, em common.EmotesMap) (common.EmotesMap, error) {
-	var runPathLength = len(common.RunPath() + "/static/")
+	var runPathLength = len(common.RunPath() + "/emotes/")
 
 	common.LogDebugf("finding emotes in %q\n", dir)
 	emotePNGs, err := filepath.Glob(filepath.Join(dir, "*.png"))

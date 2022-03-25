@@ -16,6 +16,7 @@ import (
 	"github.com/nareix/joy4/format"
 	"github.com/nareix/joy4/format/rtmp"
 	"github.com/zorchenhimer/MovieNight/common"
+	"github.com/zorchenhimer/MovieNight/files"
 )
 
 var stats = newStreamStats()
@@ -116,11 +117,8 @@ func run(args args) {
 	router := http.NewServeMux()
 
 	router.HandleFunc("/ws", wsHandler) // Chat websocket
-	router.HandleFunc("/static/js/", wsStaticFiles)
-	router.HandleFunc("/static/css/", wsStaticFiles)
-	router.HandleFunc("/static/img/", wsImages)
+	router.Handle("/static/", http.FileServer(http.FS(files.StaticFS)))
 	router.HandleFunc("/emotes/", wsEmotes)
-	router.HandleFunc("/favicon.ico", wsStaticFiles)
 	router.HandleFunc("/chat", handleIndexTemplate)
 	router.HandleFunc("/video", handleIndexTemplate)
 	router.HandleFunc("/help", handleHelpTemplate)
