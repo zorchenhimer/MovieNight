@@ -35,7 +35,8 @@ func loadEmotes() error {
 func processEmoteDir(path string) (common.EmotesMap, error) {
 	dirInfo, err := os.ReadDir(path)
 	if err != nil {
-		return nil, fmt.Errorf("could not open emoteDir: %w", err)
+		common.LogErrorf("could not open emoteDir: %v\n", err)
+		// return nil, fmt.Errorf("could not open emoteDir: %w", err)
 	}
 
 	subDirs := []string{}

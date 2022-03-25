@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"os"
@@ -13,7 +14,6 @@ import (
 
 	"github.com/gorilla/sessions"
 	"github.com/zorchenhimer/MovieNight/common"
-	"github.com/zorchenhimer/MovieNight/files"
 )
 
 var settings *Settings
@@ -74,10 +74,16 @@ type BanInfo struct {
 	When  time.Time
 }
 
+//go:embed settings_example.json
+var settingsExampleFS []byte
+
 func LoadSettings(filename string) (*Settings, error) {
-	raw, err := files.DefaultFS.ReadFile(filename)
+	raw, err := os.ReadFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("error reading file: %w", err)
+		if !errors.Is(err, os.ErrNotExist) {
+			return nil, fmt.Errorf("could not read settings file: %w", err)
+		}
+		raw = settingsExampleFS
 	}
 
 	var s *Settings

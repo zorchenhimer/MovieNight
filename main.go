@@ -16,7 +16,6 @@ import (
 	"github.com/nareix/joy4/format"
 	"github.com/nareix/joy4/format/rtmp"
 	"github.com/zorchenhimer/MovieNight/common"
-	"github.com/zorchenhimer/MovieNight/files"
 )
 
 var stats = newStreamStats()
@@ -46,7 +45,6 @@ func setupSettings(adminPass string, confFile string) error {
 	return nil
 }
 
-//go:embed static/*.html static/css static/img static/js
 var staticFs embed.FS
 
 type args struct {
@@ -64,14 +62,8 @@ func main() {
 }
 
 func run(args args) {
+	var err error
 	start := time.Now()
-
-	files.DefaultFS.RegisterStaticFS(&staticFs)
-	err := files.SetupStaticFiles()
-	if err != nil {
-		fmt.Printf("Error writing static files: %v\n", err)
-		os.Exit(1)
-	}
 
 	format.RegisterAll()
 
