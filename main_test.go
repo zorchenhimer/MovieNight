@@ -121,7 +121,6 @@ func TestMain(m *testing.M) {
 
 	browsers = append(browsers, pw.Firefox)
 	browsers = append(browsers, pw.Chromium)
-	browsers = append(browsers, pw.WebKit)
 
 	code := m.Run()
 	os.Exit(code)
