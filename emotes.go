@@ -8,10 +8,11 @@ import (
 	"strings"
 
 	"github.com/zorchenhimer/MovieNight/common"
+	"github.com/zorchenhimer/MovieNight/files"
 )
 
 func loadEmotes() error {
-	newEmotes, err := processEmoteDir(path.Join(common.RunPath(), "emotes"))
+	newEmotes, err := processEmoteDir(path.Join(files.RunPath(), "emotes"))
 	if err != nil {
 		return err
 	}
@@ -21,10 +22,10 @@ func loadEmotes() error {
 	return nil
 }
 
-func processEmoteDir(path string) (common.EmotesMap, error) {
-	dirInfo, err := os.ReadDir(path)
+func processEmoteDir(dir string) (common.EmotesMap, error) {
+	dirInfo, err := os.ReadDir(dir)
 	if err != nil {
-		common.LogErrorf("could not open emoteDir: %v\n", err)
+		common.LogErrorf("could not open emote dir: %v\n", err)
 	}
 
 	subDirs := []string{}
@@ -39,21 +40,21 @@ func processEmoteDir(path string) (common.EmotesMap, error) {
 
 	em := common.NewEmotesMap()
 	// Find top level emotes
-	em, err = findEmotes(path, em)
+	em, err = findEmotes(dir, em)
 	if err != nil {
 		return nil, fmt.Errorf("could not findEmotes() in top level directory: %w", err)
 	}
 
 	// Get second level subdirs (eg, "twitch", "zorchenhimer", etc)
-	for _, dir := range subDirs {
-		subd, err := os.ReadDir(filepath.Join(path, dir))
+	for _, subDir := range subDirs {
+		subd, err := os.ReadDir(path.Join(dir, subDir))
 		if err != nil {
 			common.LogErrorf("Error reading dir %q: %v\n", subd, err)
 			continue
 		}
 		for _, d := range subd {
 			if d.IsDir() {
-				p := filepath.Join(path, dir, d.Name())
+				p := path.Join(dir, subDir, d.Name())
 				em, err = findEmotes(p, em)
 				if err != nil {
 					common.LogErrorf("Error finding emotes in %q: %v\n", p, err)
@@ -67,31 +68,18 @@ func processEmoteDir(path string) (common.EmotesMap, error) {
 }
 
 func findEmotes(dir string, em common.EmotesMap) (common.EmotesMap, error) {
-	var runPathLength = len(common.RunPath() + "/emotes/")
-
 	common.LogDebugf("finding emotes in %q\n", dir)
-	emotePNGs, err := filepath.Glob(filepath.Join(dir, "*.png"))
-	if err != nil {
-		return em, fmt.Errorf("unable to glob emote directory: %w", err)
-	}
-	common.LogInfof("Found %d emotePNGs\n", len(emotePNGs))
 
-	emoteGIFs, err := filepath.Glob(filepath.Join(dir, "*.gif"))
-	if err != nil {
-		return em, fmt.Errorf("unable to glob emote directory: %w", err)
-	}
-	common.LogInfof("Found %d emoteGIFs\n", len(emoteGIFs))
+	for _, ext := range []string{"*.png", "*.gif"} {
+		files, err := filepath.Glob(path.Join(dir, ext))
+		if err != nil {
+			return nil, fmt.Errorf("unable to glob emote directory with %q: %w", ext, err)
+		}
+		common.LogInfof("Found %d %s emotes\n", len(files), ext)
 
-	for _, file := range emotePNGs {
-		png := strings.ReplaceAll(common.Substr(file, runPathLength, len(file)), "\\", "/")
-		//common.LogDebugf("Emote PNG: %s", png)
-		em = em.Add(png)
-	}
-
-	for _, file := range emoteGIFs {
-		gif := strings.ReplaceAll(common.Substr(file, runPathLength, len(file)), "\\", "/")
-		//common.LogDebugf("Emote GIF: %s", gif)
-		em = em.Add(gif)
+		for _, file := range files {
+			em = em.Add(path.Join("emotes", strings.TrimPrefix(filepath.ToSlash(file), dir)))
+		}
 	}
 
 	return em, nil

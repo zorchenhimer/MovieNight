@@ -2,7 +2,7 @@ package common
 
 import (
 	"fmt"
-	"path/filepath"
+	"path"
 	"regexp"
 	"strings"
 )
@@ -28,8 +28,8 @@ func NewEmotesMap() EmotesMap {
 func (em EmotesMap) Add(fullpath string) EmotesMap {
 	fullpath = reStripStatic.ReplaceAllLiteralString(fullpath, "")
 
-	base := filepath.Base(fullpath)
-	code := base[0 : len(base)-len(filepath.Ext(base))]
+	base := path.Base(fullpath)
+	code := base[0 : len(base)-len(path.Ext(base))]
 
 	_, exists := em[code]
 

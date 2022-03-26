@@ -3,16 +3,15 @@ package common
 import (
 	"fmt"
 	html "html/template"
+	"io/fs"
 	"net/http"
-
-	fs "github.com/zorchenhimer/MovieNight/files"
 )
 
 // Holds the server's templates
 var serverTemplates map[string]*html.Template
 
 // Called from the server
-func InitTemplates() error {
+func InitTemplates(filesystem fs.FS) error {
 	serverTemplates = make(map[string]*html.Template)
 
 	// keys and files to load for that template
@@ -25,7 +24,7 @@ func InitTemplates() error {
 
 	// Parse server templates
 	for key, files := range serverTemplateDefs {
-		t, err := html.ParseFS(fs.StaticFS, files...)
+		t, err := html.ParseFS(filesystem, files...)
 		if err != nil {
 			return fmt.Errorf("unable to parse templates for %s: %w", key, err)
 		}

@@ -19,6 +19,9 @@ import (
 	"github.com/zorchenhimer/MovieNight/files"
 )
 
+//go:embed static/*.html static/css static/img static/js
+var staticFS embed.FS
+
 var stats = newStreamStats()
 
 func setupSettings(adminPass string, confFile string) error {
@@ -46,14 +49,13 @@ func setupSettings(adminPass string, confFile string) error {
 	return nil
 }
 
-var staticFs embed.FS
-
 type args struct {
 	Addr       string `arg:"-l,--addr" help:"host:port of the HTTP server"`
 	RtmpAddr   string `arg:"-r,--rtmp" help:"host:port of the RTMP server"`
 	StreamKey  string `arg:"-k,--key" help:"Stream key, to protect your stream"`
 	AdminPass  string `arg:"-a,--admin" help:"Set admin password.  Overrides configuration in settings.json.  This will not write the password to settings.json."`
 	ConfigFile string `arg:"-f,--config" default:"./settings.json" help:"URI of the conf file"`
+	StaticDir  string `arg:"-s,--static" help:"Directory to read static files from by default"`
 }
 
 func main() {
@@ -66,13 +68,18 @@ func run(args args) {
 	var err error
 	start := time.Now()
 
+	staticFsys, err := files.FS(staticFS, args.StaticDir, "static")
+	if err != nil {
+		log.Fatalf("Error creating static FS: %v\n", err)
+	}
+
 	format.RegisterAll()
 
 	if err := setupSettings(args.AdminPass, args.ConfigFile); err != nil {
 		log.Fatalf("Error loading settings: %v\n", err)
 	}
 
-	if err := common.InitTemplates(); err != nil {
+	if err := common.InitTemplates(staticFsys); err != nil {
 		common.LogErrorln(err)
 		os.Exit(1)
 	}
@@ -117,7 +124,7 @@ func run(args args) {
 	router := http.NewServeMux()
 
 	router.HandleFunc("/ws", wsHandler) // Chat websocket
-	router.Handle("/static/", http.FileServer(http.FS(files.StaticFS)))
+	router.Handle("/static/", http.FileServer(http.FS(staticFsys)))
 	router.HandleFunc("/emotes/", wsEmotes)
 	router.HandleFunc("/chat", handleIndexTemplate)
 	router.HandleFunc("/video", handleIndexTemplate)

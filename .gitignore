@@ -45,5 +45,5 @@ subscribers.json
 /.settings/
 /.project
 
-# test alt static folder
-testStatic
+# Emotes dir
+emotes

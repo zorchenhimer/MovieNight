@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"path"
 	"strings"
 	"sync"
 
@@ -43,7 +42,7 @@ func (w writeFlusher) Flush() error {
 }
 
 func wsEmotes(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, path.Join("static/", r.URL.Path))
+	http.ServeFile(w, r, strings.TrimPrefix(r.URL.Path, "/"))
 }
 
 // Handling the websocket
