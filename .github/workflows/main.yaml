@@ -32,11 +32,11 @@ jobs:
 
     strategy:
       matrix:
-        target: [linux, windows, darwin]
+        os: [linux, windows, darwin, netbsd, freebsd, openbsd]
         arch: [amd64, arm64]
 
     env:
-      GOOS: ${{ matrix.target }}
+      GOOS: ${{ matrix.os }}
       GOARCH: ${{ matrix.arch }}
 
     steps:
@@ -51,6 +51,6 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: MovieNight-${{ matrix.target }}-${{ matrix.arch }}
+          name: MovieNight-${{ matrix.os }}-${{ matrix.arch }}
           if-no-files-found: error
           path: MovieNight*
