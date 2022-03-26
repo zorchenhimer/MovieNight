@@ -1,6 +1,7 @@
 package files
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -9,27 +10,93 @@ import (
 	"strings"
 )
 
+type FileSystem interface {
+	fs.FS
+
+	// WriteFiles writes all the files in the embedded filesystem to the disk
+	//
+	// WriteFiles should return the number of files written even if an error occured
+	WriteFiles(name string) (int, error)
+}
+
+type ReadFileDirFS interface {
+	fs.ReadDirFS
+	fs.ReadFileFS
+}
+
 type ioFS struct {
 	diskDir    string
 	replaceKey string
-	fsys       fs.FS
+	fsys       ReadFileDirFS
 }
 
 func (f ioFS) Open(name string) (fs.File, error) {
-	diskPath := path.Join(f.diskDir, strings.TrimPrefix(name, f.replaceKey))
-	if file, err := os.Open(diskPath); err == nil {
+	if file, err := os.Open(f.diskPath(name)); err == nil {
 		return file, nil
 	}
 
 	file, err := f.fsys.Open(name)
 	if err != nil {
-		return nil, fmt.Errorf("could not find file on disk in %q or in embedded FS: %w", f.diskDir, err)
+		return nil, fmt.Errorf("could not find file on disk in %s or in embedded FS: %w", f.diskDir, err)
 	}
 
 	return file, nil
 }
 
-func FS(fsys fs.FS, diskDir, replaceKey string) (fs.FS, error) {
+func (f ioFS) WriteFiles(name string) (int, error) {
+	writeCount := 0
+
+	entries, err := f.fsys.ReadDir(name)
+	if err != nil {
+		return 0, fmt.Errorf("could not read fs directory %s: %w", name, err)
+	}
+
+	for _, entry := range entries {
+		entryName := path.Join(name, entry.Name())
+		diskName := f.diskPath(entryName)
+		if entry.IsDir() {
+			if _, err := os.Open(diskName); errors.Is(err, os.ErrNotExist) {
+				err = os.MkdirAll(diskName, 0644)
+				if err != nil {
+					return writeCount, fmt.Errorf("could not create directory %s: %w", diskName, err)
+				}
+			}
+
+			count, err := f.WriteFiles(entryName)
+			writeCount += count
+			if err != nil {
+				return writeCount, fmt.Errorf("could not write files for %s: %w", entryName, err)
+			}
+		} else {
+			_, err := os.Open(diskName)
+			if err == nil {
+				continue
+			}
+
+			if errors.Is(err, os.ErrNotExist) {
+				data, err := f.fsys.ReadFile(entryName)
+				if err != nil {
+					return writeCount, fmt.Errorf("could not read fs file %s: %w", entryName, err)
+				}
+
+				err = os.WriteFile(diskName, data, 0644)
+				if err != nil {
+					return writeCount, fmt.Errorf("could not write data from %s to %s: %w", entryName, diskName, err)
+				}
+
+				writeCount += 1
+			}
+		}
+	}
+
+	return writeCount, nil
+}
+
+func (f ioFS) diskPath(name string) string {
+	return path.Join(f.diskDir, strings.TrimPrefix(name, f.replaceKey))
+}
+
+func FS(fsys ReadFileDirFS, diskDir, replaceKey string) (FileSystem, error) {
 	if fsys == nil {
 		return nil, fmt.Errorf("fsys is null")
 	}
