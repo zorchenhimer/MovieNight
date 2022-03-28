@@ -619,9 +619,11 @@ function setupWebSocket() {
     ws.onmessage = (m) => recieveMessage(JSON.parse(m.data));
     ws.onopen = () => {
         console.log("Websocket Open");
+        // Ngnix websocket timeouts at 60s
+        // http://nginx.org/en/docs/http/websocket.html
         setInterval(() => {
             sendMessage("", ClientDataType.CdPing, false);
-        }, 60000);
+        }, 45000);
     }
     ws.onclose = () => {
         closeChat();
