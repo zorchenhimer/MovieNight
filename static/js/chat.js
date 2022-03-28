@@ -312,9 +312,12 @@ function recieveMessage(message) {
 
 /**
  * @param {string} data
+ * @param {boolean} log
  */
-function websocketSend(data) {
-    console.log(data)
+function websocketSend(data, log = true) {
+    if (log) {
+        console.log(data);
+    }
     if (ws.readyState == ws.OPEN) {
         ws.send(data);
     } else {
@@ -325,8 +328,9 @@ function websocketSend(data) {
 /**
  * @param {string|any} msg
  * @param {number} type
+ * @param {boolean} log
  */
-function sendMessage(msg, type) {
+function sendMessage(msg, type, log=true) {
     if (typeof msg !== "string") {
         msg = JSON.stringify(msg);
     }
@@ -338,7 +342,7 @@ function sendMessage(msg, type) {
     websocketSend(JSON.stringify({
         Type: type,
         Message: msg,
-    }));
+    }), log);
 }
 
 
@@ -429,14 +433,14 @@ function processMessageKey(e) {
                 const n = filteredSuggestion[i];
                 if (n == currentSuggestion) {
                     newIdx = i;
-                    if(keyCode == 40) {
+                    if (keyCode == 40) {
                         newIdx = i + 1;
                         if (newIdx == filteredSuggestion.length) {
                             newIdx--;
                         }
-                    } else if(keyCode == 38) {
-                        newIdx = i-1;
-                        if(newIdx < 0) {
+                    } else if (keyCode == 38) {
+                        newIdx = i - 1;
+                        if (newIdx < 0) {
                             newIdx = 0;
                         }
                     }
@@ -456,9 +460,9 @@ function processMessageKey(e) {
             let endsSpace = match[0].endsWith(" ");
             let replaceVal = "";
             if (currentSuggestionType == SuggestionType.Emote) {
-                replaceVal = ":"+currentSuggestion+":";
-            }else {
-                replaceVal = "@"+currentSuggestion;
+                replaceVal = ":" + currentSuggestion + ":";
+            } else {
+                replaceVal = "@" + currentSuggestion;
             }
 
             if (endsSpace) {
@@ -473,7 +477,7 @@ function processMessageKey(e) {
             msg[0].selectionEnd = idx;
 
             filteredSuggestion = [];
-        break;
+            break;
         default:
             return false;
     }
@@ -613,7 +617,14 @@ function sendColor(color) {
 function setupWebSocket() {
     ws = new WebSocket(getWsUri());
     ws.onmessage = (m) => recieveMessage(JSON.parse(m.data));
-    ws.onopen = () => console.log("Websocket Open");
+    ws.onopen = () => {
+        console.log("Websocket Open");
+        // Ngnix websocket timeouts at 60s
+        // http://nginx.org/en/docs/http/websocket.html
+        setInterval(() => {
+            sendMessage("", ClientDataType.CdPing, false);
+        }, 45000);
+    }
     ws.onclose = () => {
         closeChat();
         setNotifyBox("The connection to the server has closed. Please refresh page to connect again.");
