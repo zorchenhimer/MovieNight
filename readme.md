@@ -36,6 +36,9 @@ the newer version.
 ### Compile and install
 You have to : 
 - download `git clone https://github.com/zorchenhimer/MovieNight`, go into the source directory `cd MovieNight`;
+- run `go build`
+
+If you want to cross compile instead of running `go build`:
 - choose your `TARGET` oneof "android darwin dragonfly freebsd linux nacl netbsd openbsd plan9 solaris windows";
 - choose your `ARCH` oneof "386 amd64 amd64p32 arm arm64 ppc64 ppc64le mips mipsle mips64 mips64le mips64p32 mips64p32leppc s390 s390x sparc sparc64";
 - build `make TARGET=windows ARCH=386` (On BSD systems use `gmake`);
@@ -140,8 +143,6 @@ MovieNight’s configuration is controlled by `settings.json`:
 - `AdminPassword`: users can enter `/auth <value>` into chat to grant themselves
   admin privileges.  This value is automatically regenerated unless
   `RegenAdminPass` is false.
-- `ApprovedEmotes`: list of Twitch users whose emotes can be imported into
-  MovieNight.  Using `/addemotes <username>` in chat will add to this list.
 - `Bans`: list of banned users.
 - `LetThemLurk`: if false, announces when a user enters and leaves chat.
 - `ListenAddress`: the port that MovieNight listens on, formatted as `:8089`.
@@ -159,8 +160,6 @@ MovieNight’s configuration is controlled by `settings.json`:
 - `StreamKey`: the key that OBS will use to connect to MovieNight.
 - `StreamStats`: if true, prints statistics for the stream on server shutdown.
 - `TitleLength`: the maximum allowed length for the stream title (set with `/playing`).
-- `TwitchClientID`: OAuth client ID for the Twitch API, used for fetching emotes
-- `TwitchClientSecret`: OAuth client secret for the Twitch API; [can be generated locally with curl](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth#oauth-client-credentials-flow).
 - `WrappedEmotesOnly`: if true, requires that emote codes be wrapped in colons
   or brackets; e.g., `:PogChamp:`
 - `RateLimitChat`: the number of seconds between each message a non-privileged
