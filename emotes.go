@@ -12,20 +12,20 @@ import (
 )
 
 func loadEmotes() error {
-	newEmotes, err := processEmoteDir(files.JoinRunPath("emotes"))
+	var err error
+	common.Emotes, err = processEmoteDir(files.JoinRunPath("emotes"))
 	if err != nil {
-		return err
+		return fmt.Errorf("could not process emote dir: %w", err)
 	}
-
-	common.Emotes = newEmotes
-
 	return nil
 }
 
 func processEmoteDir(dir string) (common.EmotesMap, error) {
+	var em common.EmotesMap
 	dirInfo, err := os.ReadDir(dir)
 	if err != nil {
 		common.LogErrorf("could not open emote dir: %v\n", err)
+		return em, nil
 	}
 
 	subDirs := []string{}
@@ -38,11 +38,10 @@ func processEmoteDir(dir string) (common.EmotesMap, error) {
 		}
 	}
 
-	em := common.NewEmotesMap()
 	// Find top level emotes
 	em, err = findEmotes(dir, em)
 	if err != nil {
-		return nil, fmt.Errorf("could not findEmotes() in top level directory: %w", err)
+		return nil, fmt.Errorf("could not find emotes in top level directory: %w", err)
 	}
 
 	// Get second level subdirs (eg, "twitch", "zorchenhimer", etc)

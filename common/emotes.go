@@ -17,14 +17,6 @@ var (
 	reWrappedEmotes = regexp.MustCompile(`[:\[][^\s:\/\\\?=#\]\[]+[:\]]`)
 )
 
-func init() {
-	Emotes = NewEmotesMap()
-}
-
-func NewEmotesMap() EmotesMap {
-	return map[string]string{}
-}
-
 func (em EmotesMap) Add(fullpath string) EmotesMap {
 	fullpath = reStripStatic.ReplaceAllLiteralString(fullpath, "")
 
