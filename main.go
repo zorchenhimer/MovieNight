@@ -25,6 +25,10 @@ var staticFS embed.FS
 var stats = newStreamStats()
 
 func setupSettings(adminPass string, confFile string) error {
+	if confFile == "" {
+		confFile = files.JoinRunPath("settings.json")
+	}
+
 	var err error
 	settings, err = LoadSettings(confFile)
 	if err != nil {
@@ -54,7 +58,7 @@ type args struct {
 	RtmpAddr    string `arg:"-r,--rtmp" help:"host:port of the RTMP server"`
 	StreamKey   string `arg:"-k,--key" help:"Stream key, to protect your stream"`
 	AdminPass   string `arg:"-a,--admin" help:"Set admin password.  Overrides configuration in settings.json.  This will not write the password to settings.json."`
-	ConfigFile  string `arg:"-f,--config" default:"./settings.json" help:"URI of the conf file"`
+	ConfigFile  string `arg:"-f,--config" help:"URI of the conf file"`
 	StaticDir   string `arg:"-s,--static" help:"Directory to read static files from by default"`
 	WriteStatic bool   `arg:"--write-static" help:"write static files to the static dir"`
 }

@@ -4,7 +4,7 @@
 	"Bans": [],
 	"LetThemLurk": false,
 	"ListenAddress": ":8089",
-	"LogFile": "thelog.log",
+	"LogFile": "",
 	"LogLevel": "debug",
 	"MaxMessageCount": 300,
 	"NoCache": false,
