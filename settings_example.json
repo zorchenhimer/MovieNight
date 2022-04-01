@@ -1,6 +1,5 @@
 {
 	"AdminPassword": "",
-	"ApprovedEmotes": null,
 	"Bans": [],
 	"LetThemLurk": false,
 	"ListenAddress": ":8089",
