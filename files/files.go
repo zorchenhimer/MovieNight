@@ -104,7 +104,7 @@ func FS(fsys ReadFileDirFS, diskDir, replaceKey string) (FileSystem, error) {
 	if diskDir == "" {
 		// replaceKey is cleared because there is no diskDir to replace with the base dir with
 		replaceKey = ""
-		diskDir = RunPath()
+		diskDir = runPath()
 	}
 
 	return ioFS{
@@ -114,8 +114,12 @@ func FS(fsys ReadFileDirFS, diskDir, replaceKey string) (FileSystem, error) {
 	}, nil
 }
 
+func JoinRunPath(name string) string {
+	return path.Join(runPath(), name)
+}
+
 // Return the absolut directory containing the MovieNight binary
-func RunPath() string {
+func runPath() string {
 	ex, er := os.Executable()
 	if er != nil {
 		panic(er)

@@ -12,7 +12,7 @@ import (
 )
 
 func loadEmotes() error {
-	newEmotes, err := processEmoteDir(path.Join(files.RunPath(), "emotes"))
+	newEmotes, err := processEmoteDir(files.JoinRunPath("emotes"))
 	if err != nil {
 		return err
 	}
