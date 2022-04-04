@@ -18,20 +18,6 @@ func IsValidName(name string) bool {
 		usernameRegex.MatchString(name)
 }
 
-func Substr(input string, start int, length int) string {
-	asRunes := []rune(input)
-
-	if start >= len(asRunes) {
-		return ""
-	}
-
-	if start+length > len(asRunes) {
-		length = len(asRunes) - start
-	}
-
-	return string(asRunes[start : start+length])
-}
-
 // Return the value of "Forwarded" or "X-Forwarded-For",
 // if "Forwarded" & "X-Forwarded-For" are present then "Forwarded" value is returned.
 // Return "" if "Forwarded" and "X-Forwarded-For" are absent.
