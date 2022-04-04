@@ -1,42 +1,86 @@
 package common
 
 import (
+	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestColorHexThreeToSix(t *testing.T) {
-	expected := "RRGGBB"
-	result, _ := hexThreeToSix("RGB")
-	if result != expected {
-		t.Errorf("expected %#v, got %#v", expected, result)
+func TestHexThreeToSix(t *testing.T) {
+	result, err := hexThreeToSix("RGB")
+
+	assert.NoError(t, err)
+	assert.Equal(t, "RRGGBB", result)
+}
+
+func TestHexThreeToSixErr(t *testing.T) {
+	for _, input := range []string{"", "R", "RG", "RGBA"} {
+		t.Run(input, func(t *testing.T) {
+			_, err := hexThreeToSix(input)
+			assert.Error(t, err)
+		})
 	}
 }
 
 func TestHex(t *testing.T) {
-	// The testing data layout is inputer, Expected Red, Exp Green, Exp Blue, expect error
-	data := [][]interface{}{
-		{"010203", 1, 2, 3, false},
-		{"100", 17, 0, 0, false},
-		{"100", 1, 0, 0, true},
-		{"1000", 0, 0, 0, true},
-		{"010203", 1, 2, 4, true},
-		{"0102GG", 1, 2, 4, true},
+	testCases := []struct {
+		input string
+		red   int
+		green int
+		blue  int
+	}{
+		{"010203", 1, 2, 3},
+		{"#010203", 1, 2, 3},
+		{"100", 17, 0, 0},
+		{"#100", 17, 0, 0},
+		{"FFF", 255, 255, 255},
+		{"#FFF", 255, 255, 255},
 	}
 
-	for i := range data {
-		input := data[i][0].(string)
-		r, g, b, err := hex(input)
-		if err != nil {
-			if !data[i][4].(bool) {
-				t.Errorf("with input %#v: %v", input, err)
-			}
-			continue
-		}
+	for _, tc := range testCases {
+		red, green, blue, err := hex(tc.input)
 
-		rr, rg, rb := data[i][1].(int), data[i][2].(int), data[i][3].(int)
+		assert.NoError(t, err)
+		assert.Equal(t, tc.red, red)
+		assert.Equal(t, tc.green, green)
+		assert.Equal(t, tc.blue, blue)
+	}
+}
 
-		if !data[i][4].(bool) && (r != rr || g != rg || b != rb) {
-			t.Errorf("expected %d, %d, %d - got %d, %d, %d", r, g, b, rr, rg, rb)
-		}
+func TestHexErr(t *testing.T) {
+	for _, s := range []string{"", "ZZZ", "0ZZ", "00Z", "1000", "0102GG"} {
+		t.Run(s, func(t *testing.T) {
+			_, _, _, err := hex(s)
+			assert.Error(t, err)
+		})
+	}
+}
+
+func TestRandomColor(t *testing.T) {
+	// Get coverage for randomness
+	for i := 0; i < 100; i++ {
+		color := RandomColor()
+
+		assert.Len(t, color, 7)
+		assert.True(t, strings.HasPrefix(color, "#"))
+	}
+}
+
+func TestIsValidColor(t *testing.T) {
+	for _, s := range []string{"FFF", "#FFF", "F0F0F0", "#F0F0F0", "red"} {
+		t.Run(s, func(t *testing.T) {
+			result := IsValidColor(s)
+			assert.True(t, result)
+		})
+	}
+}
+
+func TestIsValidColorErr(t *testing.T) {
+	for _, s := range []string{"FF", "#FF", "F0F0", "#F0F0", "ZZZ", "clear"} {
+		t.Run(s, func(t *testing.T) {
+			result := IsValidColor(s)
+			assert.False(t, result)
+		})
 	}
 }
