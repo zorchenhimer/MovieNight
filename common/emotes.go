@@ -10,7 +10,7 @@ import (
 
 type EmotesMap map[string]string
 
-var Emotes EmotesMap
+var Emotes = make(EmotesMap)
 var WrappedEmotesOnly bool = false
 
 var (
