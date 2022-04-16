@@ -87,7 +87,7 @@ func runTests(t *testing.T, f func(t *testing.T, browser playwright.Browser)) {
 	for _, bt := range browsers {
 		browser, err := bt.Launch()
 		if err != nil {
-			t.Errorf("could not launch browser: %v", err)
+			t.Fatalf("could not launch browser: %v", err)
 		}
 		defer func() {
 			if browser.IsConnected() {
@@ -132,7 +132,7 @@ func TestAccess(t *testing.T) {
 	runTests(t, func(t *testing.T, browser playwright.Browser) {
 		_, err := openChat(t, browser, "testUser")
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 	})
 }
@@ -142,22 +142,22 @@ func TestChatMessage(t *testing.T) {
 	runTests(t, func(t *testing.T, browser playwright.Browser) {
 		page1, err := openChat(t, browser, "testUser1")
 		if err != nil {
-			t.Errorf("could not open chat for user 1: %v", err)
+			t.Fatalf("could not open chat for user 1: %v", err)
 		}
 
 		page2, err := openChat(t, browser, "testUser2")
 		if err != nil {
-			t.Errorf("could not open chat for user 2: %v", err)
+			t.Fatalf("could not open chat for user 2: %v", err)
 		}
 
 		err = sendMessage(page1, msg)
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 
 		_, err = page2.WaitForSelector(fmt.Sprintf(msgSpan, msg))
 		if err != nil {
-			t.Errorf("did not find testing msg: %v", err)
+			t.Fatalf("did not find testing msg: %v", err)
 		}
 	})
 }
@@ -168,17 +168,17 @@ func TestCommandNick(t *testing.T) {
 	runTests(t, func(t *testing.T, browser playwright.Browser) {
 		page, err := openChat(t, browser, "testUser")
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 
 		err = sendMessage(page, fmt.Sprintf("/nick %s", nick))
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 
 		_, err = page.WaitForSelector(fmt.Sprintf(nameSpan, nick))
 		if err != nil {
-			t.Errorf("could not find nick change message: %v", err)
+			t.Fatalf("could not find nick change message: %v", err)
 		}
 	})
 }
@@ -189,17 +189,17 @@ func TestCommandMe(t *testing.T) {
 	runTests(t, func(t *testing.T, browser playwright.Browser) {
 		page, err := openChat(t, browser, "testUser")
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 
 		err = sendMessage(page, fmt.Sprintf("/me %s", msg))
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 
 		_, err = page.WaitForSelector(fmt.Sprintf(meCmdSpan, msg))
 		if err != nil {
-			t.Errorf("could not find user me message: %v", err)
+			t.Fatalf("could not find user me message: %v", err)
 		}
 	})
 }
@@ -213,27 +213,27 @@ func TestCommandColor(t *testing.T) {
 	runTests(t, func(t *testing.T, browser playwright.Browser) {
 		page, err := openChat(t, browser, name)
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 
 		err = sendMessage(page, fmt.Sprintf("/color %s", color))
 		if err != nil {
-			t.Errorf("failed to send /color command: %v", err)
+			t.Fatalf("failed to send /color command: %v", err)
 		}
 
 		_, err = page.WaitForSelector(`//span[contains(@class, "command") and contains(text(),"Color changed successfully")]`)
 		if err != nil {
-			t.Errorf("could not find color change notification: %v", err)
+			t.Fatalf("could not find color change notification: %v", err)
 		}
 
 		err = sendMessage(page, "test")
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 
 		_, err = page.WaitForSelector(fmt.Sprintf(nameColorSpan, name, color))
 		if err != nil {
-			t.Errorf("could not find user message with new color: %v", err)
+			t.Fatalf("could not find user message with new color: %v", err)
 		}
 	})
 }
@@ -244,17 +244,17 @@ func TestGenericCommands(t *testing.T) {
 			runTests(t, func(t *testing.T, browser playwright.Browser) {
 				page, err := openChat(t, browser, "testUser")
 				if err != nil {
-					t.Error(err)
+					t.Fatal(err)
 				}
 
 				err = sendMessage(page, command)
 				if err != nil {
-					t.Errorf("failed to send %s command: %v", command, err)
+					t.Fatalf("failed to send %s command: %v", command, err)
 				}
 
 				_, err = page.WaitForSelector(commandSpan)
 				if err != nil {
-					t.Errorf("could not find command message: %v", err)
+					t.Fatalf("could not find command message: %v", err)
 				}
 			})
 		}
