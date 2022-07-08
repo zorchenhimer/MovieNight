@@ -10,6 +10,7 @@
             - [docker-compose](#docker-compose)
             - [Notes for Running Using docker-compose](#notes-for-running-using-docker-compose)
         - [FreeNAS / TrueNAS / FreeBSD build and run](#freenas-freebsd-build-and-run)
+        - [Clever-Cloud deployment and run](#clever-cloud-deployment-and-run)
     - [Usage](#usage)
     - [Configuration](#configuration)
 
@@ -96,6 +97,25 @@ The container needs to be restarted to apply any changes you make to *settings.j
 ### FreeNAS-FreeBSD build and run
 A [FreeNAS & TrueNAS plugin](https://github.com/zorglube/iocage-plugin-movienight) had been released. You should find MovieNight into the plugin section of you management GUI. However you still can make an manual plugin deployment, documentation [here](https://github.com/freenas/iocage-ix-plugins)
 If you prefer to make an Jail without using the plugin management, a script wich setup an Jail and build and run MovieNight into that Jail as been written, you'll find it here [freenas-iocage-movienight](https://github.com/zorglube/freenas-iocage-movienight)  
+
+### Clever-Cloud deployment and run
+If you don't like to handle the build and run of your MovieNight instance, here is an samll manual of "how to make it run on [Clever-Cloud](https://www.clever-cloud.com)".
+Into your Clever-Cloud dashboard: 
+ - Create a `Go` runtime instance
+ - Turn on the TCP redirection
+ - Add this configuration keys: 
+    `CC_GO_BUILD_TOOL="gobuild"` Set The build method
+    `CC_GO_PKG="github.com/zorchenhimer/MovieNight"` Set the dependencies origin
+    `CC_PRE_RUN_HOOK="cp ${MN_BUID_CONFIG}"`
+    `CC_RUN_COMMAND="${MN_BIN_DIR}/${MN_BIN_NAME} -l ${MN_PORT} -r ${MN_RTMP} -s ${MN_STATIC} -k ${MN_STREAM_KEY}"` The run command
+    `MN_BIN_DIR="/home/bas/go_home/bin"` The built binary directory
+    `MN_BIN_NAME="MovieNight"` The name of the runnable bin
+    `MN_PORT=":8080"` The http port
+    `MN_RTMP=":4040"` The rtmp port
+    `MN_STATIC="${APP_HOME}/static"` The static contents dir 
+    `MN_STREAM_KEY="YourStreamKey"` Your secret stream key
+    `MN_BUID_CONFIG="echo \"{\\\"ApprovedEmotes\\\": true, \\\"Bans\\\": [], \\\"LetThemLurk\\\": false, \\\"ListenAddress\\\": \\\":8080\\\", \\\"LogFile\\\": \\\"thelog.log\\\", \\\"LogLevel\\\": \\\"debug\\\", \\\"MaxMessageCount\\\": 300, \\\"NoCache\\\": false, \\\"NewPin\\\": true, \\\"PageTitle\\\": \\\"Movie Night\\\", \\\"RateLimitAuth\\\": 5, \\\"RateLimitChat\\\": 1, \\\"RateLimitColor\\\": 60, \\\"RateLimitDuplicate\\\": 30, \\\"RateLimitNick\\\": 300, \\\"RegenAdminPass\\\": true, \\\"RtmpListenAddress\\\": \\\":4040\\\", \\\"RoomAccess\\\": \\\"pin\\\", \\\"RoomAccessPin\\\": \\\"9445\\\", \\\"StreamKey\\\": \\\"ALongStreamKey\\\", \\\"StreamStats\\\": true, \\\"TitleLength\\\": 50, \\\"WrappedEmotesOnly\\\": true}\" >> ${MN_BIN_DIR}/settings.json"` The command that will build the `settings.json`
+ - Try run your MovieNight instance
 
 ## Usage
 Now you can use OBS to push a stream to the server.  Set the stream URL to
