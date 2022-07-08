@@ -54,14 +54,14 @@ func setupSettings(adminPass string, confFile string) error {
 }
 
 type args struct {
-	Addr        string `arg:"-l,--addr" help:"host:port of the HTTP server"`
-	RtmpAddr    string `arg:"-r,--rtmp" help:"host:port of the RTMP server"`
-	StreamKey   string `arg:"-k,--key" help:"Stream key, to protect your stream"`
-	AdminPass   string `arg:"-a,--admin" help:"Set admin password. Overrides configuration in settings.json. This will not write the password to settings.json."`
-	ConfigFile  string `arg:"-f,--config" help:"URI of the conf file"`
-	StaticDir   string `arg:"-s,--static" help:"Directory to read static files from by default"`
-	EmotesDir   string `arg:"-e,--emotes" help:"Directory to read emotes. By default it uses the executable directory"`
-	WriteStatic bool   `arg:"--write-static" help:"write static files to the static dir"`
+	Addr        string `arg:"-l,--addr,env:MN_ADDR" help:"host:port of the HTTP server"`
+	RtmpAddr    string `arg:"-r,--rtmp,env:MN_RTMP" help:"host:port of the RTMP server"`
+	StreamKey   string `arg:"-k,--key,env:MN_STREAM_KEY" help:"Stream key, to protect your stream"`
+	AdminPass   string `arg:"-a,--admin,env:MN_ADMIN_PASS" help:"Set admin password. Overrides configuration in settings.json. This will not write the password to settings.json."`
+	ConfigFile  string `arg:"-f,--config,env:MN_CONFIG" help:"URI of the conf file"`
+	StaticDir   string `arg:"-s,--static,env:MN_STATIC" help:"Directory to read static files from by default"`
+	EmotesDir   string `arg:"-e,--emotes,env:MN_EMOTES" help:"Directory to read emotes. By default it uses the executable directory"`
+	WriteStatic bool   `arg:"--write-static,env:MN_WRITE_STATIC" help:"write static files to the static dir"`
 }
 
 func main() {

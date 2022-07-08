@@ -124,21 +124,30 @@ and a chat only version at
 http://your.domain.host:8089/chat
 ```
 
-The default listen port is `:8089`.  It can be changed by providing a new port
-at startup:
+Some configurations values can be provided by three ways environment variables, run args, settings.json file. 
 
 ```text
-Usage of .\MovieNight.exe:
-  -e bool
-        Whether or not to download approved emotes on startup (default "false")
-  -k string
-        Stream key, to protect your stream (default: "")
-  -l string
-        host:port of the MovieNight (default ":8089")
-  -r string
-        host:port of the RTMP server (default ":1935")
-  -f string
-        the settings file you want to use (default "./settings.json")
+Usage: MovieNight.exe [--addr ADDR] [--rtmp RTMP] [--key KEY] [--admin ADMIN] [--config CONFIG] [--static STATIC] [--emotes EMOTES] [--write-static]
+
+Options:
+  --addr ADDR, -l ADDR
+        host:port of the HTTP server [env: MN_ADDR]
+  --rtmp RTMP, -r RTMP
+        host:port of the RTMP server [env: MN_RTMP]
+  --key KEY, -k KEY
+        Stream key, to protect your stream [env: MN_STREAM_KEY]
+  --admin ADMIN, -a ADMIN
+        Set admin password. Overrides configuration in settings.json. This will not write the password to settings.json. [env: MN_ADMIN_PASS]
+  --config CONFIG, -f CONFIG
+        URI of the conf file [env: MN_CONFIG]
+  --static STATIC, -s STATIC
+        Directory to read static files from by default [env: MN_STATIC]
+  --emotes EMOTES, -e EMOTES
+        Directory to read emotes. By default it uses the executable directory [env: MN_EMOTES]
+  --write-static
+        write static files to the static dir
+  --help, -h
+        display this help and exit
 ```
 
 ## Configuration
