@@ -1,5 +1,5 @@
-/// <reference path="./both.js" />
-/// <reference path="./consts.js" />
+/// <reference path='./both.js' />
+/// <reference path='./consts.js' />
 
 let maxMessageCount = 0;
 let inChat = false;
@@ -12,14 +12,15 @@ const SuggestionType = {
     Name: 1,
     Emote: 2
 };
+
 Object.freeze(SuggestionType);
 let currentSuggestionType = SuggestionType.None;
-let currentSuggestion = "";
+let currentSuggestion = '';
 let filteredSuggestion = [];
 
 function debug() {
-    let color = getCookie("color");
-    let timestamp = getCookie("timestamp");
+    let color = getCookie('color');
+    let timestamp = getCookie('timestamp');
 
     Object.entries({
         maxMessageCount,
@@ -28,9 +29,7 @@ function debug() {
         emotes,
         color,
         timestamp,
-    }).forEach(([k, v]) => {
-        console.log(k, v);
-    });
+    }).forEach(([k, v]) => console.log(k, v));
 }
 
 function randomColor() {
@@ -47,7 +46,7 @@ function randomColor() {
  * @param {string} color
  */
 function isValidColor(color) {
-    color = color.replace(/^#/, "", color).toLowerCase();
+    color = color.replace(/^#/, '', color).toLowerCase();
     if (Colors.includes(color)) {
         return true;
     }
@@ -69,37 +68,34 @@ function isValidColor(color) {
  * @param {string} link
  */
 function setPlaying(title, link) {
-    if (title !== "") {
+    if (title !== '') {
         $('#playing').text(title);
-        document.title = pageTitle + " | " + title;
+        document.title = `${pageTitle} | ${title}`;
     } else {
-        $('#playing').text("");
+        $('#playing').text('');
         document.title = pageTitle;
     }
 
     $('#playing').removeAttr('href');
-    if (link !== "") {
+    if (link !== '') {
         $('#playing').attr('href', link);
     }
 }
 
 function getWsUri() {
     port = window.location.port;
-    if (port != "") {
-        port = ":" + port;
+    if (port != '') {
+        port = `:${port}`;
     }
-    proto = "ws://"
-    if (location.protocol == "https:") {
-        proto = "wss://"
-    }
-    return proto + window.location.hostname + port + "/ws";
+    proto = location.protocol == 'https:' ? 'wss://' : 'ws://';
+    return `${proto}${window.location.hostname}${port}/ws`;
 }
 
 /**
  * @param {string} msg
  */
 function appendMessages(msg) {
-    let msgs = $("#messages").find('div');
+    let msgs = $('#messages').find('div');
 
     // let's just say that if the max count is less than 1, then the count is infinite
     // the server side should take care of chaking max count ranges
@@ -107,8 +103,8 @@ function appendMessages(msg) {
         msgs.first().remove();
     }
 
-    $("#messages").append(`<div>${msg}</div>`);
-    $("#messages").children().last()[0].scrollIntoView({ block: "end" });
+    $('#messages').append(`<div>${msg}</div>`);
+    $('#messages').children().last()[0].scrollIntoView({ block: 'end' });
 }
 
 function purgeChat() {
@@ -116,21 +112,21 @@ function purgeChat() {
 }
 
 function openChat() {
-    console.log("chat opening");
-    $("#joinbox").css("display", "none");
-    $("#chat").css("display", "grid");
-    $("#hidden").css("display", "")
-    $("#msg").val("");
-    $("#msg").focus();
+    console.log('chat opening');
+    $('#joinbox').css('display', 'none');
+    $('#chat').css('display', 'grid');
+    $('#hidden').css('display', '')
+    $('#msg').val('');
+    $('#msg').focus();
     inChat = true;
 }
 
 function closeChat() {
-    console.log("chat closing");
-    $("#joinbox").css("display", "");
-    $("#chat").css("display", "none");
-    $("#hidden").css("display", "none")
-    setNotifyBox("That name was already used!");
+    console.log('chat closing');
+    $('#joinbox').css('display', '');
+    $('#chat').css('display', 'none');
+    $('#hidden').css('display', 'none')
+    setNotifyBox('That name was already used!');
     inChat = false;
 }
 
@@ -140,20 +136,20 @@ function handleHiddenMessage(data) {
             users = data.Data;
             break;
         case ClientDataType.CdColor:
-            setCookie("color", data.Data);
+            setCookie('color', data.Data);
             break;
         case ClientDataType.CdEmote:
             emotes = data.Data;
             break;
         case ClientDataType.CdJoin:
-            setNotifyBox("");
+            setNotifyBox('');
             openChat();
             break;
         case ClientDataType.CdNotify:
             setNotifyBox(data.Data);
             break;
         default:
-            console.warn("unhandled hidden type", data);
+            console.warn('unhandled hidden type', data);
             break;
     }
 }
@@ -167,7 +163,7 @@ function handleChatMessage(data, isEvent) {
 
     if (isEvent) {
         function nameChangeMsg(forced) {
-            let users = data.User.split(":");
+            let users = data.User.split(':');
 
             if (users.length < 2) {
                 return `<span class="event">Somebody changed their name, but IDK who.</span>`;
@@ -203,29 +199,29 @@ function handleChatMessage(data, isEvent) {
 
     } else {
         function spanMsg(className, content) {
-            return `<span class="${className}">${content}</span>`;;
+            return `<span class="${className}">${content}</span>`;
         }
         switch (data.Type) {
             case MessageType.MsgAction:
-                msg = `<span style="color:${data.Color}">${spanMsg("name", data.From)} ${spanMsg("cmdme", msg)}</span>`;
+                msg = `<span style="color:${data.Color}">${spanMsg('name', data.From)} ${spanMsg('cmdme', msg)}</span>`;
                 break;
             case MessageType.MsgServer:
-                msg = spanMsg("announcement", msg);
+                msg = spanMsg('announcement', msg);
                 break;
             case MessageType.MsgError:
-                msg = spanMsg("error", msg);
+                msg = spanMsg('error', msg);
                 break;
             case MessageType.MsgNotice:
-                msg = spanMsg("notice", msg);
+                msg = spanMsg('notice', msg);
                 break;
             case MessageType.MsgCommandResponse:
-                msg = spanMsg("command", msg);
+                msg = spanMsg('command', msg);
                 break;
             case MessageType.MsgCommandError:
-                msg = spanMsg("commanderror", msg);
+                msg = spanMsg('commanderror', msg);
                 break;
             default:
-                msg = spanMsg("msg", msg);
+                msg = spanMsg('msg', msg);
                 switch (data.Level) {
                     case CommandLevel.CmdlMod:
                         msg = `<span><img src="/static/img/mod.png" class="badge" /><span class="name" style="color:${data.Color}">${data.From}</span><b>:</b> ${msg}</span>`;
@@ -241,9 +237,9 @@ function handleChatMessage(data, isEvent) {
         }
     }
 
-    if (getCookie("timestamp") === "true" && (data.Type == MessageType.MsgChat || data.Type == MessageType.MsgAction)) {
+    if (getCookie('timestamp') === 'true' && (data.Type == MessageType.MsgChat || data.Type == MessageType.MsgAction)) {
         let now = new Date();
-        let pad = (n) => String(n.toFixed(0)).padStart(2, "0");
+        let pad = (n) => String(n.toFixed(0)).padStart(2, '0');
         msg = `<span class="time">${pad(now.getHours())}:${pad(now.getMinutes())}</span> ${msg}`;
     }
     appendMessages(msg);
@@ -254,22 +250,22 @@ function handleChatCommand(data) {
         if (data.Arguments && data.Arguments.length > 0) {
             url = data.Arguments[0];
         }
-        window.open(url, "_blank", "menubar=0,status=0,toolbar=0,width=300,height=600");
+        window.open(url, '_blank', 'menubar=0,status=0,toolbar=0,width=300,height=600');
     }
 
     switch (data.Command) {
         case CommandType.CmdPlaying:
             if (!data.Arguments) {
-                setPlaying("", "");
+                setPlaying('', '');
             } else if (data.Arguments.length == 1) {
-                setPlaying(data.Arguments[0], "");
+                setPlaying(data.Arguments[0], '');
             } else {
                 setPlaying(data.Arguments[0], data.Arguments[1]);
             }
             break;
         case CommandType.CmdRefreshPlayer:
             // calling a video function
-            if (typeof initPlayer !== "undefined") {
+            if (typeof initPlayer !== 'undefined') {
                 initPlayer();
             }
             break;
@@ -278,14 +274,13 @@ function handleChatCommand(data) {
             appendMessages(`<span class="notice">Chat has been purged by a moderator.</span>`);
             break;
         case CommandType.CmdHelp:
-            openMenu("/help");
+            openMenu('/help');
             break;
         case CommandType.CmdEmotes:
-            openMenu("/emotes");
+            openMenu('/emotes');
             break;
     }
 }
-
 
 /**
  * @param {*} message
@@ -297,7 +292,7 @@ function recieveMessage(message) {
             break;
         case DataType.DTEvent:
             if (message.Data.Event != EventType.EvServerMessage) {
-                sendMessage("", ClientDataType.CdUsers);
+                sendMessage('', ClientDataType.CdUsers);
             }
         case DataType.DTChat:
             handleChatMessage(message.Data, message.Type == DataType.DTEvent);
@@ -321,7 +316,7 @@ function websocketSend(data, log = true) {
     if (ws.readyState == ws.OPEN) {
         ws.send(data);
     } else {
-        console.log("did not send data because websocket is not open", data);
+        console.log('did not send data because websocket is not open', data);
     }
 }
 
@@ -331,7 +326,7 @@ function websocketSend(data, log = true) {
  * @param {boolean} log
  */
 function sendMessage(msg, type, log=true) {
-    if (typeof msg !== "string") {
+    if (typeof msg !== 'string') {
         msg = JSON.stringify(msg);
     }
 
@@ -345,10 +340,9 @@ function sendMessage(msg, type, log=true) {
     }), log);
 }
 
-
 function sendChat() {
-    sendMessage($("#msg").val());
-    $("#msg").val("");
+    sendMessage($('#msg').val());
+    $('#msg').val('');
 }
 
 function emoteToHtml(file, title) {
@@ -356,18 +350,18 @@ function emoteToHtml(file, title) {
 }
 
 function updateSuggestionCss(m) {
-    if ($("#suggestions").children().length > 0) {
-        $("#suggestions").css("bottom", $("#msg").outerHeight(true) - 1 + "px");
-        $("#suggestions").css("display", "");
+    if ($('#suggestions').children().length > 0) {
+        $('#suggestions').css('bottom', `${$('#msg').outerHeight(true) - 1}px`);
+        $('#suggestions').css('display', '');
     } else {
-        $("#suggestions").css("display", "none");
+        $('#suggestions').css('display', 'none');
     }
 }
 
 function updateSuggestionScroll() {
-    let item = $("#suggestions .selectedName");
+    let item = $('#suggestions .selectedName');
     if (item.length !== 0) {
-        item[0].scrollIntoView({ block: "center" });
+        item[0].scrollIntoView({ block: 'center' });
     }
 }
 
@@ -376,32 +370,32 @@ function updateSuggestionDiv() {
 
     let divs = Array(filteredSuggestion.length);
     if (filteredSuggestion.length > 0) {
-        if (currentSuggestion == "") {
+        if (currentSuggestion == '') {
             currentSuggestion = filteredSuggestion[filteredSuggestion.length - 1]
         }
 
         let hasCurrentSuggestion = false;
         for (let i = 0; i < filteredSuggestion.length; i++) {
-            divs[i] = "<div";
+            divs[i] = '<div';
             let suggestion = filteredSuggestion[i];
             if (suggestion == currentSuggestion) {
                 hasCurrentSuggestion = true;
                 divs[i] += selectedClass;
             }
-            divs[i] += ">";
+            divs[i] += '>';
 
             if (currentSuggestionType == SuggestionType.Emote) {
                 divs[i] += emoteToHtml(emotes[suggestion], suggestion);
             }
 
-            divs[i] += suggestion + "</div>";
+            divs[i] += `${suggestion}</div>`;
         }
 
         if (!hasCurrentSuggestion) {
             divs[0] = divs[0].slice(0, 4) + selectedClass + divs[0].slice(4);
         }
     }
-    $("#suggestions")[0].innerHTML = divs.join("\n");
+    $('#suggestions')[0].innerHTML = divs.join('\n');
     updateSuggestionScroll();
 }
 
@@ -416,14 +410,14 @@ function processMessageKey(e) {
         return true;
     }
 
-    if (filteredSuggestion.length == 0 || currentSuggestion == "") {
+    if (filteredSuggestion.length == 0 || currentSuggestion == '') {
         return false;
     }
 
     switch (keyCode) {
         case 27: // esc
             filteredSuggestion = [];
-            currentSuggestion = "";
+            currentSuggestion = '';
             currentSuggestionType = SuggestionType.None;
             break;
         case 38: // up
@@ -453,20 +447,20 @@ function processMessageKey(e) {
         case 13: // enter
             const re = /[:@]([\w]+)(\s|$)/;
 
-            let msg = $("#msg");
+            let msg = $('#msg');
             let val = msg.val();
 
             let match = val.match(re);
-            let endsSpace = match[0].endsWith(" ");
-            let replaceVal = "";
+            let endsSpace = match[0].endsWith(' ');
+            let replaceVal = '';
             if (currentSuggestionType == SuggestionType.Emote) {
-                replaceVal = ":" + currentSuggestion + ":";
+                replaceVal = `:${currentSuggestion}:`;
             } else {
-                replaceVal = "@" + currentSuggestion;
+                replaceVal = `@${currentSuggestion}`;
             }
 
             if (endsSpace) {
-                replaceVal += " ";
+                replaceVal += ' ';
             }
 
             let idx = val.indexOf(match[0]) + replaceVal.length;
@@ -493,12 +487,12 @@ function processMessage() {
         }
     }
 
-    let text = $("#msg").val().toLowerCase();
-    let startIdx = $("#msg")[0].selectionStart;
+    let text = $('#msg').val().toLowerCase();
+    let startIdx = $('#msg')[0].selectionStart;
 
     filteredSuggestion = [];
     if (text && (users || emotes)) {
-        let parts = text.split(" ")
+        let parts = text.split(' ')
 
         let caret = 0;
         for (let i = 0; i < parts.length; i++) {
@@ -512,17 +506,17 @@ function processMessage() {
             // empty string element in the slice. Also check that the index of the
             // cursor is between the start of the word and the end
             if (word && caret <= startIdx && startIdx <= caret + word.length) {
-                if (word[0] == "@") {
+                if (word[0] == '@') {
                     currentSuggestionType = SuggestionType.Name;
                     users.forEach(name => handleSuggestion(word, name));
-                } else if (word[0] == ":") {
+                } else if (word[0] == ':') {
                     currentSuggestionType = SuggestionType.Emote;
                     Object.keys(emotes).forEach(emote => handleSuggestion(word, emote));
                 }
             }
 
             if (filteredSuggestion.length > 0) {
-                currentSuggestion = "";
+                currentSuggestion = '';
                 break;
             }
 
@@ -536,59 +530,59 @@ function processMessage() {
 /**
  * @param {string} msg
  */
-function setNotifyBox(msg = "") {
-    $("#notifyBox").html(msg);
+function setNotifyBox(msg = '') {
+    $('#notifyBox').html(msg);
 }
 
 // Button Wrapper Functions
 function auth() {
-    let pass = prompt("Enter pass");
-    if (pass != "" && pass !== null) {
-        sendMessage("/auth " + pass);
+    let pass = prompt('Enter pass');
+    if (pass != '' && pass !== null) {
+        sendMessage(`/auth ${pass}`);
     }
 }
 
 function nick() {
-    let nick = prompt("Enter new name");
-    if (nick != "" && nick !== null) {
-        sendMessage("/nick " + nick);
+    let nick = prompt('Enter new name');
+    if (nick != '' && nick !== null) {
+        sendMessage(`/nick ${nick}`);
     }
 }
 
 function help() {
-    sendMessage("/help");
+    sendMessage('/help');
 }
 
 function showColors(show) {
     if (show === undefined) {
-        show = $("#hiddencolor").css("display") === "none";
+        show = $('#hiddencolor').css('display') === 'none';
     }
 
-    $("#hiddencolor").css("display", show ? "block" : "");
+    $('#hiddencolor').css('display', show ? 'block' : '');
 }
 
 function colorAsHex() {
-    let r = parseInt($("#colorRed").val()).toString(16).padStart(2, "0");
-    let g = parseInt($("#colorGreen").val()).toString(16).padStart(2, "0");
-    let b = parseInt($("#colorBlue").val()).toString(16).padStart(2, "0");
+    let r = parseInt($('#colorRed').val()).toString(16).padStart(2, '0');
+    let g = parseInt($('#colorGreen').val()).toString(16).padStart(2, '0');
+    let b = parseInt($('#colorBlue').val()).toString(16).padStart(2, '0');
     return `#${r}${g}${b}`
 }
 
 function updateColor() {
-    let r = $("#colorRed").val();
-    let g = $("#colorGreen").val();
-    let b = $("#colorBlue").val();
+    let r = $('#colorRed').val();
+    let g = $('#colorGreen').val();
+    let b = $('#colorBlue').val();
 
-    $("#colorRedLabel").text(r.padStart(3, "0"));
-    $("#colorGreenLabel").text(g.padStart(3, "0"));
-    $("#colorBlueLabel").text(b.padStart(3, "0"));
+    $('#colorRedLabel').text(r.padStart(3, '0'));
+    $('#colorGreenLabel').text(g.padStart(3, '0'));
+    $('#colorBlueLabel').text(b.padStart(3, '0'));
 
-    $("#colorName").css("color", `rgb(${r}, ${g}, ${b})`);
+    $('#colorName').css('color', `rgb(${r}, ${g}, ${b})`);
 
     if (isValidColor(colorAsHex())) {
-        $("#colorWarning").text("");
+        $('#colorWarning').text('');
     } else {
-        $("#colorWarning").text("Unreadable Color");
+        $('#colorWarning').text('Unreadable Color');
     }
 }
 
@@ -599,8 +593,8 @@ function changeColor() {
 }
 
 function colorSelectChange() {
-    let val = $("#colorSelect").val()
-    if (val !== "") {
+    let val = $('#colorSelect').val()
+    if (val !== '') {
         sendColor(val);
     }
 }
@@ -609,7 +603,7 @@ function colorSelectChange() {
  * @param {string} color
  */
 function sendColor(color) {
-    sendMessage("/color " + color);
+    sendMessage(`/color ${color}`);
     showColors(false);
 }
 
@@ -618,37 +612,35 @@ function setupWebSocket() {
     ws = new WebSocket(getWsUri());
     ws.onmessage = (m) => recieveMessage(JSON.parse(m.data));
     ws.onopen = () => {
-        console.log("Websocket Open");
+        console.log('Websocket Open');
         // Ngnix websocket timeouts at 60s
         // http://nginx.org/en/docs/http/websocket.html
-        setInterval(() => {
-            sendMessage("", ClientDataType.CdPing, false);
-        }, 45000);
+        setInterval(() => {sendMessage('', ClientDataType.CdPing, false)}, 45000);
     }
     ws.onclose = () => {
         closeChat();
-        setNotifyBox("The connection to the server has closed. Please refresh page to connect again.");
-        $("#joinbox").css("display", "none");
+        setNotifyBox('The connection to the server has closed. Please refresh page to connect again.');
+        $('#joinbox').css('display', 'none');
     }
     ws.onerror = (e) => {
-        console.log("Websocket Error:", e);
+        console.log('Websocket Error:', e);
         e.target.close();
     }
 }
 
 function setupEvents() {
-    $("#name").on({
+    $('#name').on({
         keypress: (e) => {
             if (e.originalEvent.keyCode == 13) {
-                $("#join").trigger("click");
+                $('#join').trigger('click');
             }
         }
     });
 
-    $("#msg").on({
+    $('#msg').on({
         keypress: (e) => {
             if (e.originalEvent.keyCode == 13 && !e.originalEvent.shiftKey) {
-                $("#send").trigger("click");
+                $('#send').trigger('click');
                 e.preventDefault();
             }
         },
@@ -660,39 +652,39 @@ function setupEvents() {
         input: () => processMessage(),
     });
 
-    $("#send").on({
-        click: () => $("#msg").focus(),
+    $('#send').on({
+        click: () => $('#msg').focus(),
     });
 
     var suggestionObserver = new MutationObserver(
         (mutations) => mutations.forEach(updateSuggestionCss)
-    ).observe($("#suggestions")[0], { childList: true });
+    ).observe($('#suggestions')[0], { childList: true });
 }
 
 function join() {
-    color = getCookie("color");
+    color = getCookie('color');
     if (!color) {
         // If color is not set then we want to assign a random color to the user
         color = randomColor();
     } else if (!isValidColor(color)) {
         console.info(`${color} is not a valid color, clearing cookie`);
-        deleteCookie("color");
+        deleteCookie('color');
     }
 
     sendMessage({
-        Name: $("#name").val(),
+        Name: $('#name').val(),
         Color: color,
     }, ClientDataType.CdJoin);
 }
 
-window.addEventListener("onresize", updateSuggestionCss);
+window.addEventListener('onresize', updateSuggestionCss);
 
-window.addEventListener("load", () => {
+window.addEventListener('load', () => {
     setNotifyBox();
     setupWebSocket();
     setupEvents();
 
     // Make sure name is focused on start
-    $("#name").focus();
-    $("#timestamp").prop("checked", getCookie("timestamp") === "true");
+    $('#name').focus();
+    $('#timestamp').prop('checked', getCookie('timestamp') === 'true');
 });
