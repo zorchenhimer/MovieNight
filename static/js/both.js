@@ -1,6 +1,6 @@
-/// <reference path="./jquery.js" />
+/// <reference path='./jquery.js' />
 
-let konamiCode = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"]
+let konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']
 let lastKeys = []
 let devKeys = false;
 
@@ -8,7 +8,7 @@ let devKeys = false;
  * @param {string} cname
  */
 function getCookie(cname) {
-    var name = cname + "=";
+    var name = `${cname}=`;
     var decodedCookie = decodeURIComponent(document.cookie);
     var ca = decodedCookie.split(';');
     for (var i = 0; i < ca.length; i++) {
@@ -20,7 +20,7 @@ function getCookie(cname) {
             return c.substring(name.length, c.length);
         }
     }
-    return "";
+    return '';
 }
 
 /**
@@ -39,7 +39,7 @@ function setCookie(cname, val) {
 }
 
 // Make this on all pages so video page also doesn't do this
-$(document).on("keydown", function (e) {
+$(document).on('keydown', function (e) {
     lastKeys.push(e);
     if (lastKeys.length > 10) {
         lastKeys.shift();
@@ -49,7 +49,7 @@ $(document).on("keydown", function (e) {
         let modifiedLastKeys = []
         lastKeys.forEach((e) => {
             switch (e.key) {
-                case " ":
+                case ' ':
                     modifiedLastKeys.push(`Space - ${e.keyCode}`);
                     break;
                 default:
@@ -57,10 +57,10 @@ $(document).on("keydown", function (e) {
                     break;
             }
         })
-        $("#devKeys").html(`'${modifiedLastKeys.join("', '")}'`);
+        $('#devKeys').html(`'${modifiedLastKeys.join("', '")}'`);
     }
 
-    if (e.which === 8 && !$(e.target).is("input, textarea")) {
+    if (e.which === 8 && !$(e.target).is('input, textarea')) {
         e.preventDefault();
     }
 
@@ -75,26 +75,26 @@ function checkKonami(e) {
                 return;
             }
         }
-        $("#remote").css("display", "block");
+        $('#remote').css('display', 'block');
     }
 }
 
 function flipRemote() {
-    $("#remote").attr("src", "/static/img/remote_active.png");
+    $('#remote').attr('src', '/static/img/remote_active.png');
     setTimeout(() => {
-        $("#remote").attr("src", "/static/img/remote.png");
+        $('#remote').attr('src', '/static/img/remote.png');
     }, Math.round(Math.random() * 10000) + 1000);
 }
 
 function enableDebug() {
     devKeys = true;
-    $("#devKeys").css("display", "block");
+    $('#devKeys').css('display', 'block');
 }
 
 /*
 // Just add a / above to uncomment the block
 setTimeout(() => {
     enableDebug();
-    alert("Comment this out. It shows the keys.");
+    alert('Comment this out. It shows the keys.');
 }, 150);
 //*/

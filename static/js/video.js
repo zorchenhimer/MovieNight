@@ -1,4 +1,4 @@
-/// <reference path="./both.js" />
+/// <reference path='./both.js' />
 
 
 function initPlayer() {
@@ -7,10 +7,10 @@ function initPlayer() {
         return;
     }
 
-    let videoElement = document.querySelector("#videoElement");
+    let videoElement = document.querySelector('#videoElement');
     let flvPlayer = flvjs.createPlayer({
-        type: "flv",
-        url: "/live"
+        type: 'flv',
+        url: '/live'
     });
     flvPlayer.attachMediaElement(videoElement);
     flvPlayer.load();
@@ -23,4 +23,4 @@ function initPlayer() {
     };
 }
 
-window.addEventListener("load", initPlayer);
+window.addEventListener('load', initPlayer);
