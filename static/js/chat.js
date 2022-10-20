@@ -445,13 +445,8 @@ function processMessageKey(e) {
             break;
         case 9: // tab
         case 13: // enter
-            const re = /[:@]([\w]+)(\s|$)/;
+            const re = /[:@](([\w]+)(\s|$))?/;
 
-            let msg = $('#msg');
-            let val = msg.val();
-
-            let match = val.match(re);
-            let endsSpace = match[0].endsWith(' ');
             let replaceVal = '';
             if (currentSuggestionType == SuggestionType.Emote) {
                 replaceVal = `:${currentSuggestion}:`;
@@ -459,6 +454,11 @@ function processMessageKey(e) {
                 replaceVal = `@${currentSuggestion}`;
             }
 
+            let msg = $('#msg');
+            let val = msg.val();
+
+            let match = val.match(re);
+            let endsSpace = match[0].endsWith(' ');
             if (endsSpace) {
                 replaceVal += ' ';
             }
