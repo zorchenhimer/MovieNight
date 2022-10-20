@@ -32,11 +32,11 @@ jobs:
 
     strategy:
       matrix:
-        target: [linux, windows, darwin]
+        os: [linux, windows, darwin, netbsd, freebsd, openbsd]
         arch: [amd64, arm64]
 
     env:
-      GOOS: ${{ matrix.target }}
+      GOOS: ${{ matrix.os }}
       GOARCH: ${{ matrix.arch }}
 
     steps:
@@ -49,63 +49,8 @@ jobs:
       - name: build
         run: go build
 
-      - name: create artifacts dir
-        run: mkdir artifacts
-
-      - name: copy settings
-        run: cp settings_example.json artifacts/settings.json
-
-      - name: copy static
-        run: cp -r static artifacts/
-
-      - name: copy MovieNight
-        run: cp MovieNight* artifacts/
-
       - uses: actions/upload-artifact@v3
         with:
-          name: MovieNight-${{ matrix.target }}-${{ matrix.arch }}
+          name: MovieNight-${{ matrix.os }}-${{ matrix.arch }}
           if-no-files-found: error
-          path: artifacts/*
-
-  test-ui-unix:
-    runs-on: ${{ matrix.os }}
-
-    needs: build
-
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            artifact: MovieNight-linux-amd64
-          - os: macos-latest
-            artifact: MovieNight-darwin-amd64
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: ${{ matrix.artifact }}
-
-      - name: test
-        run: |
-          chmod +x ./MovieNight
-          ./MovieNight & cd _uitests && go test
-
-  test-ui-windows:
-    runs-on: windows-latest
-
-    needs: build
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: MovieNight-windows-amd64
-
-      - name: test
-        run: |
-          Start-Job { ./MovieNight.exe }
-          cd _uitests
-          go test
+          path: MovieNight*

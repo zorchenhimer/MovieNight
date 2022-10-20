@@ -4,7 +4,6 @@
 *.dll
 *.so
 *.dylib
-*.aseprite
 
 # Test binary, built with `go test -c`
 *.test
@@ -12,23 +11,22 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+
+## Custom
+
 # Log files
 *.log
 
 # GoCode debug file
 debug
 
-# Linux binary
-MovieNight
-
-# Windows binary
-MovieNight.exe
-
-# Darwin binary
-MovieNightDarwin
-
-# Go wasm script
-static/js/wasm_exec.js
+# MovieNight binary
+MovieNight*
 
 # Twitch channel info
 static/subscriber.json
@@ -39,9 +37,6 @@ settings.json
 # vscode
 .vscode
 
-# Autobuilt wasm files
-static/main.wasm
-
 # tags for vim
 tags
 
@@ -49,3 +44,6 @@ tags
 subscribers.json
 /.settings/
 /.project
+
+# Emotes dir
+emotes

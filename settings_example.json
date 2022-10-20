@@ -1,10 +1,9 @@
 {
 	"AdminPassword": "",
-	"ApprovedEmotes": null,
 	"Bans": [],
 	"LetThemLurk": false,
 	"ListenAddress": ":8089",
-	"LogFile": "thelog.log",
+	"LogFile": "",
 	"LogLevel": "debug",
 	"MaxMessageCount": 300,
 	"NoCache": false,
@@ -18,7 +17,5 @@
 	"RtmpListenAddress": ":1935",
 	"StreamKey": "ALongStreamKey",
 	"TitleLength": 50,
-	"TwitchClientID": "",
-	"TwitchClientSecret": "",
 	"WrappedEmotesOnly": false
 }

@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	html "html/template"
+	"io/fs"
 	"net/http"
 )
 
@@ -10,21 +11,20 @@ import (
 var serverTemplates map[string]*html.Template
 
 // Called from the server
-func InitTemplates() error {
+func InitTemplates(filesystem fs.FS) error {
 	serverTemplates = make(map[string]*html.Template)
-	var runPath string = RunPath()
 
 	// keys and files to load for that template
 	var serverTemplateDefs map[string][]string = map[string][]string{
-		"pin":    {runPath + "/static/base.html", runPath + "/static/thedoor.html"},
-		"main":   {runPath + "/static/base.html", runPath + "/static/main.html"},
-		"help":   {runPath + "/static/base.html", runPath + "/static/help.html"},
-		"emotes": {runPath + "/static/base.html", runPath + "/static/emotes.html"},
+		"pin":    {"static/base.html", "static/thedoor.html"},
+		"main":   {"static/base.html", "static/main.html"},
+		"help":   {"static/base.html", "static/help.html"},
+		"emotes": {"static/base.html", "static/emotes.html"},
 	}
 
 	// Parse server templates
 	for key, files := range serverTemplateDefs {
-		t, err := html.ParseFiles(files...)
+		t, err := html.ParseFS(filesystem, files...)
 		if err != nil {
 			return fmt.Errorf("unable to parse templates for %s: %w", key, err)
 		}

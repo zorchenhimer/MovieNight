@@ -2,31 +2,33 @@ package main
 
 import (
 	"context"
+	"embed"
 	"errors"
-	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
+	"github.com/alexflint/go-arg"
 	"github.com/gorilla/sessions"
 	"github.com/nareix/joy4/format"
 	"github.com/nareix/joy4/format/rtmp"
 	"github.com/zorchenhimer/MovieNight/common"
+	"github.com/zorchenhimer/MovieNight/files"
 )
 
-var (
-	pullEmotes bool
-	addr       string
-	rtmpAddr   string
-	sKey       string
-	stats      = newStreamStats()
-	sAdminPass string
-	confFile   string
-)
+//go:embed static/*.html static/css static/img static/js
+var staticFS embed.FS
 
-func setupSettings() error {
+var stats = newStreamStats()
+
+func setupSettings(adminPass string, confFile string) error {
+	if confFile == "" {
+		confFile = files.JoinRunPath("settings.json")
+	}
+
 	var err error
 	settings, err = LoadSettings(confFile)
 	if err != nil {
@@ -36,9 +38,9 @@ func setupSettings() error {
 		return fmt.Errorf("missing stream key is settings.json")
 	}
 
-	if sAdminPass != "" {
+	if adminPass != "" {
 		fmt.Println("Password provided at runtime; ignoring password in set in settings.")
-		settings.AdminPassword = sAdminPass
+		settings.AdminPassword = adminPass
 	}
 
 	sstore = sessions.NewCookieStore([]byte(settings.SessionKey))
@@ -51,33 +53,46 @@ func setupSettings() error {
 	return nil
 }
 
+type args struct {
+	Addr        string `arg:"-l,--addr" help:"host:port of the HTTP server"`
+	RtmpAddr    string `arg:"-r,--rtmp" help:"host:port of the RTMP server"`
+	StreamKey   string `arg:"-k,--key" help:"Stream key, to protect your stream"`
+	AdminPass   string `arg:"-a,--admin" help:"Set admin password.  Overrides configuration in settings.json.  This will not write the password to settings.json."`
+	ConfigFile  string `arg:"-f,--config" help:"URI of the conf file"`
+	StaticDir   string `arg:"-s,--static" help:"Directory to read static files from by default"`
+	WriteStatic bool   `arg:"--write-static" help:"write static files to the static dir"`
+}
+
 func main() {
-	flag.StringVar(&addr, "l", "", "host:port of the HTTP server")
-	flag.StringVar(&rtmpAddr, "r", "", "host:port of the RTMP server")
-	flag.StringVar(&sKey, "k", "", "Stream key, to protect your stream")
-	flag.StringVar(&sAdminPass, "a", "", "Set admin password.  Overrides configuration in settings.json.  This will not write the password to settings.json.")
-	flag.BoolVar(&pullEmotes, "e", false, "Pull emotes")
-	flag.StringVar(&confFile, "f", "./settings.json", "URI of the conf file")
-	flag.Parse()
+	var args args
+	arg.MustParse(&args)
+	run(args)
+}
 
-	format.RegisterAll()
+func run(args args) {
+	var err error
+	start := time.Now()
 
-	if err := setupSettings(); err != nil {
-		fmt.Printf("Error loading settings: %v\n", err)
-		os.Exit(1)
+	staticFsys, err := files.FS(staticFS, args.StaticDir, "static")
+	if err != nil {
+		log.Fatalf("Error creating static FS: %v\n", err)
 	}
 
-	if pullEmotes {
-		common.LogInfoln("Pulling emotes")
-		err := getEmotes(settings.ApprovedEmotes)
+	if args.WriteStatic {
+		count, err := staticFsys.WriteFiles(".")
+		fmt.Printf("%d files were writen to disk\n", count)
 		if err != nil {
-			common.LogErrorf("Error downloading emotes: %+v\n", err)
-			common.LogErrorf("Error downloading emotes: %v\n", err)
-			os.Exit(1)
+			log.Fatalf("Error writing files to static dir %q: %v\n", args.StaticDir, err)
 		}
 	}
 
-	if err := common.InitTemplates(); err != nil {
+	format.RegisterAll()
+
+	if err := setupSettings(args.AdminPass, args.ConfigFile); err != nil {
+		log.Fatalf("Error loading settings: %v\n", err)
+	}
+
+	if err := common.InitTemplates(staticFsys); err != nil {
 		common.LogErrorln(err)
 		os.Exit(1)
 	}
@@ -86,49 +101,44 @@ func main() {
 	go handleInterrupt(exit)
 
 	// Load emotes before starting server.
-	var err error
 	chat, err = newChatRoom()
 	if err != nil {
 		common.LogErrorln(err)
 		os.Exit(1)
 	}
 
-	if addr == "" {
-		addr = settings.ListenAddress
+	if args.Addr == "" {
+		args.Addr = settings.ListenAddress
 	}
 
-	if rtmpAddr == "" {
-		rtmpAddr = settings.RtmpListenAddress
+	if args.RtmpAddr == "" {
+		args.RtmpAddr = settings.RtmpListenAddress
 	}
 
 	// A stream key was passed on the command line.  Use it, but don't save
 	// it over the stream key in the settings.json file.
-	if sKey != "" {
-		settings.SetTempKey(sKey)
+	if args.StreamKey != "" {
+		settings.SetTempKey(args.StreamKey)
 	}
 
 	common.LogInfoln("Stream key: ", settings.GetStreamKey())
 	common.LogInfoln("Admin password: ", settings.AdminPassword)
-	common.LogInfoln("HTTP server listening on: ", addr)
-	common.LogInfoln("RTMP server listening on: ", rtmpAddr)
+	common.LogInfoln("HTTP server listening on: ", args.Addr)
+	common.LogInfoln("RTMP server listening on: ", args.RtmpAddr)
 	common.LogInfoln("RoomAccess: ", settings.RoomAccess)
 	common.LogInfoln("RoomAccessPin: ", settings.RoomAccessPin)
 
 	rtmpServer := &rtmp.Server{
 		HandlePlay:    handlePlay,
 		HandlePublish: handlePublish,
-		Addr:          rtmpAddr,
+		Addr:          args.RtmpAddr,
 	}
 
 	router := http.NewServeMux()
 
 	router.HandleFunc("/ws", wsHandler) // Chat websocket
-	router.HandleFunc("/static/js/", wsStaticFiles)
-	router.HandleFunc("/static/css/", wsStaticFiles)
-	router.HandleFunc("/static/img/", wsImages)
-	router.HandleFunc("/static/main.wasm", wsWasmFile)
+	router.Handle("/static/", http.FileServer(http.FS(staticFsys)))
 	router.HandleFunc("/emotes/", wsEmotes)
-	router.HandleFunc("/favicon.ico", wsStaticFiles)
 	router.HandleFunc("/chat", handleIndexTemplate)
 	router.HandleFunc("/video", handleIndexTemplate)
 	router.HandleFunc("/help", handleHelpTemplate)
@@ -138,7 +148,7 @@ func main() {
 	router.HandleFunc("/", handleDefault)
 
 	httpServer := &http.Server{
-		Addr:    addr,
+		Addr:    args.Addr,
 		Handler: router,
 	}
 
@@ -159,6 +169,8 @@ func main() {
 			panic("Error trying to start chat/http server: " + err.Error())
 		}
 	}()
+
+	common.LogInfof("Startup took %v\n", time.Since(start))
 
 	<-exit
 

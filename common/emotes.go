@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -9,7 +10,7 @@ import (
 
 type EmotesMap map[string]string
 
-var Emotes EmotesMap
+var Emotes = make(EmotesMap)
 var WrappedEmotesOnly bool = false
 
 var (
@@ -17,18 +18,10 @@ var (
 	reWrappedEmotes = regexp.MustCompile(`[:\[][^\s:\/\\\?=#\]\[]+[:\]]`)
 )
 
-func init() {
-	Emotes = NewEmotesMap()
-}
-
-func NewEmotesMap() EmotesMap {
-	return map[string]string{}
-}
-
 func (em EmotesMap) Add(fullpath string) EmotesMap {
 	fullpath = reStripStatic.ReplaceAllLiteralString(fullpath, "")
 
-	base := filepath.Base(fullpath)
+	base := path.Base(fullpath)
 	code := base[0 : len(base)-len(filepath.Ext(base))]
 
 	_, exists := em[code]
