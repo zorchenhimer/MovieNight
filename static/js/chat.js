@@ -325,7 +325,7 @@ function websocketSend(data, log = true) {
  * @param {number} type
  * @param {boolean} log
  */
-function sendMessage(msg, type, log=true) {
+function sendMessage(msg, type, log = true) {
     if (typeof msg !== 'string') {
         msg = JSON.stringify(msg);
     }
@@ -382,6 +382,7 @@ function updateSuggestionDiv() {
                 hasCurrentSuggestion = true;
                 divs[i] += selectedClass;
             }
+            divs[i] += ` onclick="clickEmote(${i})"`;
             divs[i] += '>';
 
             if (currentSuggestionType == SuggestionType.Emote) {
@@ -399,8 +400,12 @@ function updateSuggestionDiv() {
     updateSuggestionScroll();
 }
 
+function clickEmote(idx) {
+    currentSuggestion = filteredSuggestion[idx];
+    processMessageKey({ keyCode: 13, ctrlKey: false })
+}
+
 function processMessageKey(e) {
-    let startIdx = e.target.selectionStart;
     let keyCode = e.keyCode;
     let ctrl = e.ctrlKey;
 
@@ -445,7 +450,7 @@ function processMessageKey(e) {
             break;
         case 9: // tab
         case 13: // enter
-            const re = /[:@](([\w]+)(\s|$))?/;
+            const re = /[:@]([\w]+|$)(\s|$)/;
 
             let replaceVal = '';
             if (currentSuggestionType == SuggestionType.Emote) {
@@ -615,7 +620,7 @@ function setupWebSocket() {
         console.log('Websocket Open');
         // Ngnix websocket timeouts at 60s
         // http://nginx.org/en/docs/http/websocket.html
-        setInterval(() => {sendMessage('', ClientDataType.CdPing, false)}, 45000);
+        setInterval(() => { sendMessage('', ClientDataType.CdPing, false) }, 45000);
     }
     ws.onclose = () => {
         closeChat();
