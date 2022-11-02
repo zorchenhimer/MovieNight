@@ -2,7 +2,7 @@
 # ------ building mmovienight from source ------
 #
 
-FROM golang:1.13-alpine AS build
+FROM golang:1.16-alpine AS build
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ RUN apk add alpine-sdk
 
 COPY . .
 
-RUN make
+RUN make docker
 
 
 
