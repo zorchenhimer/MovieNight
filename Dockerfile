@@ -12,10 +12,12 @@ WORKDIR /app
 
 VOLUME /data
 
+RUN mkdir -p /data/emotes & mkdir -p /data/static
+
 COPY --from=build /app/MovieNight /app
 COPY --from=build /app/settings_example.json /data/config/settings.json
 
 EXPOSE 8089
 EXPOSE 1935
 
-ENTRYPOINT ["/app/MovieNight", "--config", "/data/config/settings.json", "--static", "/data/static"]
+CMD ["/app/MovieNight", "--config", "/data/config/settings.json", "--static", "/data/static", "--emotes", "/data/emotes"]

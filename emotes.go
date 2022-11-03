@@ -11,9 +11,15 @@ import (
 	"github.com/zorchenhimer/MovieNight/files"
 )
 
+var emotesLocation string
+
+func init() {
+	emotesLocation = files.JoinRunPath("emotes")
+}
+
 func loadEmotes() error {
 	var err error
-	common.Emotes, err = processEmoteDir(files.JoinRunPath("emotes"))
+	common.Emotes, err = processEmoteDir(emotesLocation)
 	if err != nil {
 		return fmt.Errorf("could not process emote dir: %w", err)
 	}
