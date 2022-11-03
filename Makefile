@@ -15,7 +15,7 @@ endif
 
 TAGS= 
 
-.PHONY: fmt vet get clean dev setdev test ServerMovieNight 
+.PHONY: fmt vet get clean dev setdev test docker ServerMovieNight 
 
 all: fmt vet test MovieNight settings.json 
 
@@ -43,6 +43,8 @@ vet:
 
 test: 
 	go$(GO_VERSION) test $(TAGS) ./... 
+
+docker: fmt vet MovieNight settings.json 
 
 # Do not put settings_example.json here as a prereq to avoid overwriting
 # the settings if the example is updated.
