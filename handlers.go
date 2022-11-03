@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -42,7 +43,7 @@ func (w writeFlusher) Flush() error {
 }
 
 func wsEmotes(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, strings.TrimPrefix(r.URL.Path, "/"))
+	http.ServeFile(w, r, filepath.Join(emotesLocation, strings.TrimPrefix(r.URL.Path, "/emotes/")))
 }
 
 // Handling the websocket
@@ -52,7 +53,7 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true }, //not checking origin
 }
 
-//this is also the handler for joining to the chat
+// this is also the handler for joining to the chat
 func wsHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)

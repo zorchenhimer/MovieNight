@@ -73,6 +73,7 @@ func processEmoteDir(dir string) (common.EmotesMap, error) {
 }
 
 func findEmotes(dir string, em common.EmotesMap) (common.EmotesMap, error) {
+	dir = filepath.ToSlash(dir)
 	common.LogDebugf("finding emotes in %q\n", dir)
 
 	for _, ext := range []string{"*.png", "*.gif"} {
