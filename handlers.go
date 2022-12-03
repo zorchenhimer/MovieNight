@@ -2,8 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
+	"io/fs"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -42,7 +46,49 @@ func (w writeFlusher) Flush() error {
 }
 
 func wsEmotes(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, strings.TrimPrefix(r.URL.Path, "/"))
+	file := strings.TrimPrefix(r.URL.Path, "/")
+
+	body, err := os.ReadFile(file)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			common.LogErrorf("Could not read emote file %s: %v\n", err)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		err = filepath.WalkDir(filepath.Dir(file), func(path string, d fs.DirEntry, err error) error {
+			if d.IsDir() || err != nil || len(body) > 0 {
+				return nil
+			}
+
+			if filepath.Base(path) != filepath.Base(file) {
+				return nil
+			}
+
+			body, err = os.ReadFile(path)
+			if err != nil && !errors.Is(err, os.ErrNotExist) {
+				return err
+			}
+			return nil
+		})
+		if err != nil {
+			common.LogErrorf("Subdir emote could not be read %s: %v\n", file, err)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+	}
+
+	if len(body) == 0 {
+		common.LogErrorf("Found emote file but pulled no data: %v\n", err)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	_, err = w.Write(body)
+	if err != nil {
+		common.LogErrorf("Could not write emote %s to response: %v\n", file, err)
+		w.WriteHeader(http.StatusNotFound)
+	}
 }
 
 // Handling the websocket
@@ -52,7 +98,7 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true }, //not checking origin
 }
 
-//this is also the handler for joining to the chat
+// this is also the handler for joining to the chat
 func wsHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)

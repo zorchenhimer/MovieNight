@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/zorchenhimer/MovieNight/common"
 	"github.com/zorchenhimer/MovieNight/files"
+	"golang.org/x/exp/slices"
 )
 
 func loadEmotes() error {
@@ -38,48 +40,19 @@ func processEmoteDir(dir string) (common.EmotesMap, error) {
 		}
 	}
 
-	// Find top level emotes
-	em, err = findEmotes(dir, em)
-	if err != nil {
-		return nil, fmt.Errorf("could not find emotes in top level directory: %w", err)
-	}
-
-	// Get second level subdirs (eg, "twitch", "zorchenhimer", etc)
-	for _, subDir := range subDirs {
-		subd, err := os.ReadDir(path.Join(dir, subDir))
-		if err != nil {
-			common.LogErrorf("Error reading dir %q: %v\n", subd, err)
-			continue
+	filepath.WalkDir(dir, func(fpath string, d fs.DirEntry, err error) error {
+		if d.IsDir() || err != nil {
+			return nil
 		}
-		for _, d := range subd {
-			if d.IsDir() {
-				p := path.Join(dir, subDir, d.Name())
-				em, err = findEmotes(p, em)
-				if err != nil {
-					common.LogErrorf("Error finding emotes in %q: %v\n", p, err)
-				}
-			}
+
+		if slices.Contains([]string{".png", ".gif"}, filepath.Ext(fpath)) {
+			em = em.Add(path.Join("emotes", strings.TrimPrefix(filepath.ToSlash(fpath), dir)))
 		}
-	}
 
-	common.LogInfof("processEmoteDir: %d\n", len(em))
-	return em, nil
-}
+		return nil
+	})
 
-func findEmotes(dir string, em common.EmotesMap) (common.EmotesMap, error) {
-	common.LogDebugf("finding emotes in %q\n", dir)
-
-	for _, ext := range []string{"*.png", "*.gif"} {
-		files, err := filepath.Glob(path.Join(dir, ext))
-		if err != nil {
-			return nil, fmt.Errorf("unable to glob emote directory with %q: %w", ext, err)
-		}
-		common.LogInfof("Found %d %s emotes\n", len(files), ext)
-
-		for _, file := range files {
-			em = em.Add(path.Join("emotes", strings.TrimPrefix(filepath.ToSlash(file), dir)))
-		}
-	}
+	common.LogInfof("Found %d emotes in %s\n", len(em), dir)
 
 	return em, nil
 }
