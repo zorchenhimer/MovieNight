@@ -51,7 +51,7 @@ func wsEmotes(w http.ResponseWriter, r *http.Request) {
 	body, err := os.ReadFile(file)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
-			common.LogErrorf("Could not read emote file %s: %v\n", err)
+			common.LogErrorf("Could not read emote file %s: %v\n", file, err)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
