@@ -48,34 +48,31 @@ func (w writeFlusher) Flush() error {
 func wsEmotes(w http.ResponseWriter, r *http.Request) {
 	file := strings.TrimPrefix(r.URL.Path, "/")
 
-	body, err := os.ReadFile(file)
-	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			common.LogErrorf("Could not read emote file %s: %v\n", file, err)
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
+	emoteDirSuffix := filepath.Base(emotesDir)
+	if emoteDirSuffix == filepath.SplitList(file)[0] {
+		file = strings.TrimPrefix(file, emoteDirSuffix+"/")
+	}
 
-		err = filepath.WalkDir(filepath.Dir(file), func(path string, d fs.DirEntry, err error) error {
-			if d.IsDir() || err != nil || len(body) > 0 {
-				return nil
-			}
-
-			if filepath.Base(path) != filepath.Base(file) {
-				return nil
-			}
-
-			body, err = os.ReadFile(path)
-			if err != nil && !errors.Is(err, os.ErrNotExist) {
-				return err
-			}
+	var body []byte
+	err := filepath.WalkDir(emotesDir, func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() || err != nil || len(body) > 0 {
 			return nil
-		})
-		if err != nil {
-			common.LogErrorf("Subdir emote could not be read %s: %v\n", file, err)
-			w.WriteHeader(http.StatusNotFound)
-			return
 		}
+
+		if filepath.Base(path) != filepath.Base(file) {
+			return nil
+		}
+
+		body, err = os.ReadFile(path)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		common.LogErrorf("Emote could not be read %s: %v\n", file, err)
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 
 	if len(body) == 0 {
