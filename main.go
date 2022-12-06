@@ -61,6 +61,7 @@ type args struct {
 	ConfigFile  string `arg:"-f,--config" help:"URI of the conf file"`
 	StaticDir   string `arg:"-s,--static" help:"Directory to read static files from by default"`
 	WriteStatic bool   `arg:"--write-static" help:"write static files to the static dir"`
+	EmotesDir   string `arg:"--emotes" help:"directory to pull emotes from"`
 }
 
 func main() {
@@ -72,6 +73,11 @@ func main() {
 func run(args args) {
 	var err error
 	start := time.Now()
+
+	emotesDir = args.EmotesDir
+	if emotesDir == "" {
+		emotesDir = files.JoinRunPath("emotes")
+	}
 
 	staticFsys, err := files.FS(staticFS, args.StaticDir, "static")
 	if err != nil {
