@@ -2,8 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
+	"io/fs"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -43,7 +46,46 @@ func (w writeFlusher) Flush() error {
 }
 
 func wsEmotes(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, filepath.Join(emotesLocation, strings.TrimPrefix(r.URL.Path, "/emotes/")))
+	file := strings.TrimPrefix(r.URL.Path, "/")
+
+	emoteDirSuffix := filepath.Base(emotesDir)
+	if emoteDirSuffix == filepath.SplitList(file)[0] {
+		file = strings.TrimPrefix(file, emoteDirSuffix+"/")
+	}
+
+	var body []byte
+	err := filepath.WalkDir(emotesDir, func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() || err != nil || len(body) > 0 {
+			return nil
+		}
+
+		if filepath.Base(path) != filepath.Base(file) {
+			return nil
+		}
+
+		body, err = os.ReadFile(path)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		common.LogErrorf("Emote could not be read %s: %v\n", file, err)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	if len(body) == 0 {
+		common.LogErrorf("Found emote file but pulled no data: %v\n", err)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	_, err = w.Write(body)
+	if err != nil {
+		common.LogErrorf("Could not write emote %s to response: %v\n", file, err)
+		w.WriteHeader(http.StatusNotFound)
+	}
 }
 
 // Handling the websocket

@@ -74,9 +74,9 @@ func run(args args) {
 	var err error
 	start := time.Now()
 
-	if args.EmotesDir != "" {
-		fmt.Printf("Setting emotes dir to %s\n", args.EmotesDir)
-		emotesLocation = args.EmotesDir
+	emotesDir = args.EmotesDir
+	if emotesDir == "" {
+		emotesDir = files.JoinRunPath("emotes")
 	}
 
 	staticFsys, err := files.FS(staticFS, args.StaticDir, "static")
