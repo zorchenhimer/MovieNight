@@ -1,35 +1,23 @@
-#
-# ------ building mmovienight from source ------
-#
-
-FROM golang:1.16-alpine AS build
+FROM golang:1.18 AS build
 
 WORKDIR /app
-
-RUN apk add alpine-sdk
 
 COPY . .
 
-RUN make docker
+RUN go build
 
-
-
-#
-# ------ creating image to run movienight ------
-#
-
-FROM alpine:latest
+FROM photon
 
 WORKDIR /app
 
-VOLUME /config
+VOLUME /data
 
-COPY --from=build /app /app
-COPY --from=build /app/settings_example.json /config/settings.json
+RUN mkdir -p /data/emotes & mkdir -p /data/static
 
-RUN chmod +x /app/docker/start.sh
+COPY --from=build /app/MovieNight /app
+COPY --from=build /app/settings_example.json /data/config/settings.json
 
 EXPOSE 8089
 EXPOSE 1935
 
-CMD ["/app/docker/start.sh"]
+CMD ["/app/MovieNight", "--config", "/data/config/settings.json", "--static", "/data/static", "--emotes", "/data/emotes"]

@@ -57,9 +57,10 @@ type args struct {
 	Addr        string `arg:"-l,--addr" help:"host:port of the HTTP server"`
 	RtmpAddr    string `arg:"-r,--rtmp" help:"host:port of the RTMP server"`
 	StreamKey   string `arg:"-k,--key" help:"Stream key, to protect your stream"`
-	AdminPass   string `arg:"-a,--admin" help:"Set admin password.  Overrides configuration in settings.json.  This will not write the password to settings.json."`
+	AdminPass   string `arg:"-a,--admin" help:"Set admin password. Overrides configuration in settings.json. This will not write the password to settings.json."`
 	ConfigFile  string `arg:"-f,--config" help:"URI of the conf file"`
 	StaticDir   string `arg:"-s,--static" help:"Directory to read static files from by default"`
+	EmotesDir   string `arg:"-e,--emotes" help:"Directory to read emotes. By default it uses the executable directory"`
 	WriteStatic bool   `arg:"--write-static" help:"write static files to the static dir"`
 }
 
@@ -72,6 +73,11 @@ func main() {
 func run(args args) {
 	var err error
 	start := time.Now()
+
+	emotesDir = args.EmotesDir
+	if emotesDir == "" {
+		emotesDir = files.JoinRunPath("emotes")
+	}
 
 	staticFsys, err := files.FS(staticFS, args.StaticDir, "static")
 	if err != nil {

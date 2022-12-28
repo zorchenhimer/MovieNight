@@ -4,13 +4,13 @@ services:
   movienight:
     image: movienight:latest
     build:
-      context: ../
+      context: .
       dockerfile: Dockerfile
     ports:
       - 8089:8089
       - 1935:1935
     volumes:
-      - movienight-config:/config
+      - movienight-data:/data
       
 volumes:
-  movienight-config:
+  movienight-data:

@@ -9,13 +9,14 @@ import (
 	"strings"
 
 	"github.com/zorchenhimer/MovieNight/common"
-	"github.com/zorchenhimer/MovieNight/files"
 	"golang.org/x/exp/slices"
 )
 
+var emotesDir string
+
 func loadEmotes() error {
 	var err error
-	common.Emotes, err = processEmoteDir(files.JoinRunPath("emotes"))
+	common.Emotes, err = processEmoteDir(emotesDir)
 	if err != nil {
 		return fmt.Errorf("could not process emote dir: %w", err)
 	}
@@ -24,20 +25,10 @@ func loadEmotes() error {
 
 func processEmoteDir(dir string) (common.EmotesMap, error) {
 	em := make(common.EmotesMap)
-	dirInfo, err := os.ReadDir(dir)
+	_, err := os.ReadDir(dir)
 	if err != nil {
 		common.LogErrorf("could not open emote dir: %v\n", err)
 		return em, nil
-	}
-
-	subDirs := []string{}
-
-	for _, item := range dirInfo {
-		// Get first level subdirs (eg, "twitch", "discord", etc)
-		if item.IsDir() {
-			subDirs = append(subDirs, item.Name())
-			continue
-		}
 	}
 
 	filepath.WalkDir(dir, func(fpath string, d fs.DirEntry, err error) error {
