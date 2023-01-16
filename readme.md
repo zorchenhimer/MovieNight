@@ -66,7 +66,11 @@ docker build -t movienight .
 Run the image once it's built:
 
 ```shell
-docker run -d -p 8089:8089 -p 1935:1935 [-v ./settings.json:/config/settings.json] movienight
+# with default settings file (this uses the settings_example.json config file)
+docker run -d -p 8089:8089 -p 1935:1935 movienight
+
+# using a custom settings file
+docker run -d -p 8089:8089 -p 1935:1935 -v ./settings.json:/data/config/settings.json movienight
 ```
 
 Explanation:
