@@ -25,6 +25,9 @@ jobs:
       - name: test
         run: go test ./...
 
+      - name: test ui
+        run: go test ./... -tags=test_ui
+
   build:
     runs-on: ubuntu-latest
 

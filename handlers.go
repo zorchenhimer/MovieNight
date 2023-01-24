@@ -127,10 +127,14 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+			if data.Type == common.CdPing {
+				continue
+			}
+
 			var joinData common.JoinData
 			err = json.Unmarshal([]byte(data.Message), &joinData)
 			if err != nil {
-				common.LogInfof("[handler] Could not unmarshal join data %#v: %v\n", data.Message, err)
+				common.LogInfof("[handler] Could not unmarshal websocket %d data %#v: %v\n", data.Type, data.Message, err)
 				continue
 			}
 
@@ -315,14 +319,6 @@ func handleEmoteTemplate(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleIndexTemplate(w http.ResponseWriter, r *http.Request) {
-	if settings.RoomAccess != AccessOpen {
-		if !checkRoomAccess(w, r) {
-			common.LogDebugln("Denied access")
-			return
-		}
-		common.LogDebugln("Granted access")
-	}
-
 	type Data struct {
 		Video, Chat         bool
 		MessageHistoryCount int
@@ -472,4 +468,17 @@ func handleDefault(w http.ResponseWriter, r *http.Request) {
 	} else {
 		handleIndexTemplate(w, r)
 	}
+}
+
+func wrapAuth(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if settings.RoomAccess != AccessOpen {
+			if !checkRoomAccess(w, r) {
+				common.LogDebugln("Denied access")
+				return
+			}
+			common.LogDebugln("Granted access")
+		}
+		next.ServeHTTP(w, r)
+	})
 }

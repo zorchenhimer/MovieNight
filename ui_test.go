@@ -1,3 +1,5 @@
+//go:build test_ui
+
 package main
 
 import (
