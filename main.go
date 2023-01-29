@@ -142,16 +142,17 @@ func run(args args) {
 
 	router := http.NewServeMux()
 
-	router.HandleFunc("/ws", wsHandler) // Chat websocket
 	router.Handle("/static/", http.FileServer(http.FS(staticFsys)))
 	router.HandleFunc("/emotes/", wsEmotes)
-	router.HandleFunc("/chat", handleIndexTemplate)
-	router.HandleFunc("/video", handleIndexTemplate)
-	router.HandleFunc("/help", handleHelpTemplate)
-	router.HandleFunc("/emotes", handleEmoteTemplate)
 
-	router.HandleFunc("/live", handleLive)
-	router.HandleFunc("/", handleDefault)
+	router.HandleFunc("/ws", wrapAuth(wsHandler)) // Chat websocket
+	router.HandleFunc("/chat", wrapAuth(handleIndexTemplate))
+	router.HandleFunc("/video", wrapAuth(handleIndexTemplate))
+	router.HandleFunc("/help", wrapAuth(handleHelpTemplate))
+	router.HandleFunc("/emotes", wrapAuth(handleEmoteTemplate))
+
+	router.HandleFunc("/live", wrapAuth(handleLive))
+	router.HandleFunc("/", wrapAuth(handleDefault))
 
 	httpServer := &http.Server{
 		Addr:    args.Addr,
