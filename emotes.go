@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -27,7 +28,11 @@ func processEmoteDir(dir string) (common.EmotesMap, error) {
 	em := make(common.EmotesMap)
 	_, err := os.ReadDir(dir)
 	if err != nil {
-		common.LogErrorf("could not open emote dir: %v\n", err)
+		if errors.Is(err, os.ErrNotExist) {
+			common.LogInfof("%s does not exist so no emotes were loaded\n", dir)
+		} else {
+			common.LogErrorf("could not open emote dir: %v\n", err)
+		}
 		return em, nil
 	}
 
