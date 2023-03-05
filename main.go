@@ -60,7 +60,7 @@ type args struct {
 	AdminPass   string `arg:"-a,--admin,env:MN_ADMIN_PASS" help:"Set admin password. Overrides configuration in settings.json. This will not write the password to settings.json."`
 	ConfigFile  string `arg:"-f,--config,env:MN_CONFIG" help:"URI of the conf file"`
 	StaticDir   string `arg:"-s,--static,env:MN_STATIC" help:"Directory to read static files from by default"`
-	EmotesDir   string `arg:"-e,--emotes,env:MN_EMOTES" help:"Directory to read emotes. By default it uses the executable directory"`
+	EmotesDir   string `arg:"-e,--emotes,env:MN_EMOTES" default:"emotes" help:"Directory to read emotes. By default it uses the executable directory"`
 	WriteStatic bool   `arg:"--write-static,env:MN_WRITE_STATIC" help:"write static files to the static dir"`
 }
 
@@ -74,10 +74,7 @@ func run(args args) {
 	var err error
 	start := time.Now()
 
-	emotesDir = args.EmotesDir
-	if emotesDir == "" {
-		emotesDir = files.JoinRunPath("emotes")
-	}
+	emotesDir = files.JoinRunPath(args.EmotesDir)
 
 	staticFsys, err := files.FS(staticFS, args.StaticDir, "static")
 	if err != nil {
