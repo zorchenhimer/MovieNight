@@ -196,7 +196,7 @@ var commands = &CommandControl{
 
 				pw := html.UnescapeString(strings.Join(args, " "))
 
-				if settings.AdminPassword == pw {
+				if settings.GetAdminPassword() == pw {
 					cl.CmdLevel = common.CmdlAdmin
 					cl.belongsTo.AddModNotice(cl.name + " used the admin password")
 					common.LogInfof("[auth] %s used the admin password\n", cl.name)

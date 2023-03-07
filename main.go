@@ -16,7 +16,6 @@ import (
 	"github.com/nareix/joy4/format"
 	"github.com/nareix/joy4/format/rtmp"
 	"github.com/zorchenhimer/MovieNight/common"
-	"github.com/zorchenhimer/MovieNight/files"
 )
 
 //go:embed static/*.html static/css static/img static/js
@@ -24,44 +23,34 @@ var staticFS embed.FS
 
 var stats = newStreamStats()
 
-func setupSettings(adminPass string, confFile string) error {
-	if confFile == "" {
-		confFile = files.JoinRunPath("settings.json")
-	}
-
+func setupSettings(args args) error {
 	var err error
-	settings, err = LoadSettings(confFile)
+	settings, err = LoadSettings(args)
 	if err != nil {
 		return fmt.Errorf("unable to load settings: %w", err)
 	}
-	if len(settings.StreamKey) == 0 {
-		return fmt.Errorf("missing stream key is settings.json")
-	}
 
-	if adminPass != "" {
-		fmt.Println("Password provided at runtime; ignoring password in set in settings.")
-		settings.AdminPassword = adminPass
-	}
+	return nil
+}
 
+func setupCookieStore() {
 	sstore = sessions.NewCookieStore([]byte(settings.SessionKey))
 	sstore.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   60 * 60 * 24, // one day
 		SameSite: http.SameSiteStrictMode,
 	}
-
-	return nil
 }
 
 type args struct {
-	Addr        string `arg:"-l,--addr" help:"host:port of the HTTP server"`
-	RtmpAddr    string `arg:"-r,--rtmp" help:"host:port of the RTMP server"`
-	StreamKey   string `arg:"-k,--key" help:"Stream key, to protect your stream"`
-	AdminPass   string `arg:"-a,--admin" help:"Set admin password. Overrides configuration in settings.json. This will not write the password to settings.json."`
-	ConfigFile  string `arg:"-f,--config" help:"URI of the conf file"`
-	StaticDir   string `arg:"-s,--static" help:"Directory to read static files from by default"`
-	EmotesDir   string `arg:"-e,--emotes" help:"Directory to read emotes. By default it uses the executable directory"`
-	WriteStatic bool   `arg:"--write-static" help:"write static files to the static dir"`
+	Addr        string `arg:"-l,--addr,env:MN_ADDR" help:"host:port of the HTTP server"`
+	RtmpAddr    string `arg:"-r,--rtmp,env:MN_RTMP" help:"host:port of the RTMP server"`
+	StreamKey   string `arg:"-k,--key,env:MN_STREAM_KEY" default:"" help:"Stream key, to protect your stream"`
+	AdminPass   string `arg:"-a,--admin,env:MN_ADMIN_PASS" default:"" help:"Set admin password. Overrides configuration in settings.json. This will not write the password to settings.json."`
+	ConfigFile  string `arg:"-f,--config,env:MN_CONFIG" default:"settings.json" help:"URI of the conf file"`
+	StaticDir   string `arg:"-s,--static,env:MN_STATIC" default:"" help:"Directory to read static files from by default"` // default static dir should be `static` I guess. Zorglube
+	EmotesDir   string `arg:"-e,--emotes,env:MN_EMOTES" default:"emotes" help:"Directory to read emotes. By default it uses the executable directory"`
+	WriteStatic bool   `arg:"--write-static,env:MN_WRITE_STATIC" default:"false" help:"write static files to the static dir"`
 }
 
 func main() {
@@ -74,29 +63,22 @@ func run(args args) {
 	var err error
 	start := time.Now()
 
-	emotesDir = args.EmotesDir
-	if emotesDir == "" {
-		emotesDir = files.JoinRunPath("emotes")
+	if err := setupSettings(args); err != nil {
+		log.Fatalf("Error loading settings: %v\n", err)
 	}
 
-	staticFsys, err := files.FS(staticFS, args.StaticDir, "static")
-	if err != nil {
-		log.Fatalf("Error creating static FS: %v\n", err)
-	}
+	setupCookieStore()
+	staticFsys := settings.GetStaticFsys()
 
-	if args.WriteStatic {
+	if settings.GetWriteStatic() {
 		count, err := staticFsys.WriteFiles(".")
 		fmt.Printf("%d files were writen to disk\n", count)
 		if err != nil {
-			log.Fatalf("Error writing files to static dir %q: %v\n", args.StaticDir, err)
+			log.Fatalf("Error writing files to static dir %q: %v\n", settings.GetStaticDir(), err)
 		}
 	}
 
 	format.RegisterAll()
-
-	if err := setupSettings(args.AdminPass, args.ConfigFile); err != nil {
-		log.Fatalf("Error loading settings: %v\n", err)
-	}
 
 	if err := common.InitTemplates(staticFsys); err != nil {
 		common.LogErrorln(err)
@@ -113,31 +95,17 @@ func run(args args) {
 		os.Exit(1)
 	}
 
-	if args.Addr == "" {
-		args.Addr = settings.ListenAddress
-	}
-
-	if args.RtmpAddr == "" {
-		args.RtmpAddr = settings.RtmpListenAddress
-	}
-
-	// A stream key was passed on the command line.  Use it, but don't save
-	// it over the stream key in the settings.json file.
-	if args.StreamKey != "" {
-		settings.SetTempKey(args.StreamKey)
-	}
-
 	common.LogInfoln("Stream key: ", settings.GetStreamKey())
-	common.LogInfoln("Admin password: ", settings.AdminPassword)
-	common.LogInfoln("HTTP server listening on: ", args.Addr)
-	common.LogInfoln("RTMP server listening on: ", args.RtmpAddr)
-	common.LogInfoln("RoomAccess: ", settings.RoomAccess)
-	common.LogInfoln("RoomAccessPin: ", settings.RoomAccessPin)
+	common.LogInfoln("Admin password: ", settings.GetAdminPassword())
+	common.LogInfoln("HTTP server listening on: ", settings.GetAddr())
+	common.LogInfoln("RTMP server listening on: ", settings.GetRtmpAddr())
+	common.LogInfoln("RoomAccess: ", settings.GetRoomAccess())
+	common.LogInfoln("RoomAccessPin: ", settings.GetRoomAccessPin())
 
 	rtmpServer := &rtmp.Server{
 		HandlePlay:    handlePlay,
 		HandlePublish: handlePublish,
-		Addr:          args.RtmpAddr,
+		Addr:          settings.GetRtmpAddr(),
 	}
 
 	router := http.NewServeMux()
@@ -155,7 +123,7 @@ func run(args args) {
 	router.HandleFunc("/", wrapAuth(handleDefault))
 
 	httpServer := &http.Server{
-		Addr:    args.Addr,
+		Addr:    settings.GetAddr(),
 		Handler: router,
 	}
 

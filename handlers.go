@@ -48,13 +48,13 @@ func (w writeFlusher) Flush() error {
 func wsEmotes(w http.ResponseWriter, r *http.Request) {
 	file := strings.TrimPrefix(r.URL.Path, "/")
 
-	emoteDirSuffix := filepath.Base(emotesDir)
+	emoteDirSuffix := filepath.Base(settings.GetEmotesDir())
 	if emoteDirSuffix == filepath.SplitList(file)[0] {
 		file = strings.TrimPrefix(file, emoteDirSuffix+"/")
 	}
 
 	var body []byte
-	err := filepath.WalkDir(emotesDir, func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(settings.GetEmotesDir(), func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() || err != nil || len(body) > 0 {
 			return nil
 		}
@@ -177,7 +177,7 @@ func checkRoomAccess(w http.ResponseWriter, r *http.Request) bool {
 		common.LogErrorf("Unable to get session for client %s: %v\n", r.RemoteAddr, err)
 	}
 
-	if settings.RoomAccess == AccessPin {
+	if settings.GetRoomAccess() == AccessPin {
 		pin := session.Values["pin"]
 		// No pin found in session
 		if pin == nil || len(pin.(string)) == 0 {
@@ -223,7 +223,7 @@ func checkRoomAccess(w http.ResponseWriter, r *http.Request) bool {
 		}
 
 		// Pin found in session, but it has changed since last time.
-		if pin.(string) != settings.RoomAccessPin {
+		if pin.(string) != settings.GetRoomAccessPin() {
 			// Clear out the old pin.
 			session.Values["pin"] = nil
 			err = session.Save(r, w)

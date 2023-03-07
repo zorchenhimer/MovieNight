@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math/big"
 	"os"
 	"strings"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/gorilla/sessions"
 	"github.com/zorchenhimer/MovieNight/common"
+	"github.com/zorchenhimer/MovieNight/files"
 )
 
 var settings *Settings
@@ -21,8 +23,9 @@ var sstore *sessions.CookieStore
 
 type Settings struct {
 	// Non-Saved settings
-	filename   string
-	cmdLineKey string // stream key from the command line
+	filename string
+	// the argument from the command line
+	args args
 
 	// Saved settings
 	AdminPassword     string
@@ -74,7 +77,8 @@ type BanInfo struct {
 //go:embed settings_example.json
 var settingsExampleFS []byte
 
-func LoadSettings(filename string) (*Settings, error) {
+func LoadSettings(args args) (*Settings, error) {
+	var filename = files.JoinRunPath(args.ConfigFile)
 	raw, err := os.ReadFile(filename)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
@@ -89,6 +93,7 @@ func LoadSettings(filename string) (*Settings, error) {
 		return nil, fmt.Errorf("error unmarshaling: %w", err)
 	}
 	s.filename = filename
+	s.args = args // Keep an eye on the args from the command line
 
 	var logFileDir string = s.LogFile
 	fmt.Printf("Log file: %s\n", logFileDir)
@@ -280,20 +285,18 @@ func (s *Settings) IsBanned(host string) (bool, []string) {
 	return false, nil
 }
 
-func (s *Settings) SetTempKey(key string) {
-	defer s.lock.Unlock()
-	s.lock.Lock()
-
-	s.cmdLineKey = key
-}
-
 func (s *Settings) GetStreamKey() string {
 	defer s.lock.RUnlock()
 	s.lock.RLock()
 
-	if len(s.cmdLineKey) > 0 {
-		return s.cmdLineKey
+	if s.args.StreamKey != "" {
+		return s.args.StreamKey
 	}
+
+	if s.StreamKey == "" {
+		panic("Missing stream key, add it in settings.json, or use --streamKey at runtime")
+	}
+
 	return s.StreamKey
 }
 
@@ -310,4 +313,56 @@ func (s *Settings) generateNewPin() (string, error) {
 		return "", err
 	}
 	return s.RoomAccessPin, nil
+}
+
+func (s *Settings) GetAdminPassword() string {
+	if s.args.AdminPass != "" {
+		common.LogInfoln("Password provided at runtime; ignoring password in set in settings.")
+		return s.args.AdminPass
+	}
+	return s.AdminPassword
+}
+
+func (s *Settings) GetAddr() string {
+	if s.args.Addr != "" {
+		return s.args.Addr
+	}
+	return s.ListenAddress
+}
+
+func (s *Settings) GetRtmpAddr() string {
+	if s.args.RtmpAddr != "" {
+		return s.args.RtmpAddr
+	}
+	return s.RtmpListenAddress
+}
+
+func (s *Settings) GetRoomAccess() AccessMode {
+	return s.RoomAccess
+}
+
+func (s *Settings) GetRoomAccessPin() string {
+	return s.RoomAccessPin
+}
+
+func (s *Settings) GetEmotesDir() string {
+	return files.JoinRunPath(s.args.EmotesDir)
+}
+
+func (s *Settings) GetStaticDir() string {
+	return s.args.StaticDir
+}
+
+func (s *Settings) GetStaticFsys() files.FileSystem {
+	fSys, err := files.FS(staticFS, settings.GetStaticDir(), "static")
+	if err != nil {
+		log.Fatalf("Error creating static FS: %v\n", err)
+		return nil
+	}
+
+	return fSys
+}
+
+func (s *Settings) GetWriteStatic() bool {
+	return s.args.WriteStatic
 }

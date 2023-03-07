@@ -13,11 +13,9 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-var emotesDir string
-
 func loadEmotes() error {
 	var err error
-	common.Emotes, err = processEmoteDir(emotesDir)
+	common.Emotes, err = processEmoteDir(settings.GetEmotesDir())
 	if err != nil {
 		return fmt.Errorf("could not process emote dir: %w", err)
 	}
