@@ -106,7 +106,7 @@ Into your Clever-Cloud dashboard:
  - Add this configuration keys: 
     `CC_GO_BUILD_TOOL="gobuild"` Set The build method
     `CC_GO_PKG="github.com/zorchenhimer/MovieNight"` Set the dependencies origin
-    `CC_PRE_RUN_HOOK="cp ${MN_BUID_CONFIG}"`
+    `CC_PRE_RUN_HOOK="echo \"{\\\"ApprovedEmotes\\\": true, \\\"Bans\\\": [], \\\"LetThemLurk\\\": false, \\\"ListenAddress\\\": \\\":8080\\\", \\\"LogFile\\\": \\\"thelog.log\\\", \\\"LogLevel\\\": \\\"debug\\\", \\\"MaxMessageCount\\\": 300, \\\"NoCache\\\": false, \\\"NewPin\\\": true, \\\"PageTitle\\\": \\\"Movie Night\\\", \\\"RateLimitAuth\\\": 5, \\\"RateLimitChat\\\": 1, \\\"RateLimitColor\\\": 60, \\\"RateLimitDuplicate\\\": 30, \\\"RateLimitNick\\\": 300, \\\"RegenAdminPass\\\": true, \\\"RtmpListenAddress\\\": \\\":4040\\\", \\\"RoomAccess\\\": \\\"pin\\\", \\\"RoomAccessPin\\\": \\\"9999\\\", \\\"StreamKey\\\": \\\"ALongStreamKey\\\", \\\"StreamStats\\\": true, \\\"TitleLength\\\": 50, \\\"WrappedEmotesOnly\\\": true}\" >> /home/bas/go_home/bin/settings.json"` The command that will build the `settings.json`
     `CC_RUN_COMMAND="${MN_BIN_DIR}/${MN_BIN_NAME} -l ${MN_PORT} -r ${MN_RTMP} -s ${MN_STATIC} -k ${MN_STREAM_KEY}"` The run command
     `MN_BIN_DIR="/home/bas/go_home/bin"` The built binary directory
     `MN_BIN_NAME="MovieNight"` The name of the runnable bin
@@ -114,7 +114,6 @@ Into your Clever-Cloud dashboard:
     `MN_RTMP=":4040"` The rtmp port
     `MN_STATIC="${APP_HOME}/static"` The static contents dir 
     `MN_STREAM_KEY="YourStreamKey"` Your secret stream key
-    `MN_BUID_CONFIG="echo \"{\\\"ApprovedEmotes\\\": true, \\\"Bans\\\": [], \\\"LetThemLurk\\\": false, \\\"ListenAddress\\\": \\\":8080\\\", \\\"LogFile\\\": \\\"thelog.log\\\", \\\"LogLevel\\\": \\\"debug\\\", \\\"MaxMessageCount\\\": 300, \\\"NoCache\\\": false, \\\"NewPin\\\": true, \\\"PageTitle\\\": \\\"Movie Night\\\", \\\"RateLimitAuth\\\": 5, \\\"RateLimitChat\\\": 1, \\\"RateLimitColor\\\": 60, \\\"RateLimitDuplicate\\\": 30, \\\"RateLimitNick\\\": 300, \\\"RegenAdminPass\\\": true, \\\"RtmpListenAddress\\\": \\\":4040\\\", \\\"RoomAccess\\\": \\\"pin\\\", \\\"RoomAccessPin\\\": \\\"9445\\\", \\\"StreamKey\\\": \\\"ALongStreamKey\\\", \\\"StreamStats\\\": true, \\\"TitleLength\\\": 50, \\\"WrappedEmotesOnly\\\": true}\" >> ${MN_BIN_DIR}/settings.json"` The command that will build the `settings.json`
  - Try run your MovieNight instance
 
 ## Usage
