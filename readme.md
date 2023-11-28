@@ -100,18 +100,20 @@ Into your Clever-Cloud dashboard:
  - Name it, choose your datacenter
  - You don't neet any "Add-On", unless you want to provide some Emotes to you MovieNight instance
  - Add thoses environement-variables (expert mode allow you copy past frome this page):
-    `CC_GO_BUILD_TOOL="gobuild"` Set The build method
-    `CC_GO_PKG="github.com/zorchenhimer/MovieNight"` Set the `Go` dependencies origin
-    `CC_PRE_RUN_HOOK="echo \"{\\\"ApprovedEmotes\\\": true, \\\"Bans\\\": [], \\\"LetThemLurk\\\": false, \\\"ListenAddress\\\": \\\":8080\\\", \\\"LogFile\\\": \\\"thelog.log\\\", \\\"LogLevel\\\": \\\"debug\\\", \\\"MaxMessageCount\\\": 300, \\\"NoCache\\\": false, \\\"NewPin\\\": true, \\\"PageTitle\\\": \\\"Movie Night\\\", \\\"RateLimitAuth\\\": 5, \\\"RateLimitChat\\\": 1, \\\"RateLimitColor\\\": 60, \\\"RateLimitDuplicate\\\": 30, \\\"RateLimitNick\\\": 300, \\\"RegenAdminPass\\\": true, \\\"RtmpListenAddress\\\": \\\":4040\\\", \\\"RoomAccess\\\": \\\"pin\\\", \\\"RoomAccessPin\\\": \\\"9999\\\", \\\"StreamKey\\\": \\\"ALongStreamKey\\\", \\\"StreamStats\\\": true, \\\"TitleLength\\\": 50, \\\"WrappedEmotesOnly\\\": true}\" >> /home/bas/go_home/bin/settings.json"` The command that will build a default configuration file `settings.json`
-    `CC_RUN_COMMAND="${MN_BIN_DIR}/${MN_BIN_NAME} -l ${MN_PORT} -r ${MN_RTMP} -s ${MN_STATIC} -k ${MN_STREAM_KEY}"` The run command
-    `MN_BIN_DIR="/home/bas/go_home/bin"` The built binary directory
-    `MN_BIN_NAME="MovieNight"` The name of the runnable bin
-    `MN_PORT=":8080"` The http port
-    `MN_RTMP=":4040"` The rtmp port
-    `MN_STATIC="${APP_HOME}/static"` The static contents dir
-    `MN_STREAM_KEY="YourStreamKey"` Your secret stream key, you have to change it
+      - `CC_GO_BUILD_TOOL="gobuild"` Set The build method
+      - `CC_GO_PKG="github.com/zorchenhimer/MovieNight"` Set the `Go` dependencies origin
+      - `CC_PRE_RUN_HOOK="echo \"{\\\"ApprovedEmotes\\\": true, \\\"Bans\\\": [], \\\"LetThemLurk\\\": false, \\\"ListenAddress\\\": \\\":8080\\\", \\\"LogFile\\\": \\\"thelog.log\\\", \\\"LogLevel\\\": \\\"debug\\\", \\\"MaxMessageCount\\\": 300, \\\"NoCache\\\": false, \\\"NewPin\\\": true, \\\"PageTitle\\\": \\\"Movie Night\\\", \\\"RateLimitAuth\\\": 5, \\\"RateLimitChat\\\": 1, \\\"RateLimitColor\\\": 60, \\\"RateLimitDuplicate\\\": 30, \\\"RateLimitNick\\\": 300, \\\"RegenAdminPass\\\": true, \\\"RtmpListenAddress\\\": \\\":4040\\\", \\\"RoomAccess\\\": \\\"pin\\\", \\\"RoomAccessPin\\\": \\\"9999\\\", \\\"StreamKey\\\": \\\"ALongStreamKey\\\", \\\"StreamStats\\\": true, \\\"TitleLength\\\": 50, \\\"WrappedEmotesOnly\\\": true}\" >> /home/bas/go_home/bin/settings.json"` The command that will build a default configuration file `settings.json`
+      - `CC_RUN_COMMAND="${MN_BIN_DIR}/${MN_BIN_NAME} -l ${MN_PORT} -r ${MN_RTMP} -s ${MN_STATIC} -k ${MN_STREAM_KEY}"` The run command
+      - `MN_BIN_DIR="/home/bas/go_home/bin"` The built binary directory
+      - `MN_BIN_NAME="MovieNight"` The name of the runnable bin
+      - `MN_PORT=":8080"` The http port
+      - `MN_RTMP=":4040"` The rtmp port
+      - `MN_STATIC="${APP_HOME}/static"` The static contents dir
+      - `MN_STREAM_KEY="YourStreamKey"` Your secret stream key, you have to change it
  - Turn on the TCP redirection
  - Try run your MovieNight instance
+
+Here is an example of the Clever-Cloud app Evironement Variables you can use after fex customizations:
 
 ```text
 CC_GO_BUILD_TOOL="gobuild"
