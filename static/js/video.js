@@ -10,7 +10,10 @@ function initPlayer() {
     let videoElement = document.querySelector('#videoElement');
     let flvPlayer = flvjs.createPlayer({
         type: 'flv',
-        url: '/live'
+        url: '/live',
+        isLive: true,
+        hasAudio: true,
+        hasVideo: true
     });
     flvPlayer.attachMediaElement(videoElement);
     flvPlayer.load();
