@@ -34,7 +34,7 @@ func setupSettings(adminPass string, confFile string) error {
 	if err != nil {
 		return fmt.Errorf("unable to load settings: %w", err)
 	}
-	if len(settings.StreamKey) == 0 {
+	if !settings.NewStreamKey && len(settings.StreamKey) == 0 {
 		return fmt.Errorf("missing stream key is settings.json")
 	}
 
