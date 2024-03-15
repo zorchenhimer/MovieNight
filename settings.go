@@ -21,8 +21,9 @@ var sstore *sessions.CookieStore
 
 type Settings struct {
 	// Non-Saved settings
-	filename   string
-	cmdLineKey string // stream key from the command line
+	filename     string
+	cmdLineKey   string // stream key from the command line
+	rndStreamKey string // random stream key; only used if NewStreamKey is set
 
 	// Saved settings
 	AdminPassword     string
@@ -33,6 +34,7 @@ type Settings struct {
 	LogLevel          common.LogLevel
 	MaxMessageCount   int
 	NewPin            bool   // Auto generate a new pin on start.  Overwrites RoomAccessPin if set.
+	NewStreamKey      bool   // Auto generate a new stream key on start. Used instead of StreamKey if set.
 	PageTitle         string // primary value for the page <title> element
 	RegenAdminPass    bool   // regenerate admin password on start?
 	RoomAccess        AccessMode
@@ -172,6 +174,11 @@ func LoadSettings(filename string) (*Settings, error) {
 		s.TitleLength = 50
 	}
 
+	// Set a random stream key
+	if s.NewStreamKey {
+		s.rndStreamKey = randStringRunes(20)
+	}
+
 	// Is this a good way to do this? Probably not...
 	if len(s.SessionKey) == 0 {
 		out := ""
@@ -294,6 +301,10 @@ func (s *Settings) GetStreamKey() string {
 	if len(s.cmdLineKey) > 0 {
 		return s.cmdLineKey
 	}
+	if s.NewStreamKey {
+		return s.rndStreamKey
+	}
+
 	return s.StreamKey
 }
 
@@ -310,4 +321,17 @@ func (s *Settings) generateNewPin() (string, error) {
 		return "", err
 	}
 	return s.RoomAccessPin, nil
+}
+
+// Adapted from: https://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-go/22892986#22892986
+var letterRunes = []rune("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func randStringRunes(n int) string {
+	length := big.NewInt(int64(len(letterRunes)))
+	b := make([]rune, n)
+	for i := range b {
+		letter_idx, _ := rand.Int(rand.Reader, length)
+		b[i] = letterRunes[letter_idx.Int64()]
+	}
+	return string(b)
 }
