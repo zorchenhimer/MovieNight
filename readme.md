@@ -48,6 +48,14 @@ $ (make|gmake) TARGET=windows ARCH=386
 $ ./MovieNight
 ```
 
+### Docker Packages
+
+The image can be pulled using the command below. View tagged versions at [ghcr](https://github.com/zorchenhimer/MovieNight/pkgs/container/movienight)
+
+```bash
+docker pull ghcr.io/zorchenhimer/movienight:master
+```
+
 ### Docker build
 MovieNight provides a Dockerfile and a docker-compose file to run MovieNight using Docker.
 
