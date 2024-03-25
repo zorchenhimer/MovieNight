@@ -60,6 +60,7 @@ jobs:
         run: go build
 
       - uses: actions/upload-artifact@v3
+        if: github.event_name != 'pull_request'
         with:
           name: MovieNight-${{ matrix.os }}-${{ matrix.arch }}
           if-no-files-found: error
@@ -67,6 +68,7 @@ jobs:
 
   docker:
     runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
 
     needs: pre-build
 
