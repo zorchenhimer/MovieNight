@@ -147,8 +147,6 @@ func GetAcceptHeader(format string) string {
 	switch format {
 	case "hls":
 		return "application/vnd.apple.mpegurl"
-	case "flv":
-		return "video/x-flv"
 	default:
 		return "video/x-flv"
 	}
@@ -202,8 +200,6 @@ func GetContentTypeForFormat(format string) string {
 		return "application/vnd.apple.mpegurl"
 	case "ts":
 		return "video/mp2t"
-	case "flv":
-		return "video/x-flv"
 	default:
 		return "video/x-flv"
 	}
