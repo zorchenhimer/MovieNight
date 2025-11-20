@@ -20,6 +20,7 @@ import (
 
 // HLSConfig represents configuration for HLS streaming
 type HLSConfig struct {
+	HLSVersion            int 		    // HLS version to use
 	SegmentDuration       time.Duration // Duration of each segment
 	MaxSegments           int           // Maximum number of segments to keep in memory
 	TargetDuration        time.Duration // Target duration for playlist
@@ -33,6 +34,7 @@ type HLSConfig struct {
 // DefaultHLSConfig returns the default HLS configuration
 func DefaultHLSConfig() HLSConfig {
 	return HLSConfig{
+		HLSVersion:            6,               // Use HLS version 6 for better support
 		SegmentDuration:       4 * time.Second, // Shorter segments for lower latency
 		MaxSegments:           6,               // Fewer segments for faster processing
 		TargetDuration:        4 * time.Second, // Match segment duration
@@ -145,7 +147,7 @@ func NewHLSChannel(que *pubsub.Queue) (*HLSChannel, error) {
 	}
 
 	// Set playlist properties for optimal HLS performance and sliding window
-	playlist.SetVersion(6)  // HLS version 6 for better live streaming support
+	playlist.SetVersion(config.HLSVersion)
 	playlist.Closed = false // Keep playlist open for live streaming (sliding window)
 
 	hls := &HLSChannel{
@@ -215,7 +217,7 @@ func NewHLSChannelWithDeviceOptimization(que *pubsub.Queue, r *http.Request) (*H
 		cancel()
 		return nil, fmt.Errorf("failed to create optimized playlist: %w", err)
 	}
-	playlist.SetVersion(6)
+	playlist.SetVersion(config.HLSVersion)
 	playlist.Closed = false // Keep playlist open for live streaming (sliding window)
 
 	hls := &HLSChannel{
@@ -428,7 +430,7 @@ func (h *HLSChannel) addGeneratedSegment(segment HLSSegment) {
 			common.LogErrorf("Failed to create new playlist for sliding window: %v\n", err)
 			return
 		}
-		newPlaylist.SetVersion(6)
+		newPlaylist.SetVersion(config.HLSVersion)
 		newPlaylist.Closed = false
 
 		// Add only the segments that should remain (excluding the oldest one)
