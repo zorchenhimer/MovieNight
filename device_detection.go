@@ -71,6 +71,10 @@ func DetectDeviceCapabilities(r *http.Request) DeviceCapabilities {
 	for _, pattern := range iosPatterns {
 		if pattern.MatchString(userAgent) {
 			capabilities.IsIOS = true
+			// iOS devices have native HLS support
+			capabilities.SupportsHLS = true
+			capabilities.SupportsMPEGTS = false // iOS Safari doesn't support MPEG-TS well
+			capabilities.PreferredCodec = "hls"
 			break
 		}
 	}
@@ -80,35 +84,29 @@ func DetectDeviceCapabilities(r *http.Request) DeviceCapabilities {
 		for _, pattern := range androidPatterns {
 			if pattern.MatchString(userAgent) {
 				capabilities.IsAndroid = true
+				// Android devices may support HLS via hls.js
+				capabilities.SupportsHLS = true
+				capabilities.SupportsMPEGTS = true
+				capabilities.PreferredCodec = "hls" // Prefer HLS for mobile
 				break
 			}
 		}
 	}
 
-	// Detect mobile devices
+	// Set defaults for Desktop or unknown devices
+	if !capabilities.IsIOS && !capabilities.IsAndroid {
+		// Desktop browsers - prefer MPEG-TS for better performance
+		capabilities.SupportsHLS = true    // via hls.js
+		capabilities.SupportsMPEGTS = true // via mpegts.js
+		capabilities.PreferredCodec = "flv"
+	}
+	
+	// Detect mobile devices -- there do exist some non-iOS/Android mobile devices
 	for _, pattern := range mobilePatterns {
 		if pattern.MatchString(userAgent) {
 			capabilities.IsMobile = true
 			break
 		}
-	}
-
-	// Determine streaming capabilities
-	if capabilities.IsIOS {
-		// iOS devices have native HLS support
-		capabilities.SupportsHLS = true
-		capabilities.SupportsMPEGTS = false // iOS Safari doesn't support MPEG-TS well
-		capabilities.PreferredCodec = "hls"
-	} else if capabilities.IsAndroid {
-		// Android devices may support HLS via hls.js
-		capabilities.SupportsHLS = true
-		capabilities.SupportsMPEGTS = true
-		capabilities.PreferredCodec = "hls" // Prefer HLS for mobile
-	} else {
-		// Desktop browsers - prefer MPEG-TS for better performance
-		capabilities.SupportsHLS = true    // via hls.js
-		capabilities.SupportsMPEGTS = true // via mpegts.js
-		capabilities.PreferredCodec = "flv"
 	}
 
 	return capabilities
