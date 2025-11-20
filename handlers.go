@@ -502,7 +502,7 @@ func handleFLVStream(w http.ResponseWriter, r *http.Request, ch *Channel) {
 	w.Header().Set("Content-Type", "video/x-flv")
 	w.Header().Set("Transfer-Encoding", "chunked")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	flusher := w.(http.Flusher)
 	flusher.Flush()
 
@@ -608,7 +608,7 @@ func handleHLSPlaylist(w http.ResponseWriter, r *http.Request, hlsChan *HLSChann
 		return
 	}
 
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(playlist))
 	common.LogDebugf("handleHLSPlaylist: playlist sent successfully\n")
 }
@@ -646,7 +646,7 @@ func handleHLSSegment(w http.ResponseWriter, r *http.Request, hlsChan *HLSChanne
 	w.Header().Set("Cache-Control", "public, max-age=3600") // Cache segments for 1 hour instead of 1 year
 	w.Header().Set("Content-Length", strconv.Itoa(len(segmentData)))
 
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	w.Write(segmentData)
 }
 
