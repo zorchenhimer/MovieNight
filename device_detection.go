@@ -9,7 +9,6 @@ import (
 // DeviceCapabilities represents the streaming capabilities of a device
 type DeviceCapabilities struct {
 	SupportsHLS    bool
-	SupportsMPEGTS bool
 	IsMobile       bool
 	IsIOS          bool
 	IsAndroid      bool
@@ -51,7 +50,6 @@ func DetectDeviceCapabilities(r *http.Request) DeviceCapabilities {
 	if r == nil {
 		return DeviceCapabilities{
 			SupportsHLS:    false,
-			SupportsMPEGTS: true,
 			IsMobile:       false,
 			IsIOS:          false,
 			IsAndroid:      false,
@@ -73,7 +71,6 @@ func DetectDeviceCapabilities(r *http.Request) DeviceCapabilities {
 			capabilities.IsIOS = true
 			// iOS devices have native HLS support
 			capabilities.SupportsHLS = true
-			capabilities.SupportsMPEGTS = false // iOS Safari doesn't support MPEG-TS well
 			capabilities.PreferredCodec = "hls"
 			break
 		}
@@ -86,7 +83,6 @@ func DetectDeviceCapabilities(r *http.Request) DeviceCapabilities {
 				capabilities.IsAndroid = true
 				// Android devices may support HLS via hls.js
 				capabilities.SupportsHLS = true
-				capabilities.SupportsMPEGTS = true
 				capabilities.PreferredCodec = "hls" // Prefer HLS for mobile
 				break
 			}
@@ -95,9 +91,8 @@ func DetectDeviceCapabilities(r *http.Request) DeviceCapabilities {
 
 	// Set defaults for Desktop or unknown devices
 	if !capabilities.IsIOS && !capabilities.IsAndroid {
-		// Desktop browsers - prefer MPEG-TS for better performance
-		capabilities.SupportsHLS = true    // via hls.js
-		capabilities.SupportsMPEGTS = true // via mpegts.js
+		// Desktop browsers - prefer FLV
+		capabilities.SupportsHLS = true // via hls.js
 		capabilities.PreferredCodec = "flv"
 	}
 
@@ -130,7 +125,7 @@ func ShouldUseHLS(r *http.Request) bool {
 		return true
 	}
 
-	// For other devices, use MPEG-TS by default for better performance
+	// For other devices, use FLV by default
 	return false
 }
 

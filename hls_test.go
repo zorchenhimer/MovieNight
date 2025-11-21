@@ -70,7 +70,6 @@ func TestDetectDeviceCapabilities_NilRequest(t *testing.T) {
 
 	assert.False(t, capabilities.IsIOS)
 	assert.False(t, capabilities.SupportsHLS)
-	assert.True(t, capabilities.SupportsMPEGTS)
 	assert.Equal(t, "flv", capabilities.PreferredCodec)
 	assert.Equal(t, "", capabilities.UserAgent)
 }
