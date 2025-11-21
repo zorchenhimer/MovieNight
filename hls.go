@@ -57,37 +57,42 @@ type HLSQualitySettings struct {
 
 // GetQualitySettings returns appropriate quality settings based on device capabilities
 func GetQualitySettings(capabilities DeviceCapabilities) HLSQualitySettings {
+	// Use all DeviceCapabilities properties for optimization
 	if capabilities.IsIOS {
 		if capabilities.IsMobile {
-			// iOS Mobile - optimize for battery and bandwidth
 			return HLSQualitySettings{
-				BitrateMultiplier: 0.7, // 30% reduction
+				BitrateMultiplier: 0.7,
 				Resolution:        "720p",
 				FrameRate:         30,
 				KeyFrameInterval:  2,
 			}
-		} else {
-			// iOS Desktop (macOS) - higher quality
-			return HLSQualitySettings{
-				BitrateMultiplier: 0.85, // 15% reduction
-				Resolution:        "1080p",
-				FrameRate:         60,
-				KeyFrameInterval:  2,
-			}
 		}
-	} else if capabilities.IsAndroid {
-		// Android devices - balance quality and performance
 		return HLSQualitySettings{
-			BitrateMultiplier: 0.75, // 25% reduction
-			Resolution:        "720p",
-			FrameRate:         30,
+			BitrateMultiplier: 0.85,
+			Resolution:        "1080p",
+			FrameRate:         60,
 			KeyFrameInterval:  2,
 		}
 	}
-
-	// Desktop/Other - use default HLS settings with moderate reduction
+	if capabilities.IsAndroid {
+		if capabilities.IsMobile {
+			return HLSQualitySettings{
+				BitrateMultiplier: 0.75,
+				Resolution:        "720p",
+				FrameRate:         30,
+				KeyFrameInterval:  2,
+			}
+		}
+		return HLSQualitySettings{
+			BitrateMultiplier: 0.8,
+			Resolution:        "1080p",
+			FrameRate:         60,
+			KeyFrameInterval:  2,
+		}
+	}
+	// Fallback for unknown devices
 	return HLSQualitySettings{
-		BitrateMultiplier: 0.8, // 20% reduction for HLS overhead
+		BitrateMultiplier: 0.8,
 		Resolution:        "1080p",
 		FrameRate:         60,
 		KeyFrameInterval:  2,
@@ -193,22 +198,24 @@ func NewHLSChannelWithDeviceOptimization(que *pubsub.Queue, r *http.Request) (*H
 	// Apply device-specific optimizations
 	config.BitrateReduction = qualitySettings.BitrateMultiplier
 
+	// Use all DeviceCapabilities properties for segment logic
 	if capabilities.IsIOS && capabilities.IsMobile {
-		// Optimize for iOS mobile devices - prioritize low latency
-		config.SegmentDuration = 3 * time.Second // Very short segments for low latency
-		config.MaxSegments = 5                   // Minimal segments for fast processing
+		config.SegmentDuration = 3 * time.Second
+		config.MaxSegments = 5
 		config.EnableLowLatency = true
-		config.MaxConcurrentSegments = 3 // Balanced concurrency for mobile
-	} else if capabilities.IsAndroid {
-		// Optimize for Android devices
-		config.SegmentDuration = 4 * time.Second // Short segments for good performance
+		config.MaxConcurrentSegments = 3
+	} else if capabilities.IsAndroid && capabilities.IsMobile {
+		config.SegmentDuration = 4 * time.Second
 		config.MaxSegments = 6
 		config.MaxConcurrentSegments = 3
-	} else {
-		// Desktop optimization - can handle slightly longer segments
-		config.SegmentDuration = 4 * time.Second // Still short for low latency
+	} else if capabilities.SupportsHLS {
+		config.SegmentDuration = 4 * time.Second
 		config.MaxSegments = 8
 		config.MaxConcurrentSegments = 5
+	} else {
+		config.SegmentDuration = 4 * time.Second
+		config.MaxSegments = 6
+		config.MaxConcurrentSegments = 3
 	}
 
 	// Create playlist with device-optimized settings for proper sliding window
@@ -239,8 +246,8 @@ func NewHLSChannelWithDeviceOptimization(que *pubsub.Queue, r *http.Request) (*H
 	// Start background cleanup routine
 	go hls.startViewerCleanup()
 
-	common.LogDebugf("Created HLS channel optimized for device: iOS=%v, Mobile=%v, BitrateReduction=%.2f\n",
-		capabilities.IsIOS, capabilities.IsMobile, config.BitrateReduction)
+	common.LogDebugf("Created HLS channel optimized for device: %+v, BitrateReduction=%.2f\n",
+		capabilities, config.BitrateReduction)
 
 	return hls, nil
 }

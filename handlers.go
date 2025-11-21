@@ -470,13 +470,14 @@ func handleLive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Detect device capabilities
+	capabilities := DetectDeviceCapabilities(r)
 	if ch != nil {
-		// Detect streaming format based on device capabilities or explicit request
-		streamingFormat := GetStreamingFormat(r)
+		streamingFormat := capabilities.PreferredCodec
 		common.LogDebugf("Detected streaming format: %s\n", streamingFormat)
 
 		// Also check if this is an HLS playlist request (for native iOS)
-		if streamingFormat == "hls" || strings.HasSuffix(r.URL.Path, ".m3u8") || r.URL.Query().Get("format") == "hls" {
+		if capabilities.SupportsHLS || strings.HasSuffix(r.URL.Path, ".m3u8") || r.URL.Query().Get("format") == "hls" {
 			common.LogDebugf("Routing to HLS handler\n")
 			handleHLSStream(w, r, ch)
 		} else {
@@ -485,7 +486,7 @@ func handleLive(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		// When no stream is active, return appropriate response based on request type
-		if strings.HasSuffix(r.URL.Path, ".m3u8") || r.URL.Query().Get("format") == "hls" {
+		if capabilities.SupportsHLS || strings.HasSuffix(r.URL.Path, ".m3u8") || r.URL.Query().Get("format") == "hls" {
 			// For HLS requests, return a proper HTTP status
 			common.LogInfof("HLS request for inactive stream: %s\n", r.URL.Path)
 			w.Header().Set("Content-Type", GetContentTypeForFormat("hls"))

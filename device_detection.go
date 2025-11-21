@@ -96,7 +96,7 @@ func DetectDeviceCapabilities(r *http.Request) DeviceCapabilities {
 		capabilities.PreferredCodec = "flv"
 	}
 
-	// Detect mobile devices -- there do exist some non-iOS/Android mobile devices
+	// Detect mobile devices -- we'll adjust quality settings based on this
 	for _, pattern := range mobilePatterns {
 		if pattern.MatchString(userAgent) {
 			capabilities.IsMobile = true
@@ -105,36 +105,6 @@ func DetectDeviceCapabilities(r *http.Request) DeviceCapabilities {
 	}
 
 	return capabilities
-}
-
-// ShouldUseHLS determines if HLS should be used for this request
-func ShouldUseHLS(r *http.Request) bool {
-	if r == nil {
-		return false
-	}
-
-	capabilities := DetectDeviceCapabilities(r)
-
-	// Use HLS for iOS devices as they have native support and better performance
-	if capabilities.IsIOS {
-		return true
-	}
-
-	// Check if explicitly requested via query parameter
-	if r.URL.Query().Get("format") == "hls" {
-		return true
-	}
-
-	// For other devices, use FLV by default
-	return false
-}
-
-// GetStreamingFormat returns the preferred streaming format for the device
-func GetStreamingFormat(r *http.Request) string {
-	if ShouldUseHLS(r) {
-		return "hls"
-	}
-	return "flv"
 }
 
 // GetAcceptHeader returns the appropriate Accept header for the streaming format

@@ -74,52 +74,6 @@ func TestDetectDeviceCapabilities_NilRequest(t *testing.T) {
 	assert.Equal(t, "", capabilities.UserAgent)
 }
 
-func TestShouldUseHLS(t *testing.T) {
-	tests := []struct {
-		name       string
-		userAgent  string
-		queryParam string
-		expected   bool
-	}{
-		{
-			name:      "iOS device should use HLS",
-			userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15",
-			expected:  true,
-		},
-		{
-			name:      "Desktop Chrome should use FLV by default",
-			userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-			expected:  false,
-		},
-		{
-			name:       "Force HLS via query parameter",
-			userAgent:  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-			queryParam: "hls",
-			expected:   true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			url := "/"
-			if tt.queryParam != "" {
-				url += "?format=" + tt.queryParam
-			}
-
-			req := httptest.NewRequest("GET", url, nil)
-			req.Header.Set("User-Agent", tt.userAgent)
-
-			result := ShouldUseHLS(req)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
-
-func TestShouldUseHLS_NilRequest(t *testing.T) {
-	result := ShouldUseHLS(nil)
-	assert.False(t, result)
-}
-
 func TestIsValidSegmentURI(t *testing.T) {
 	tests := []struct {
 		uri      string
@@ -530,12 +484,6 @@ func TestHLSIntegration(t *testing.T) {
 		req.Header.Set("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15")
 
 		// Test device detection
-		shouldUseHLS := ShouldUseHLS(req)
-		assert.True(t, shouldUseHLS, "iOS devices should use HLS")
-
-		format := GetStreamingFormat(req)
-		assert.Equal(t, "hls", format, "iOS should get HLS format")
-
 		capabilities := DetectDeviceCapabilities(req)
 		assert.True(t, capabilities.IsIOS, "Should detect iOS")
 		assert.True(t, capabilities.SupportsHLS, "iOS should support HLS")
@@ -553,27 +501,9 @@ func TestHLSIntegration(t *testing.T) {
 		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36")
 
 		// Test device detection
-		shouldUseHLS := ShouldUseHLS(req)
-		assert.False(t, shouldUseHLS, "Desktop should use FLV by default")
-
-		format := GetStreamingFormat(req)
-		assert.Equal(t, "flv", format, "Desktop should get FLV format")
-
 		capabilities := DetectDeviceCapabilities(req)
 		assert.False(t, capabilities.IsIOS, "Should not detect iOS")
 		assert.True(t, capabilities.SupportsHLS, "Desktop should support HLS via hls.js")
 		assert.Equal(t, "flv", capabilities.PreferredCodec, "Desktop should prefer FLV")
-	})
-
-	t.Run("Force HLS via Query Parameter", func(t *testing.T) {
-		// Simulate desktop request with HLS forced
-		req := httptest.NewRequest("GET", "/live?format=hls", nil)
-		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-
-		shouldUseHLS := ShouldUseHLS(req)
-		assert.True(t, shouldUseHLS, "Should use HLS when forced via query parameter")
-
-		format := GetStreamingFormat(req)
-		assert.Equal(t, "hls", format, "Should get HLS format when requested")
 	})
 }
