@@ -463,6 +463,13 @@ func handleLive(w http.ResponseWriter, r *http.Request) {
 	format := r.URL.Query().Get("format")
 	common.LogDebugf("handleLive: path=%s, format=%s, userAgent=%s\n", r.URL.Path, format, userAgent)
 
+	// If the user-agent is missing or invalid, reject the request
+	if !ValidateUserAgent(userAgent) {
+		common.LogInfof("Rejected live request with invalid User-Agent: %s\n", userAgent)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	if ch != nil {
 		// Detect streaming format based on device capabilities or explicit request
 		streamingFormat := GetStreamingFormat(r)

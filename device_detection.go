@@ -66,7 +66,7 @@ func DetectDeviceCapabilities(r *http.Request) DeviceCapabilities {
 		UserAgent: userAgent,
 	}
 
-	// Primary detection via User Agent string (prioritized as requested)
+	// Primary detection via User Agent string
 	// Detect iOS devices first
 	for _, pattern := range iosPatterns {
 		if pattern.MatchString(userAgent) {
@@ -100,7 +100,7 @@ func DetectDeviceCapabilities(r *http.Request) DeviceCapabilities {
 		capabilities.SupportsMPEGTS = true // via mpegts.js
 		capabilities.PreferredCodec = "flv"
 	}
-	
+
 	// Detect mobile devices -- there do exist some non-iOS/Android mobile devices
 	for _, pattern := range mobilePatterns {
 		if pattern.MatchString(userAgent) {
