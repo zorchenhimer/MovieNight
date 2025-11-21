@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
@@ -723,12 +724,10 @@ func IsValidSegmentURI(uri string) bool {
 
 	// Check for UUID format: 32 hex characters
 	if len(identifier) == 32 {
-		for _, c := range identifier {
-			if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
-				return false
-			}
+		if _, err := hex.DecodeString(identifier); err == nil {
+			// Valid UUID format
+			return true
 		}
-		return true
 	}
 
 	return false
