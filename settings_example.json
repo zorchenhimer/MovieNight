@@ -18,5 +18,6 @@
 	"RtmpListenAddress": ":1935",
 	"StreamKey": "ALongStreamKey",
 	"TitleLength": 50,
-	"WrappedEmotesOnly": false
+	"WrappedEmotesOnly": false,
+	"UABotPatterns": ["curl","wget","python","bot","crawler","spider"]
 }

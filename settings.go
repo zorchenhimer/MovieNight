@@ -48,6 +48,7 @@ type Settings struct {
 	StreamStats       bool
 	TitleLength       int  // maximum length of the title that can be set with the /playing
 	WrappedEmotesOnly bool // only allow "wrapped" emotes.  eg :Kappa: and [Kappa] but not Kappa
+	UABotPatterns	  []string // list of suspicious patterns in UserAgent that might indicate bots or scrapers
 
 	// Rate limiting stuff, in seconds
 	RateLimitChat      time.Duration

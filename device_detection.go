@@ -216,18 +216,8 @@ func ValidateUserAgent(userAgent string) bool {
 		return false
 	}
 
-	// Check for suspicious patterns that might indicate bot/scraper
-	suspiciousPatterns := []string{
-		"curl",
-		"wget",
-		"python",
-		"bot",
-		"crawler",
-		"spider",
-	}
-
 	lowerUA := strings.ToLower(userAgent)
-	for _, pattern := range suspiciousPatterns {
+	for _, pattern := range settings.UABotPatterns {
 		if strings.Contains(lowerUA, pattern) {
 			return false
 		}
