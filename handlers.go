@@ -568,9 +568,9 @@ func handleHLSStream(w http.ResponseWriter, r *http.Request, ch *Channel) {
 		common.LogDebugf("handleHLSStream: routing to segment handler\n")
 		handleHLSSegment(w, r, ch.hlsChan)
 	} else {
-		// Default to playlist for HLS requests
-		common.LogDebugf("handleHLSStream: defaulting to playlist handler\n")
-		handleHLSPlaylist(w, r, ch.hlsChan)
+		// It is neither a playlist nor a segment request. Return 404.
+		common.LogDebugf("handleHLSStream: invalid HLS request\n")
+		w.WriteHeader(http.StatusNotFound)
 	}
 }
 
