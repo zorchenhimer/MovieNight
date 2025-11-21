@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/nareix/joy4/av/pubsub"
-	"github.com/zorchenhimer/MovieNight/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/zorchenhimer/MovieNight/common"
 )
 
 func TestDetectDeviceCapabilities(t *testing.T) {
@@ -512,6 +512,8 @@ func TestValidateUserAgent(t *testing.T) {
 		{"Googlebot/2.1", false},
 		{string(make([]byte, 1001)), false}, // Too long
 	}
+
+	setupSettings("", "")
 
 	for _, tt := range tests {
 		t.Run(tt.userAgent, func(t *testing.T) {
