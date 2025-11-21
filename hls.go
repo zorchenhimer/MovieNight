@@ -21,7 +21,7 @@ import (
 
 // HLSConfig represents configuration for HLS streaming
 type HLSConfig struct {
-	HLSVersion            uint8 		    // HLS version to use
+	HLSVersion            uint8         // HLS version to use
 	SegmentDuration       time.Duration // Duration of each segment
 	MaxSegments           int           // Maximum number of segments to keep in memory
 	TargetDuration        time.Duration // Target duration for playlist
@@ -431,7 +431,7 @@ func (h *HLSChannel) addGeneratedSegment(segment HLSSegment) {
 			common.LogErrorf("Failed to create new playlist for sliding window: %v\n", err)
 			return
 		}
-		newPlaylist.SetVersion(config.HLSVersion)
+		newPlaylist.SetVersion(h.config.HLSVersion)
 		newPlaylist.Closed = false
 
 		// Add only the segments that should remain (excluding the oldest one)
