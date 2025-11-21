@@ -704,8 +704,8 @@ func handleHLS(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 		}
 	} else {
-		// Default to playlist
-		handleHLSPlaylist(w, r, ch.hlsChan)
+		// Not enough path parts. Return 400 Bad Request
+		w.WriteHeader(http.StatusBadRequest)
 	}
 }
 
