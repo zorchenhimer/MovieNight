@@ -660,7 +660,8 @@ func handleHLSSegment(w http.ResponseWriter, r *http.Request, hlsChan *HLSChanne
 func handleHLS(w http.ResponseWriter, r *http.Request) {
 	// Extract stream path from URL like /hls/streamname/playlist.m3u8 or /hls/streamname/segment_N.ts
 	pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-	if len(pathParts) < 2 {
+	if len(pathParts) < 3 {
+		common.LogErrorf("handleHLS: invalid path, not enough parts")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -694,18 +695,13 @@ func handleHLS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Handle different HLS requests
-	if len(pathParts) >= 3 {
-		fileName := pathParts[2]
-		if strings.HasSuffix(fileName, ".m3u8") {
-			handleHLSPlaylist(w, r, ch.hlsChan)
-		} else if strings.HasSuffix(fileName, ".ts") {
-			handleHLSSegment(w, r, ch.hlsChan)
-		} else {
-			w.WriteHeader(http.StatusNotFound)
-		}
+	fileName := pathParts[2]
+	if strings.HasSuffix(fileName, ".m3u8") {
+		handleHLSPlaylist(w, r, ch.hlsChan)
+	} else if strings.HasSuffix(fileName, ".ts") {
+		handleHLSSegment(w, r, ch.hlsChan)
 	} else {
-		// Not enough path parts. Return 400 Bad Request
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 	}
 }
 
