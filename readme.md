@@ -193,8 +193,8 @@ MovieNight’s configuration is controlled by `settings.json`:
     - `NewStreamKey`: if true, uses a random `StreamKey` when the server starts. The command line option takes precedence, and will be used if it is set.
     - `PageTitle`: The base string used in the `<title>` element of the page.  When the stream title is set with `/playing`, it is appended; e.g., `Movie Night | The Man Who Killed Hitler and Then the Bigfoot`
     - `RegenAdminPass`: if true, regenerates `AdminPassword` when the server starts.
-    - `RoomAccess`: the access policy of the chat room; this is managed by the application and should not be edited manually.
-    - `RoomAccessPin`: if set, serves as the password required to enter the chatroom.
+    - `RoomAccess`: [open|pin|request] the access policy of the chat room; this is managed by the application and should not be edited manually. Default is : open
+    - `RoomAccessPin`: if `RoomAccess` is set to `pin`, then the pin in here serves as the password required to enter the chatroom.
     - `SessionKey`: key used for storing session data (cookies etc.)
     - `StreamKey`: the key that OBS will use to connect to MovieNight.
     - `StreamStats`: if true, prints statistics for the stream on server shutdown.
