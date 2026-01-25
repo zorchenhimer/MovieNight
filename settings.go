@@ -1,8 +1,10 @@
 package main
 
 import (
+	"crypto/md5"
 	"crypto/rand"
 	_ "embed"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -38,6 +40,7 @@ type Settings struct {
 	PageTitle         string // primary value for the page <title> element
 	RegenAdminPass    bool   // regenerate admin password on start?
 	RoomAccess        AccessMode
+	AccessLink        string // if you using port fordwing u can add the public ip here for easy access through terminal
 	RoomAccessPin     string // The current pin
 	RtmpListenAddress string // host:port that the RTMP server listens on
 	SessionKey        string // key for session data
@@ -45,6 +48,7 @@ type Settings struct {
 	StreamStats       bool
 	TitleLength       int  // maximum length of the title that can be set with the /playing
 	WrappedEmotesOnly bool // only allow "wrapped" emotes.  eg :Kappa: and [Kappa] but not Kappa
+	UABotPatterns	  []string // list of suspicious patterns in UserAgent that might indicate bots or scrapers
 
 	// Rate limiting stuff, in seconds
 	RateLimitChat      time.Duration
@@ -209,10 +213,18 @@ func generatePass(seed int64) (string, error) {
 		if err != nil {
 			return "", err
 		}
-
 		out = fmt.Sprintf("%s%X", out, num)
 	}
+	out = getMD5Hash(out)
+
 	return out, nil
+}
+
+// unesserasy function just to make the string hashed
+func getMD5Hash(text string) string {
+	hasher := md5.New()
+	hasher.Write([]byte(text))
+	return hex.EncodeToString(hasher.Sum(nil))
 }
 
 func (s *Settings) Save() error {

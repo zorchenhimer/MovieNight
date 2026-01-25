@@ -57,7 +57,7 @@ func NewClient(connection *chatConnection, room *ChatRoom, name, color string) (
 	return c, nil
 }
 
-//Client has a new message to broadcast
+// Client has a new message to broadcast
 func (cl *Client) NewMsg(data common.ClientData) {
 	switch data.Type {
 	case common.CdAuth:
@@ -221,7 +221,7 @@ func formatLinks(input string) string {
 	return strings.Join(newMsg, " ")
 }
 
-//Exiting out
+// Exiting out
 func (cl *Client) Exit() {
 	cl.belongsTo.Leave(cl.name, cl.color)
 }

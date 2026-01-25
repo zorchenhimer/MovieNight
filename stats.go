@@ -26,14 +26,14 @@ func (s *streamStats) addViewer(id string) {
 	s.updateMaxViewers(size)
 	s.mutex.Unlock()
 
-	common.LogDebugf("[stats] %d viewer(s) connected\n", size)
+	common.LogInfof("[stats] %d viewer(s) connected\n", size)
 }
 func (s *streamStats) removeViewer(id string) {
 	s.mutex.Lock()
 	delete(s.viewers, id)
 	s.mutex.Unlock()
 
-	common.LogDebugf("[stats] One viewer left the stream\n")
+	common.LogInfof("[stats] One viewer left the stream\n")
 }
 
 func (s *streamStats) updateMaxViewers(size int) {

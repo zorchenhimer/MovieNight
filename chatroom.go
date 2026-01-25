@@ -28,7 +28,7 @@ type ChatRoom struct {
 	modPasswordsMtx sync.Mutex
 }
 
-//initializing the chatroom
+// initializing the chatroom
 func newChatRoom() (*ChatRoom, error) {
 	cr := &ChatRoom{
 		queue:    make(chan common.ChatData, 1000),
@@ -322,7 +322,7 @@ func (cr *ChatRoom) UserCount() int {
 	return len(cr.clients)
 }
 
-//broadcasting all the messages in the queue in one block
+// broadcasting all the messages in the queue in one block
 func (cr *ChatRoom) Broadcast() {
 	send := func(data common.ChatData, client *Client) {
 		err := client.SendChatData(data)

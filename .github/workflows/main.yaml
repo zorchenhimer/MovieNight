@@ -24,7 +24,7 @@ jobs:
 
       - uses: actions/setup-go@v3
         with:
-          go-version: ^1.16
+          go-version: ^1.20
 
       - name: vet
         run: go vet ./...
@@ -54,7 +54,7 @@ jobs:
 
       - uses: actions/setup-go@v3
         with:
-          go-version: ^1.16
+          go-version: ^1.20
 
       - name: build
         run: go build

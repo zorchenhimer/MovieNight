@@ -116,6 +116,9 @@ func run(args args) {
 	if args.Addr == "" {
 		args.Addr = settings.ListenAddress
 	}
+	if settings.AccessLink != "" {
+		common.LogInfoln("AccessLink: ", settings.AccessLink)
+	}
 
 	if args.RtmpAddr == "" {
 		args.RtmpAddr = settings.RtmpListenAddress
@@ -126,7 +129,6 @@ func run(args args) {
 	if args.StreamKey != "" {
 		settings.SetTempKey(args.StreamKey)
 	}
-
 	common.LogInfoln("Stream key: ", settings.GetStreamKey())
 	common.LogInfoln("Admin password: ", settings.AdminPassword)
 	common.LogInfoln("HTTP server listening on: ", args.Addr)
@@ -152,6 +154,8 @@ func run(args args) {
 	router.HandleFunc("/emotes", wrapAuth(handleEmoteTemplate))
 
 	router.HandleFunc("/live", wrapAuth(handleLive))
+	router.HandleFunc("/live/", wrapAuth(handleLiveSegments)) // HLS segments from /live/ path
+	router.HandleFunc("/hls/", wrapAuth(handleHLS))           // HLS playlist and segments
 	router.HandleFunc("/", wrapAuth(handleDefault))
 
 	httpServer := &http.Server{

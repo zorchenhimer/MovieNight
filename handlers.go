@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -32,7 +33,8 @@ var (
 )
 
 type Channel struct {
-	que *pubsub.Queue
+	que     *pubsub.Queue
+	hlsChan *HLSChannel
 }
 
 type writeFlusher struct {
@@ -396,6 +398,23 @@ func handlePublish(conn *rtmp.Conn) {
 	if err != nil {
 		common.LogErrorf("Could not write header to streams: %v\n", err)
 	}
+
+	// Initialize HLS channel for this stream immediately
+	common.LogInfof("Creating HLS channel for stream: %s\n", streamPath)
+	hlsChan, err := NewHLSChannel(ch.que)
+	if err != nil {
+		common.LogErrorf("Failed to create HLS channel: %v\n", err)
+	} else {
+		ch.hlsChan = hlsChan
+		err = ch.hlsChan.Start()
+		if err != nil {
+			common.LogErrorf("Failed to start HLS channel: %v\n", err)
+			ch.hlsChan = nil
+		} else {
+			common.LogDebugf("HLS channel started for stream: %s\n", streamPath)
+		}
+	}
+
 	channels[streamPath] = ch
 	l.Unlock()
 
@@ -411,6 +430,10 @@ func handlePublish(conn *rtmp.Conn) {
 	stats.endStream()
 
 	l.Lock()
+	// Clean up HLS channel if it exists
+	if ch.hlsChan != nil {
+		ch.hlsChan.Stop()
+	}
 	delete(channels, streamPath)
 	l.Unlock()
 	ch.que.Close()
@@ -435,29 +458,299 @@ func handleLive(w http.ResponseWriter, r *http.Request) {
 	ch := channels[strings.Trim(r.URL.Path, "/")]
 	l.RUnlock()
 
+	// Debug logging for HLS troubleshooting
+	userAgent := r.Header.Get("User-Agent")
+	format := r.URL.Query().Get("format")
+	common.LogDebugf("handleLive: path=%s, format=%s, userAgent=%s\n", r.URL.Path, format, userAgent)
+
+	// If the user-agent is missing or invalid, reject the request
+	if !ValidateUserAgent(userAgent) {
+		common.LogInfof("Rejected live request with invalid User-Agent: %s\n", userAgent)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// Detect device capabilities
+	capabilities := DetectDeviceCapabilities(r)
 	if ch != nil {
-		w.Header().Set("Content-Type", "video/x-flv")
-		w.Header().Set("Transfer-Encoding", "chunked")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.WriteHeader(200)
-		flusher := w.(http.Flusher)
-		flusher.Flush()
+		streamingFormat := capabilities.PreferredCodec
+		common.LogDebugf("Detected streaming format: %s\n", streamingFormat)
 
-		muxer := flv.NewMuxerWriteFlusher(writeFlusher{httpflusher: flusher, Writer: w})
-		cursor := ch.que.Latest()
-
-		session, _ := sstore.Get(r, "moviesession")
-		stats.addViewer(session.ID)
-		err := avutil.CopyFile(muxer, cursor)
-		if err != nil {
-			common.LogErrorf("Could not copy video to connection: %v\n", err)
+		// Also check if this is an HLS playlist request (for native iOS)
+		if capabilities.SupportsHLS || strings.HasSuffix(r.URL.Path, ".m3u8") || r.URL.Query().Get("format") == "hls" {
+			common.LogDebugf("Routing to HLS handler\n")
+			handleHLSStream(w, r, ch)
+		} else {
+			common.LogDebugf("Routing to FLV handler\n")
+			handleFLVStream(w, r, ch)
 		}
-		stats.removeViewer(session.ID)
 	} else {
-		// Maybe HTTP_204 is better than HTTP_404
-		w.WriteHeader(http.StatusNoContent)
+		// When no stream is active, return appropriate response based on request type
+		if capabilities.SupportsHLS || strings.HasSuffix(r.URL.Path, ".m3u8") || r.URL.Query().Get("format") == "hls" {
+			// For HLS requests, return a proper HTTP status
+			common.LogInfof("HLS request for inactive stream: %s\n", r.URL.Path)
+			w.Header().Set("Content-Type", GetContentTypeForFormat("hls"))
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.WriteHeader(http.StatusServiceUnavailable) // 503 - Service Unavailable is more appropriate than 204
+		} else {
+			// For FLV requests, use the original behavior
+			common.LogInfof("FLV request for inactive stream: %s\n", r.URL.Path)
+			w.WriteHeader(http.StatusNoContent)
+		}
 		stats.resetViewers()
 	}
+}
+
+func handleFLVStream(w http.ResponseWriter, r *http.Request, ch *Channel) {
+	if ch == nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	w.Header().Set("Content-Type", "video/x-flv")
+	w.Header().Set("Transfer-Encoding", "chunked")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.WriteHeader(http.StatusOK)
+	flusher := w.(http.Flusher)
+	flusher.Flush()
+
+	muxer := flv.NewMuxerWriteFlusher(writeFlusher{httpflusher: flusher, Writer: w})
+	cursor := ch.que.Latest()
+
+	session, _ := sstore.Get(r, "moviesession")
+	stats.addViewer(session.ID)
+	err := avutil.CopyFile(muxer, cursor)
+	if err != nil {
+		common.LogErrorf("Could not copy video to connection: %v\n", err)
+	}
+	stats.removeViewer(session.ID)
+}
+
+func handleHLSStream(w http.ResponseWriter, r *http.Request, ch *Channel) {
+	common.LogDebugf("handleHLSStream called for path: %s\n", r.URL.Path)
+
+	if ch == nil {
+		common.LogDebugf("handleHLSStream: channel is nil\n")
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	// Initialize HLS channel if not already done
+	if ch.hlsChan == nil {
+		// Check if the queue has any data before creating HLS channel
+		if ch.que == nil {
+			common.LogDebugf("handleHLSStream: no queue available\n")
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+
+		common.LogDebugf("handleHLSStream: initializing HLS channel\n")
+		hlsChan, err := NewHLSChannelWithDeviceOptimization(ch.que, r)
+		if err != nil {
+			common.LogErrorf("Failed to create HLS channel: %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		ch.hlsChan = hlsChan
+		err = ch.hlsChan.Start()
+		if err != nil {
+			common.LogErrorf("Failed to start HLS channel: %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		common.LogDebugf("handleHLSStream: HLS channel initialized and started\n")
+	}
+
+	// Handle different HLS requests
+	if IsHLSPlaylistRequest(r) {
+		common.LogDebugf("handleHLSStream: routing to playlist handler\n")
+		handleHLSPlaylist(w, r, ch.hlsChan)
+	} else if IsHLSSegmentRequest(r) {
+		common.LogDebugf("handleHLSStream: routing to segment handler\n")
+		handleHLSSegment(w, r, ch.hlsChan)
+	} else {
+		// It is neither a playlist nor a segment request. Return 404.
+		common.LogDebugf("handleHLSStream: invalid HLS request\n")
+		w.WriteHeader(http.StatusNotFound)
+	}
+}
+
+func handleHLSPlaylist(w http.ResponseWriter, r *http.Request, hlsChan *HLSChannel) {
+	common.LogDebugf("handleHLSPlaylist called\n")
+
+	if hlsChan == nil {
+		common.LogDebugf("handleHLSPlaylist: hlsChan is nil\n")
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", GetContentTypeForFormat("hls"))
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
+
+	playlist := hlsChan.GetPlaylist()
+	common.LogDebugf("handleHLSPlaylist: playlist length = %d\n", len(playlist))
+
+	// Check if playlist has segments rather than just being empty string
+	hasSegments := hlsChan.HasSegments()
+	common.LogDebugf("handleHLSPlaylist: hasSegments = %v\n", hasSegments)
+
+	// Track viewer for HLS - count viewers even when waiting for segments
+	session, _ := sstore.Get(r, "moviesession")
+	if session != nil {
+		isNewViewer := hlsChan.AddViewer(session.ID)
+		if isNewViewer {
+			stats.addViewer(session.ID)
+			common.LogInfof("[HLS] New viewer added to stats: %s\n", session.ID)
+		}
+	}
+
+	if playlist == "" || !hasSegments {
+		common.LogDebugf("handleHLSPlaylist: playlist is empty or has no segments\n")
+		// Return 503 (Service Unavailable) for empty playlists to indicate segments are still being generated
+		// This is more appropriate than 404 and allows clients to retry
+		w.WriteHeader(http.StatusServiceUnavailable)
+		w.Write([]byte("#EXTM3U\n#EXT-X-VERSION:6\n#EXT-X-TARGETDURATION:10\n#EXT-X-MEDIA-SEQUENCE:0\n"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(playlist))
+	common.LogDebugf("handleHLSPlaylist: playlist sent successfully\n")
+}
+
+func handleHLSSegment(w http.ResponseWriter, r *http.Request, hlsChan *HLSChannel) {
+	if hlsChan == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	// Extract segment filename from path
+	pathParts := strings.Split(r.URL.Path, "/")
+	segmentFilename := pathParts[len(pathParts)-1]
+
+	if !IsValidSegmentURI(segmentFilename) {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// Reconstruct the full URI that was used when storing the segment
+	// The segment was stored with the full absolute path like "/live/segment_N.ts"
+	segmentURI := r.URL.Path
+
+	segmentData, err := hlsChan.GetSegmentByURI(segmentURI)
+	if err != nil {
+		common.LogErrorf("Failed to get HLS segment %s: %v\n", segmentURI, err)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", GetContentTypeForFormat("ts"))
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	// Use shorter cache time for live segments to prevent stale content issues
+	// Long cache (1 year) can cause problems when service restarts with different content
+	w.Header().Set("Cache-Control", "public, max-age=3600") // Cache segments for 1 hour instead of 1 year
+	w.Header().Set("Content-Length", strconv.Itoa(len(segmentData)))
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(segmentData)
+}
+
+func handleHLS(w http.ResponseWriter, r *http.Request) {
+	// Extract stream path from URL like /hls/streamname/playlist.m3u8 or /hls/streamname/segment_N.ts
+	pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	if len(pathParts) < 3 {
+		common.LogErrorf("handleHLS: invalid path, not enough parts")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	streamName := pathParts[1]
+
+	l.RLock()
+	ch := channels[streamName]
+	l.RUnlock()
+
+	if ch == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	// Initialize HLS channel if not already done
+	if ch.hlsChan == nil {
+		hlsChan, err := NewHLSChannelWithDeviceOptimization(ch.que, r)
+		if err != nil {
+			common.LogErrorf("Failed to create HLS channel: %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		ch.hlsChan = hlsChan
+		err = ch.hlsChan.Start()
+		if err != nil {
+			common.LogErrorf("Failed to start HLS channel: %v\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Handle different HLS requests
+	fileName := pathParts[2]
+	if strings.HasSuffix(fileName, ".m3u8") {
+		handleHLSPlaylist(w, r, ch.hlsChan)
+	} else if strings.HasSuffix(fileName, ".ts") {
+		handleHLSSegment(w, r, ch.hlsChan)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+	}
+}
+
+// handleLiveSegments handles HLS segment requests from /live/ path
+func handleLiveSegments(w http.ResponseWriter, r *http.Request) {
+	// Extract segment name from URL like /live/segment_N.ts
+	path := strings.Trim(r.URL.Path, "/")
+	pathParts := strings.Split(path, "/")
+
+	common.LogDebugf("handleLiveSegments: path=%s, pathParts=%v", path, pathParts)
+
+	if len(pathParts) < 2 {
+		common.LogDebugf("handleLiveSegments: invalid path, not enough parts")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	segmentName := pathParts[1]
+	if !strings.HasSuffix(segmentName, ".ts") {
+		common.LogDebugf("handleLiveSegments: not a .ts file: %s", segmentName)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	// Use "live" as the default stream name for /live/ requests
+	streamName := "live"
+
+	l.RLock()
+	ch := channels[streamName]
+	l.RUnlock()
+
+	if ch == nil {
+		common.LogDebugf("handleLiveSegments: no channel found for stream: %s", streamName)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	// Make sure we have an HLS channel
+	if ch.hlsChan == nil {
+		common.LogDebugf("handleLiveSegments: no HLS channel found for stream: %s", streamName)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	common.LogDebugf("handleLiveSegments: requesting segment %s from HLS channel", segmentName)
+
+	// Handle the segment request
+	handleHLSSegment(w, r, ch.hlsChan)
 }
 
 func handleDefault(w http.ResponseWriter, r *http.Request) {
