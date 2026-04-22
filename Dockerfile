@@ -1,4 +1,4 @@
-FROM golang:1.18 AS build
+FROM golang AS build
 
 WORKDIR /app
 
