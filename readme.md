@@ -10,6 +10,7 @@
             - [docker-compose](#docker-compose)
             - [Notes for Running Using docker-compose](#notes-for-running-using-docker-compose)
         - [FreeNAS / TrueNAS / FreeBSD build and run](#freenas-freebsd-build-and-run)
+        - [TrueNas Scale](#TrueNas-Scale-deployment-and-run)
         - [Clever-Cloud deployment and run](#clever-cloud-deployment-and-run)
     - [Usage](#usage)
     - [Configuration](#configuration)
@@ -100,6 +101,9 @@ The container needs to be restarted to apply any changes you make to *settings.j
 ### FreeNAS-FreeBSD build and run
 A [FreeNAS & TrueNAS plugin](https://github.com/zorglube/iocage-plugin-movienight) had been released. You should find MovieNight into the plugin section of you management GUI. However you still can make an manual plugin deployment, documentation [here](https://github.com/freenas/iocage-ix-plugins)
 If you prefer to make an Jail without using the plugin management, a script wich setup an Jail and build and run MovieNight into that Jail as been written, you'll find it here [freenas-iocage-movienight](https://github.com/zorglube/freenas-iocage-movienight)  
+
+### TrueNas Scale deployment and run
+The deployment on TrueNas Scale is a simple Docker image deployment. I (Zorglube) am working on deploying the app on the TrueNas App Market, and I wrote an blog post on [how to deploy on TrueNas](https://blog.broncotoxique.com/2026/07/29/truenas-scale-movienight/).
 
 ### Clever-Cloud deployment and run
 If you don't like to handle the build and run of your MovieNight instance, here is an samll manual of "how to make it run on [Clever-Cloud](https://www.clever-cloud.com)".
